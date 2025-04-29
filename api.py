@@ -1536,6 +1536,608 @@ def get_quick_farm_guidance():
     except Exception as e:
         return jsonify({'error': f'Failed to generate quick farm guidance: {str(e)}'}), 500
 
+# Advanced AI-powered fertilizer recommendations
+@app.route('/api/advanced_fertilizer_recommendations', methods=['POST'])
+def get_advanced_fertilizer_recommendations():
+    """Get AI-powered fertilizer recommendations based on field details and soil test results"""
+    try:
+        data = request.json
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+            
+        # Required parameters
+        crop_type = data.get('crop_type')
+        soil_type = data.get('soil_type')
+        growth_stage = data.get('growth_stage', 'seedling')  # Default to seedling if not specified
+        
+        # Optional parameters
+        field_size = data.get('field_size', 1.0)  # In hectares
+        planting_date = data.get('planting_date')
+        
+        # Soil test results (optional but valuable)
+        soil_test = data.get('soil_test', {})
+        nitrogen_level = soil_test.get('nitrogen', 'medium')
+        phosphorus_level = soil_test.get('phosphorus', 'medium')
+        potassium_level = soil_test.get('potassium', 'medium')
+        ph_level = soil_test.get('ph', 7.0)
+        organic_matter = soil_test.get('organic_matter', 'medium')
+        
+        # Location data for regional considerations
+        location = data.get('location')
+        
+        # Previous fertilizer applications
+        previous_applications = data.get('previous_applications', [])
+        
+        # Use AI to generate fertilizer recommendations
+        if GEMINI_API_KEY:
+            try:
+                # Use the best available model
+                try:
+                    model = genai.GenerativeModel('gemini-1.5-pro')
+                except:
+                    # Fallback model selection logic remains similar
+                    for m in genai.list_models():
+                        if 'gemini' in m.name and 'generateContent' in m.supported_generation_methods:
+                            model_name = m.name.replace('models/', '')
+                            print(f"Using fallback model: {model_name}")
+                            model = genai.GenerativeModel(model_name)
+                            break
+                
+                # Construct the prompt for fertilizer recommendations
+                prompt = f"""
+                As an agricultural expert, provide detailed fertilizer recommendations for:
+                
+                Crop: {crop_type}
+                Soil Type: {soil_type}
+                Growth Stage: {growth_stage}
+                Field Size: {field_size} hectares
+                {"Planting Date: " + planting_date if planting_date else ""}
+                {"Location: " + location if location else ""}
+                
+                Soil Test Results:
+                - Nitrogen Level: {nitrogen_level}
+                - Phosphorus Level: {phosphorus_level}
+                - Potassium Level: {potassium_level}
+                - pH Level: {ph_level}
+                - Organic Matter: {organic_matter}
+                
+                Previous Fertilizer Applications:
+                {previous_applications if previous_applications else "None recorded"}
+                
+                Provide a comprehensive fertilizer application plan with:
+                1. Specific NPK fertilizer ratios and brands/types for each growth stage
+                2. Precise application rates in kg/hectare
+                3. Exact timing of applications related to growth stages
+                4. Application methods (broadcast, banding, foliar, etc.)
+                5. Secondary nutrients and micronutrients if needed
+                6. Both organic and conventional fertilizer options
+                7. Cost-effective fertilizer combinations to maximize yield
+                
+                Format your response as a JSON object with these keys:
+                "primary_recommendations": [array of main fertilizer recommendations with product, ratio, rate, timing, method]
+                "secondary_nutrients": [recommendations for secondary nutrients if needed]
+                "micronutrients": [recommendations for micronutrients if needed]
+                "organic_alternatives": [organic fertilizer options]
+                "application_schedule": [detailed timing of applications]
+                "expected_benefits": [expected yield impact]
+                "precautions": [warnings and precautions]
+                "cost_estimate": estimated cost per hectare
+                """
+                
+                # Generate recommendations
+                response = model.generate_content(prompt)
+                
+                try:
+                    # Try to extract JSON from the response
+                    import json
+                    import re
+                    
+                    # Find JSON-like content
+                    json_match = re.search(r'({[\s\S]*})', response.text)
+                    if json_match:
+                        json_str = json_match.group(1)
+                        recommendations = json.loads(json_str)
+                    else:
+                        # If JSON extraction fails, create structured data
+                        recommendations = {
+                            "primary_recommendations": [
+                                {
+                                    "product": f"NPK fertilizer suitable for {crop_type}",
+                                    "ratio": "Based on soil test results",
+                                    "rate": f"Calculate based on {field_size} hectares",
+                                    "timing": f"Apply at {growth_stage} stage",
+                                    "method": "As appropriate for your field conditions"
+                                }
+                            ],
+                            "notes": "Detailed analysis based on AI processing.",
+                            "raw_response": response.text
+                        }
+                        
+                    # Return the recommendations
+                    return jsonify({
+                        'fertilizer_recommendations': recommendations,
+                        'generated_by': 'AI Agriculture Expert (Gemini)'
+                    })
+                    
+                except Exception as e:
+                    print(f"Error processing fertilizer recommendations: {str(e)}")
+                    return jsonify({
+                        'fertilizer_recommendations': {
+                            'notes': 'Error processing detailed recommendations',
+                            'general_advice': response.text
+                        },
+                        'generated_by': 'AI Agriculture Expert (Gemini)'
+                    })
+                    
+            except Exception as e:
+                print(f"Error generating fertilizer recommendations with AI: {str(e)}")
+                # Fall back to rule-based recommendations
+        
+        # Fallback rule-based fertilizer recommendations
+        # This provides basic recommendations when AI is unavailable
+        recommendations = generate_rule_based_fertilizer_recommendations(
+            crop_type, soil_type, growth_stage, 
+            nitrogen_level, phosphorus_level, potassium_level, ph_level
+        )
+        
+        return jsonify({
+            'fertilizer_recommendations': recommendations,
+            'generated_by': 'Rule-Based System'
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'Failed to generate fertilizer recommendations: {str(e)}'}), 500
+
+# Advanced AI-powered irrigation recommendations
+@app.route('/api/irrigation_recommendations', methods=['POST'])
+def get_irrigation_recommendations():
+    """Get AI-powered irrigation recommendations based on crop, soil, and weather conditions"""
+    try:
+        data = request.json
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+            
+        # Required parameters
+        crop_type = data.get('crop_type')
+        soil_type = data.get('soil_type')
+        growth_stage = data.get('growth_stage', 'vegetative')  # Default to vegetative if not specified
+        
+        # Optional parameters
+        field_size = data.get('field_size', 1.0)  # In hectares
+        current_soil_moisture = data.get('soil_moisture', 'medium')  # Dry, medium, wet
+        irrigation_system = data.get('irrigation_system', 'drip')  # Drip, sprinkler, flood, etc.
+        
+        # Weather data (optional but valuable)
+        weather_data = data.get('weather_data', {})
+        temperature = weather_data.get('temperature', 25)  # In Celsius
+        humidity = weather_data.get('humidity', 50)  # Percentage
+        precipitation_forecast = weather_data.get('precipitation_forecast', [0, 0, 0, 0, 0])  # 5-day precipitation
+        evapotranspiration = weather_data.get('evapotranspiration', 5)  # Daily ET in mm
+        
+        # Location and time data
+        location = data.get('location')
+        season = data.get('season', 'summer')
+        
+        # Previous irrigation records
+        previous_irrigation = data.get('previous_irrigation', [])
+        
+        # Use AI to generate irrigation recommendations
+        if GEMINI_API_KEY:
+            try:
+                # Use the best available model
+                try:
+                    model = genai.GenerativeModel('gemini-1.5-pro')
+                except:
+                    # Fallback model selection
+                    for m in genai.list_models():
+                        if 'gemini' in m.name and 'generateContent' in m.supported_generation_methods:
+                            model_name = m.name.replace('models/', '')
+                            print(f"Using fallback model: {model_name}")
+                            model = genai.GenerativeModel(model_name)
+                            break
+                
+                # Construct the prompt for irrigation recommendations
+                prompt = f"""
+                As an irrigation expert, provide detailed irrigation recommendations for:
+                
+                Crop: {crop_type}
+                Soil Type: {soil_type}
+                Growth Stage: {growth_stage}
+                Field Size: {field_size} hectares
+                Current Soil Moisture: {current_soil_moisture}
+                Irrigation System: {irrigation_system}
+                {"Location: " + location if location else ""}
+                Season: {season}
+                
+                Weather Data:
+                - Temperature: {temperature}°C
+                - Humidity: {humidity}%
+                - 5-day Precipitation Forecast (mm): {precipitation_forecast}
+                - Evapotranspiration: {evapotranspiration} mm/day
+                
+                Previous Irrigation:
+                {previous_irrigation if previous_irrigation else "None recorded"}
+                
+                Provide a comprehensive irrigation plan with:
+                1. Exact water requirements in mm or liters per hectare
+                2. Frequency of irrigation (daily, every 2 days, weekly, etc.)
+                3. Duration of each irrigation session in minutes or hours
+                4. Best time of day to irrigate
+                5. Adjustments needed based on weather forecast
+                6. Water conservation techniques
+                7. Signs of over/under irrigation to monitor
+                
+                Format your response as a JSON object with these keys:
+                "water_requirement": daily water requirement in mm
+                "frequency": recommended irrigation frequency
+                "duration": duration of each irrigation session
+                "best_time": optimal time of day for irrigation
+                "weather_adjustments": adjustments based on forecast
+                "conservation_techniques": water conservation methods
+                "monitoring_indicators": signs to watch for
+                "irrigation_schedule": detailed schedule for next 7 days
+                "expected_benefits": expected benefits of following this plan
+                """
+                
+                # Generate recommendations
+                response = model.generate_content(prompt)
+                
+                try:
+                    # Try to extract JSON from the response
+                    import json
+                    import re
+                    
+                    # Find JSON-like content
+                    json_match = re.search(r'({[\s\S]*})', response.text)
+                    if json_match:
+                        json_str = json_match.group(1)
+                        recommendations = json.loads(json_str)
+                    else:
+                        # If JSON extraction fails, create structured data
+                        recommendations = {
+                            "water_requirement": f"Based on {crop_type} needs in {growth_stage} stage",
+                            "frequency": "Determined by soil conditions and weather",
+                            "duration": "Adjust based on system efficiency",
+                            "notes": "Detailed analysis from AI processing.",
+                            "raw_response": response.text
+                        }
+                        
+                    # Return the recommendations
+                    return jsonify({
+                        'irrigation_recommendations': recommendations,
+                        'generated_by': 'AI Irrigation Expert (Gemini)'
+                    })
+                    
+                except Exception as e:
+                    print(f"Error processing irrigation recommendations: {str(e)}")
+                    return jsonify({
+                        'irrigation_recommendations': {
+                            'notes': 'Error processing detailed recommendations',
+                            'general_advice': response.text
+                        },
+                        'generated_by': 'AI Irrigation Expert (Gemini)'
+                    })
+                    
+            except Exception as e:
+                print(f"Error generating irrigation recommendations with AI: {str(e)}")
+                # Fall back to rule-based recommendations
+        
+        # Fallback rule-based irrigation recommendations
+        recommendations = generate_rule_based_irrigation_recommendations(
+            crop_type, soil_type, growth_stage, 
+            current_soil_moisture, irrigation_system, precipitation_forecast
+        )
+        
+        return jsonify({
+            'irrigation_recommendations': recommendations,
+            'generated_by': 'Rule-Based System'
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'Failed to generate irrigation recommendations: {str(e)}'}), 500
+
+# Helper function for rule-based fertilizer recommendations
+def generate_rule_based_fertilizer_recommendations(crop_type, soil_type, growth_stage, 
+                                                  nitrogen_level='medium', phosphorus_level='medium', 
+                                                  potassium_level='medium', ph_level=7.0):
+    """Generate basic fertilizer recommendations based on crop and soil type"""
+    
+    # Basic NPK ratios by crop type (simplified)
+    crop_npk_ratios = {
+        'Rice': '15-15-15',
+        'Wheat': '20-10-10',
+        'Cotton': '5-15-15',
+        'Sugarcane': '15-15-15',
+        'Maize': '15-15-15',
+        'Potato': '10-20-20',
+        'Tomato': '10-10-10',
+        'Chickpea': '10-20-10',
+        'Soybean': '0-20-20',
+        'Groundnut': '10-20-20',
+        'Turmeric': '5-10-20',
+    }
+    
+    # Default to balanced fertilizer if crop not in list
+    npk_ratio = crop_npk_ratios.get(crop_type, '15-15-15')
+    
+    # Adjust based on soil type
+    soil_adjustments = {
+        'Sandy': 'Increase frequency, reduce quantity per application',
+        'Clay': 'Reduce frequency, may need additional drainage',
+        'Loamy': 'Standard application',
+        'Silt': 'Moderate frequency',
+        'Black': 'May need less phosphorus',
+        'Red': 'May need more phosphorus',
+        'Alluvial': 'Often fertile, may need less fertilizer',
+        'Laterite': 'May need more complete nutrients',
+        'Peaty': 'May need less nitrogen, more phosphorus',
+        'Calcareous': 'Watch for micronutrient availability',
+        'Saline': 'May need special salt-tolerant formulations',
+        'Acidic': 'Consider lime application to adjust pH'
+    }
+    
+    soil_note = soil_adjustments.get(soil_type, 'Standard application methods')
+    
+    # Adjust based on growth stage
+    stage_guidance = {
+        'seedling': 'Focus on phosphorus for root development',
+        'vegetative': 'Higher nitrogen needed for leaf growth',
+        'flowering': 'Reduce nitrogen, increase phosphorus and potassium',
+        'fruiting': 'Focus on potassium for fruit development',
+        'maturity': 'Minimal fertilizer needed, prepare for next season'
+    }
+    
+    stage_note = stage_guidance.get(growth_stage, 'Balanced nutrition recommended')
+    
+    # Adjust based on soil test results
+    adjustments = []
+    
+    if nitrogen_level == 'low':
+        adjustments.append('Increase nitrogen application by 25%')
+    elif nitrogen_level == 'high':
+        adjustments.append('Decrease nitrogen application by 25%')
+        
+    if phosphorus_level == 'low':
+        adjustments.append('Increase phosphorus application by 25%')
+    elif phosphorus_level == 'high':
+        adjustments.append('Decrease phosphorus application by 25%')
+        
+    if potassium_level == 'low':
+        adjustments.append('Increase potassium application by 25%')
+    elif potassium_level == 'high':
+        adjustments.append('Decrease potassium application by 25%')
+    
+    # pH adjustments
+    ph_recommendation = ''
+    if ph_level < 6.0:
+        ph_recommendation = 'Consider applying agricultural lime to raise pH'
+    elif ph_level > 7.5:
+        ph_recommendation = 'Consider adding organic matter or sulfur to lower pH'
+    else:
+        ph_recommendation = 'pH is in good range for most crops'
+    
+    # Compile recommendations
+    recommendations = {
+        'primary_recommendations': [
+            {
+                'product': f'NPK {npk_ratio}',
+                'rate': '250 kg/hectare',
+                'timing': f'Apply at {growth_stage} stage',
+                'method': 'Broadcast and incorporate into soil'
+            }
+        ],
+        'soil_specific_notes': soil_note,
+        'growth_stage_notes': stage_note,
+        'adjustments': adjustments,
+        'ph_management': ph_recommendation,
+        'organic_alternatives': [
+            {
+                'product': 'Well-rotted farmyard manure',
+                'rate': '10-15 tons/hectare',
+                'timing': 'Apply before planting',
+                'method': 'Broadcast and incorporate into soil'
+            },
+            {
+                'product': 'Compost',
+                'rate': '5-10 tons/hectare',
+                'timing': 'Apply before planting',
+                'method': 'Broadcast and incorporate into soil'
+            }
+        ]
+    }
+    
+    return recommendations
+
+# Helper function for rule-based irrigation recommendations
+def generate_rule_based_irrigation_recommendations(crop_type, soil_type, growth_stage, 
+                                                 soil_moisture='medium', irrigation_system='drip',
+                                                 precipitation_forecast=[0, 0, 0, 0, 0]):
+    """Generate basic irrigation recommendations based on crop, soil, and conditions"""
+    
+    # Base water requirements by crop type (in mm/day, simplified)
+    crop_water_needs = {
+        'Rice': 8,
+        'Wheat': 5,
+        'Cotton': 6,
+        'Sugarcane': 7,
+        'Maize': 5.5,
+        'Potato': 4.5,
+        'Tomato': 5,
+        'Chickpea': 4,
+        'Soybean': 5,
+        'Groundnut': 5,
+        'Turmeric': 6,
+    }
+    
+    # Default water requirement if crop not in list
+    base_water_requirement = crop_water_needs.get(crop_type, 5)  # mm/day
+    
+    # Adjust based on soil type
+    soil_factors = {
+        'Sandy': 1.2,  # Needs more frequent irrigation
+        'Clay': 0.8,   # Holds water longer
+        'Loamy': 1.0,  # Balanced water retention
+        'Silt': 0.9,   # Good water retention
+        'Black': 0.85, # Good water retention
+        'Red': 1.1,    # Less water retention
+        'Alluvial': 0.95,
+        'Laterite': 1.1,
+        'Peaty': 0.8,
+        'Calcareous': 1.05,
+        'Saline': 1.15, # Needs more water to manage salinity
+        'Acidic': 1.0
+    }
+    
+    soil_factor = soil_factors.get(soil_type, 1.0)
+    adjusted_water_requirement = base_water_requirement * soil_factor
+    
+    # Adjust based on growth stage
+    stage_factors = {
+        'seedling': 0.6,     # Less water needed
+        'vegetative': 1.0,   # Standard water needs
+        'flowering': 1.2,    # Critical stage, more water
+        'fruiting': 1.1,     # Needs good moisture
+        'maturity': 0.7      # Reducing water needs
+    }
+    
+    stage_factor = stage_factors.get(growth_stage, 1.0)
+    adjusted_water_requirement *= stage_factor
+    
+    # Adjust based on current soil moisture
+    moisture_factors = {
+        'dry': 1.2,      # Needs more water to rehydrate
+        'medium': 1.0,   # Normal irrigation
+        'wet': 0.7       # Reduced irrigation
+    }
+    
+    moisture_factor = moisture_factors.get(soil_moisture, 1.0)
+    adjusted_water_requirement *= moisture_factor
+    
+    # Irrigation frequency based on soil type and system
+    frequency_guide = {
+        'Sandy': {
+            'drip': 'Daily',
+            'sprinkler': 'Every 2 days',
+            'flood': 'Every 4 days'
+        },
+        'Clay': {
+            'drip': 'Every 3 days',
+            'sprinkler': 'Every 5 days',
+            'flood': 'Every 7 days'
+        },
+        'Loamy': {
+            'drip': 'Every 2 days',
+            'sprinkler': 'Every 3 days',
+            'flood': 'Every 5 days'
+        }
+    }
+    
+    # Default frequency if specific combination not found
+    if soil_type in frequency_guide and irrigation_system in frequency_guide[soil_type]:
+        frequency = frequency_guide[soil_type][irrigation_system]
+    elif irrigation_system == 'drip':
+        frequency = 'Every 2 days'
+    elif irrigation_system == 'sprinkler':
+        frequency = 'Every 3-4 days'
+    else:
+        frequency = 'Every 5-7 days'
+    
+    # Calculate duration based on system efficiency
+    system_efficiency = {
+        'drip': 0.9,       # 90% efficiency
+        'sprinkler': 0.7,  # 70% efficiency
+        'flood': 0.5       # 50% efficiency
+    }
+    
+    efficiency = system_efficiency.get(irrigation_system, 0.7)
+    
+    # Adjust for precipitation forecast
+    total_precipitation = sum(precipitation_forecast)
+    if total_precipitation > 0:
+        # Reduce irrigation by expected rainfall
+        adjusted_water_requirement = max(0, adjusted_water_requirement - (total_precipitation / 5))
+    
+    # Calculate water volume needed (L/hectare)
+    water_volume_per_day = adjusted_water_requirement * 10000  # L/hectare
+    
+    # Determine best time for irrigation
+    best_time = 'Early morning or late evening to reduce evaporation'
+    
+    # Conservation techniques
+    conservation_techniques = [
+        'Mulching to reduce evaporation',
+        'Regular system maintenance to prevent leaks',
+        'Proper scheduling based on crop needs',
+        f'Using {irrigation_system} irrigation for higher efficiency'
+    ]
+    
+    # Signs to monitor
+    monitoring_signs = [
+        'Wilting leaves indicate under-irrigation',
+        'Yellowing lower leaves may indicate over-irrigation',
+        'Cracked soil surface indicates dry conditions',
+        'Fungal growth may indicate excessive moisture'
+    ]
+    
+    # 7-day schedule
+    schedule = []
+    for day in range(7):
+        if "Daily" in frequency:
+            should_irrigate = True
+        elif "Every 2 days" in frequency:
+            should_irrigate = day % 2 == 0
+        elif "Every 3 days" in frequency:
+            should_irrigate = day % 3 == 0
+        elif "Every 4 days" in frequency:
+            should_irrigate = day % 4 == 0
+        elif "Every 5 days" in frequency:
+            should_irrigate = day % 5 == 0
+        elif "Every 7 days" in frequency:
+            should_irrigate = day % 7 == 0
+        else:
+            should_irrigate = day == 0 or day == 3 or day == 6  # Default to 3 times/week
+        
+        # Adjust for forecast precipitation
+        rain_adjustment = ""
+        if day < len(precipitation_forecast) and precipitation_forecast[day] > 5:
+            should_irrigate = False
+            rain_adjustment = f" (Skipped due to {precipitation_forecast[day]}mm forecast rainfall)"
+        
+        if should_irrigate:
+            schedule.append({
+                'day': day + 1,
+                'irrigate': True,
+                'amount': f"{adjusted_water_requirement:.1f} mm",
+                'volume': f"{water_volume_per_day:.0f} L/hectare",
+                'note': f"Standard irrigation{rain_adjustment}" 
+            })
+        else:
+            schedule.append({
+                'day': day + 1,
+                'irrigate': False,
+                'amount': "0 mm",
+                'volume': "0 L/hectare",
+                'note': f"No irrigation needed{rain_adjustment}"
+            })
+    
+    # Compile recommendations
+    recommendations = {
+        'water_requirement': f"{adjusted_water_requirement:.1f} mm/day",
+        'frequency': frequency,
+        'best_time': best_time,
+        'system_efficiency': f"{efficiency*100:.0f}%",
+        'conservation_techniques': conservation_techniques,
+        'monitoring_indicators': monitoring_signs,
+        'irrigation_schedule': schedule,
+        'notes': [
+            f"Recommendations adjusted for {soil_type} soil and {growth_stage} growth stage",
+            f"Current soil moisture is {soil_moisture}",
+            f"Total forecast precipitation: {total_precipitation}mm over next 5 days"
+        ]
+    }
+    
+    return recommendations
+
 # Run the Flask app
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5002, debug=True)
