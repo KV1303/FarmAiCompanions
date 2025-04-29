@@ -8,7 +8,7 @@ const multer = require('multer');
 
 const app = express();
 const PORT = 5000;
-const API_PORT = 5001;
+const API_PORT = 5002;
 
 // Create uploads directory if it doesn't exist
 if (!fs.existsSync('uploads')) {
