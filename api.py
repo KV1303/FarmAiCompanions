@@ -1338,57 +1338,137 @@ def get_quick_farm_guidance():
         try:
             # If Gemini API key is available, use AI for detailed guidance
             if GEMINI_API_KEY:
-                model = genai.GenerativeModel('gemini-pro')
+                # List available models to see what we can use
+                print("\n\n--- AVAILABLE GEMINI MODELS ---")
+                for m in genai.list_models():
+                    if 'generateContent' in m.supported_generation_methods:
+                        print(f"Model name: {m.name}")
+                print("--- END AVAILABLE MODELS ---\n\n")
+                
+                # Use the newer model names that are available
+                try:
+                    # Use the latest pro model for best results with long responses
+                    model = genai.GenerativeModel('gemini-1.5-pro')
+                except Exception as e:
+                    print(f"Error with gemini-1.5-pro: {str(e)}")
+                    # Fallback to flash model which is more efficient
+                    try:
+                        model = genai.GenerativeModel('gemini-1.5-flash')
+                    except Exception as e2:
+                        print(f"Error with gemini-1.5-flash: {str(e2)}")
+                        # Final fallback - use whatever comes first in available models
+                        for m in genai.list_models():
+                            if 'gemini' in m.name and 'generateContent' in m.supported_generation_methods:
+                                model_name = m.name.replace('models/', '')
+                                print(f"Using fallback model: {model_name}")
+                                model = genai.GenerativeModel(model_name)
+                                break
                 
                 # Create a more comprehensive prompt for detailed guidance
                 prompt = f"""
-                As an agricultural expert, write a detailed farming guide for {crop_type} cultivation in {soil_type} soil. 
+                You are an agricultural expert commissioned to write a comprehensive farming manual. Create a detailed, practical guide for {crop_type} cultivation in {soil_type} soil that combines traditional practices and modern techniques.
                 
-                Structure your response as an informative article that covers:
-                
-                1. Introduction to {crop_type} farming in {soil_type} soil with its advantages and challenges
-                
-                2. Detailed Cultivation Timeline:
-                   - Pre-planting preparation with exact timing
-                   - Planting techniques with precise spacing measurements
-                   - Growth stages with expected durations
-                   - Harvest timing indicators and techniques
-                
-                3. Soil Management for {soil_type} soil:
-                   - How to optimize {soil_type} soil for {crop_type}
-                   - Soil amendments and their application rates
-                   - pH management specific to this combination
-                
-                4. Irrigation Requirements:
-                   - Watering schedule throughout growth stages
-                   - Water conservation techniques
-                   - Signs of over/under watering
-                
-                5. Fertilization Strategy:
-                   - Detailed NPK requirements with exact ratios
-                   - Timing of fertilizer applications
-                   - Organic alternatives and their application rates
-                
-                6. Pest and Disease Management:
-                   - Common pests and diseases specific to {crop_type} in {soil_type} soil
-                   - Prevention measures with timing
-                   - Organic and conventional treatment options
-                
-                7. Modern Farming Technologies:
-                   - Advanced techniques applicable to this crop-soil combination
-                   - Precision farming approaches
-                   - Technology integration suggestions
-                
-                8. Sustainable Practices:
-                   - Crop rotation recommendations
-                   - Cover cropping strategies
-                   - Reducing environmental impact
-                
-                Provide specific, actionable information with exact measurements, timings, and rates wherever possible.
-                Also include a structured JSON response with concise bullet-point recommendations for each category.
+                FORMAT YOUR RESPONSE AS A COMPLETE ARTICLE WITH HEADINGS AND SUBHEADINGS. DO NOT include any JSON content or code blocks in the main article. Write in clear, professional language suitable for publishing in an agricultural journal.
+
+                ## ARTICLE STRUCTURE AND CONTENT:
+
+                # {crop_type} Cultivation Guide for {soil_type} Soil
+                Begin with a thorough introduction (250-300 words) explaining why {crop_type} is well-suited (or what challenges it faces) in {soil_type} soil. Include regional considerations and economic importance.
+
+                ## Detailed Cultivation Timeline
+                Create a chronological, month-by-month or season-by-season breakdown of the complete growing cycle with SPECIFIC DATES AND TIMINGS:
+                - Pre-planting soil preparation (beginning 45-60 days before planting date)
+                - Seed selection and treatment recommendations with EXACT seed rates (kg/ha)
+                - Planting window with PRECISE spacing measurements (e.g., 45cm between rows, 15cm between plants)
+                - Post-planting care with timing
+                - Critical growth stages with SPECIFIC DURATION of each stage
+                - Harvest timing indicators with EXACT maturity signs
+                - Post-harvest handling and storage recommendations
+
+                ## Soil Management Techniques
+                Provide soil-specific guidance:
+                - Detailed analysis of {soil_type} soil properties and how they affect {crop_type}
+                - Step-by-step soil preparation procedures with SPECIFIC amendment quantities
+                - Optimal pH range with EXACT adjustment methods (e.g., "Add 500kg/ha of agricultural lime to raise pH from 5.5 to 6.5")
+                - Organic matter incorporation with EXACT rates and timing
+                - Tillage recommendations (depth, frequency, tools)
+
+                ## Precise Irrigation Strategy
+                Develop a complete irrigation plan:
+                - Water requirements throughout each growth stage with EXACT quantities (mm or L/plant)
+                - Irrigation frequency with SPECIFIC intervals based on crop stage and weather conditions
+                - Irrigation system recommendations specifically for {soil_type} soil
+                - Water conservation techniques with implementation details
+                - Signs of water stress or excess with remediation strategies
+                - Drainage considerations specific to {soil_type} soil
+
+                ## Comprehensive Fertilization Plan
+                Create a complete nutritional program:
+                - SPECIFIC NPK ratio requirements for each growth stage (e.g., 12-24-12 at planting)
+                - PRECISE application rates in kg/ha for each application
+                - Detailed timing of fertilizer applications tied to growth stages
+                - Micronutrient requirements with SPECIFIC products and rates
+                - Organic fertilization alternatives with EXACT application rates
+                - Foliar feeding recommendations with SPECIFIC dilution rates
+
+                ## Integrated Pest and Disease Management
+                Provide a complete protection strategy:
+                - List of common pests specific to {crop_type} in {soil_type} soil with IDENTIFICATION FEATURES
+                - List of common diseases with EARLY SYMPTOMS
+                - Preventive measures with SPECIFIC timing relative to growth stages
+                - Monitoring techniques with EXACT frequency (e.g., "Scout fields twice weekly")
+                - Organic control options with PRECISE application rates and timing
+                - Conventional chemical options with SPECIFIC active ingredients, rates, and safety intervals
+                - Resistance management strategies
+
+                ## Modern Farming Technologies
+                Detail relevant technological innovations:
+                - Appropriate mechanization options for different farm sizes
+                - Precision agriculture techniques applicable to {crop_type} in {soil_type} soil
+                - Sensor and monitoring technologies with implementation guidance
+                - Digital tools and software recommendations for farm management
+                - Cost-benefit analysis of technology adoption
+
+                ## Sustainable Farming Practices
+                Outline environmental conservation approaches:
+                - SPECIFIC crop rotation recommendations with exact crop sequences
+                - Cover cropping strategies with NAMED species recommendations
+                - Soil conservation practices tailored to {soil_type}
+                - Biodiversity enhancement techniques around fields
+                - Carbon sequestration approaches for {crop_type} cultivation
+                - Water conservation strategies beyond irrigation management
+
+                ## Economic Considerations
+                Provide business guidance:
+                - Estimated yields for {crop_type} in {soil_type} soil under different management intensities
+                - Production costs breakdown with REALISTIC figures
+                - Market opportunities and value-addition possibilities
+                - Storage and handling for market timing
+
+                IMPORTANT: Your response should be as comprehensive as a book chapter. Write the COMPLETE ARTICLE. Include SPECIFIC, ACTIONABLE information with EXACT measurements, timing, and application rates. Avoid generalizations - be precise throughout. Emphasize PRACTICAL IMPLEMENTATION.
                 """
                 
-                response = model.generate_content(prompt)
+                # Set default temperature and max_output_tokens for more detailed content
+                generation_config = {
+                    "temperature": 0.7,
+                    "top_p": 0.9,
+                    "top_k": 40,
+                    "max_output_tokens": 4096,  # Request longer response
+                    "response_mime_type": "text/plain"
+                }
+                
+                # Generate content with specified configuration
+                response = model.generate_content(
+                    prompt,
+                    generation_config=generation_config
+                )
+                
+                # Print the response to debug it
+                print("\n\n--- GEMINI RESPONSE START ---")
+                print("Response status:", response._result.candidates[0].finish_reason)
+                print("Response text preview:", response.text[:500] if response.text else "No text")
+                print("Response text length:", len(response.text) if response.text else 0)
+                print("--- GEMINI RESPONSE END ---\n\n")
                 
                 # Process the response
                 if response and response.text:

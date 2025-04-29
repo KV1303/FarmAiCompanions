@@ -158,14 +158,15 @@ function displayQuickGuidance(data) {
         ${guidance.detailed_article ? `
         <!-- Detailed Article -->
         <div class="tab-pane fade show active" id="article-content" role="tabpanel">
-          <div class="detailed-guide p-2">
-            <div class="article-content">
-              ${formatArticleContent(guidance.detailed_article)}
-            </div>
-            <div class="text-end mt-3">
-              <button class="btn btn-sm btn-outline-success" onclick="printArticle('${crop_type}', '${soil_type}')">
+          <div class="detailed-guide">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="mb-0">Comprehensive Growing Guide</h5>
+              <button class="btn btn-sm btn-success" onclick="printArticle('${crop_type}', '${soil_type}')">
                 <i class="fas fa-print me-2"></i>Print Guide
               </button>
+            </div>
+            <div class="article-content">
+              ${formatArticleContent(guidance.detailed_article)}
             </div>
           </div>
         </div>
