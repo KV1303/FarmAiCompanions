@@ -600,33 +600,37 @@ async function displayFieldDetails(field) {
       </div>
     </div>
     
-    <ul class="nav nav-tabs" id="fieldTabs" role="tablist">
-      <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="monitoring-tab" data-bs-toggle="tab" data-bs-target="#monitoring" type="button" role="tab">Monitoring</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="diseases-tab" data-bs-toggle="tab" data-bs-target="#diseases" type="button" role="tab">Diseases</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="recommendations-tab" data-bs-toggle="tab" data-bs-target="#recommendations" type="button" role="tab">Recommendations</button>
-      </li>
-    </ul>
+    <div class="mb-4">
+      <ul class="nav nav-pills" id="fieldTabs">
+        <li class="nav-item">
+          <button class="nav-link active" id="monitoring-btn">Monitoring</button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" id="diseases-btn">Diseases</button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" id="recommendations-btn">Recommendations</button>
+        </li>
+      </ul>
+    </div>
     
-    <div class="tab-content" id="fieldTabsContent">
-      <div class="tab-pane fade show active" id="monitoring" role="tabpanel">
+    <div id="tabContent">
+      <div id="monitoring-content">
         <div class="text-center py-3">
           <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Loading...</span>
           </div>
         </div>
       </div>
-      <div class="tab-pane fade" id="diseases" role="tabpanel">
+      
+      <div id="diseases-content" class="d-none">
         <div class="text-center py-3">
           <p>No disease reports yet</p>
           <button class="btn btn-primary" id="scanForDiseaseBtn">Scan for Diseases</button>
         </div>
       </div>
-      <div class="tab-pane fade" id="recommendations" role="tabpanel">
+      
+      <div id="recommendations-content" class="d-none">
         <div class="text-center py-3">
           <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Loading...</span>
@@ -643,7 +647,7 @@ async function displayFieldDetails(field) {
     const monitoringData = await fetchAPI(`field_monitoring?field_id=${field.id}`);
     displayFieldMonitoring(monitoringData);
   } catch (error) {
-    document.getElementById('monitoring').innerHTML = `
+    document.getElementById('monitoring-content').innerHTML = `
       <div class="alert alert-danger">
         Failed to load field monitoring data: ${error.message}
       </div>
@@ -655,7 +659,7 @@ async function displayFieldDetails(field) {
     const guidance = await fetchAPI(`farm_guidance/${field.id}`);
     displayFarmGuidance(guidance);
   } catch (error) {
-    document.getElementById('recommendations').innerHTML = `
+    document.getElementById('recommendations-content').innerHTML = `
       <div class="alert alert-danger">
         <p><strong>Failed to load AI-powered farming guidance:</strong> ${error.message}</p>
         <button class="btn btn-sm btn-outline-danger mt-2" onclick="retryLoadFarmGuidance(${field.id})">
@@ -670,34 +674,40 @@ async function displayFieldDetails(field) {
     showSection('diseaseDetectionSection');
   });
   
-  // Set up the tab navigation
-  document.querySelectorAll('#fieldTabs .nav-link').forEach(tab => {
-    tab.addEventListener('click', function() {
-      // Remove active class from all tabs
-      document.querySelectorAll('#fieldTabs .nav-link').forEach(t => {
-        t.classList.remove('active');
-      });
-      
-      // Add active class to clicked tab
-      this.classList.add('active');
-      
-      // Hide all tab panes
-      document.querySelectorAll('#fieldTabsContent .tab-pane').forEach(pane => {
-        pane.classList.remove('show', 'active');
-      });
-      
-      // Show the corresponding tab pane
-      const target = this.getAttribute('data-bs-target');
-      document.querySelector(target).classList.add('show', 'active');
-    });
+  // Set up the tab navigation with simpler approach
+  document.getElementById('monitoring-btn').addEventListener('click', function() {
+    document.querySelectorAll('#fieldTabs .nav-link').forEach(t => t.classList.remove('active'));
+    this.classList.add('active');
+    
+    document.getElementById('monitoring-content').classList.remove('d-none');
+    document.getElementById('diseases-content').classList.add('d-none');
+    document.getElementById('recommendations-content').classList.add('d-none');
+  });
+  
+  document.getElementById('diseases-btn').addEventListener('click', function() {
+    document.querySelectorAll('#fieldTabs .nav-link').forEach(t => t.classList.remove('active'));
+    this.classList.add('active');
+    
+    document.getElementById('monitoring-content').classList.add('d-none');
+    document.getElementById('diseases-content').classList.remove('d-none');
+    document.getElementById('recommendations-content').classList.add('d-none');
+  });
+  
+  document.getElementById('recommendations-btn').addEventListener('click', function() {
+    document.querySelectorAll('#fieldTabs .nav-link').forEach(t => t.classList.remove('active'));
+    this.classList.add('active');
+    
+    document.getElementById('monitoring-content').classList.add('d-none');
+    document.getElementById('diseases-content').classList.add('d-none');
+    document.getElementById('recommendations-content').classList.remove('d-none');
   });
 }
 
 function displayFieldMonitoring(data) {
-  const monitoringTab = document.getElementById('monitoring');
+  const monitoringContent = document.getElementById('monitoring-content');
   
   if (!data || !data.ndvi) {
-    monitoringTab.innerHTML = '<p>No monitoring data available for this field</p>';
+    monitoringContent.innerHTML = '<p>No monitoring data available for this field</p>';
     return;
   }
   
@@ -798,7 +808,7 @@ function displayFieldMonitoring(data) {
     html += '</tbody></table></div></div></div></div></div>';
   }
   
-  monitoringTab.innerHTML = html;
+  monitoringContent.innerHTML = html;
   
   // Update dashboard health index
   document.getElementById('healthIndex').textContent = 
@@ -806,10 +816,10 @@ function displayFieldMonitoring(data) {
 }
 
 function displayFarmGuidance(data) {
-  const recommendationsTab = document.getElementById('recommendations');
+  const recommendationsContent = document.getElementById('recommendations-content');
   
   if (!data || !data.guidance) {
-    recommendationsTab.innerHTML = '<p>No AI farming guidance available for this field</p>';
+    recommendationsContent.innerHTML = '<p>No AI farming guidance available for this field</p>';
     return;
   }
   
@@ -993,13 +1003,13 @@ function displayFarmGuidance(data) {
     </div>
   `;
   
-  recommendationsTab.innerHTML = html;
+  recommendationsContent.innerHTML = html;
 }
 
 // Function to retry loading farm guidance if it fails
 async function retryLoadFarmGuidance(fieldId) {
   try {
-    document.getElementById('recommendations').innerHTML = `
+    document.getElementById('recommendations-content').innerHTML = `
       <div class="text-center py-3">
         <div class="spinner-border text-primary" role="status">
           <span class="visually-hidden">Loading...</span>
@@ -1011,7 +1021,7 @@ async function retryLoadFarmGuidance(fieldId) {
     const guidance = await fetchAPI(`farm_guidance/${fieldId}`);
     displayFarmGuidance(guidance);
   } catch (error) {
-    document.getElementById('recommendations').innerHTML = `
+    document.getElementById('recommendations-content').innerHTML = `
       <div class="alert alert-danger">
         <p><strong>Failed to load AI-powered farming guidance:</strong> ${error.message}</p>
         <button class="btn btn-sm btn-outline-danger mt-2" onclick="retryLoadFarmGuidance(${fieldId})">
@@ -1024,7 +1034,7 @@ async function retryLoadFarmGuidance(fieldId) {
 
 // Function to print the guidance
 function printGuidance() {
-  const printContent = document.getElementById('recommendations').innerHTML;
+  const printContent = document.getElementById('recommendations-content').innerHTML;
   const printWindow = window.open('', '_blank');
   
   printWindow.document.write(`
@@ -1086,7 +1096,7 @@ async function viewFieldGuidance(fieldId) {
     
     // Switch to the recommendations tab
     setTimeout(() => {
-      document.getElementById('recommendations-tab').click();
+      document.getElementById('recommendations-btn').click();
       
       // Scroll to the recommendations tab
       document.getElementById('fieldDetails').scrollIntoView({
@@ -1111,10 +1121,10 @@ async function viewFieldGuidance(fieldId) {
 
 // Legacy function for backward compatibility
 function displayRecommendations(data) {
-  const recommendationsTab = document.getElementById('recommendations');
+  const recommendationsContent = document.getElementById('recommendations-content');
   
   if (!data || (!data.recommendations && !data.generated_by)) {
-    recommendationsTab.innerHTML = '<p>No recommendations available for this field</p>';
+    recommendationsContent.innerHTML = '<p>No recommendations available for this field</p>';
     return;
   }
   
@@ -1153,7 +1163,7 @@ function displayRecommendations(data) {
     `;
   }
   
-  recommendationsTab.innerHTML = html;
+  recommendationsContent.innerHTML = html;
 }
 
 // Event listeners
