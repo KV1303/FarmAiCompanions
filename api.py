@@ -125,8 +125,13 @@ def get_market_prices():
         try:
             # Placeholder for eNAM API call
             # In a real app, you would call the official eNAM API
-            dummy_crops = ['Rice', 'Wheat', 'Cotton', 'Sugarcane', 'Maize']
-            dummy_markets = ['Delhi', 'Mumbai', 'Kolkata', 'Chennai', 'Lucknow']
+            dummy_crops = [
+                'Rice', 'Wheat', 'Cotton', 'Sugarcane', 'Maize', 
+                'Soybean', 'Potato', 'Tomato', 'Chickpea', 'Mustard',
+                'Groundnut', 'Chilli', 'Onion', 'Turmeric', 'Ginger',
+                'Millet', 'Barley', 'Jute', 'Sunflower'
+            ]
+            dummy_markets = ['Delhi', 'Mumbai', 'Kolkata', 'Chennai', 'Lucknow', 'Bangalore', 'Hyderabad']
             
             for crop in dummy_crops:
                 if crop_type and crop != crop_type:
