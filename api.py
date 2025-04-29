@@ -1307,6 +1307,48 @@ def get_farm_guidance(field_id):
     except Exception as e:
         return jsonify({'error': f'Failed to generate farm guidance: {str(e)}'}), 500
 
+# Quick guidance endpoint (no authentication required)
+@app.route('/api/guidance/quick', methods=['POST'])
+def get_quick_farm_guidance():
+    """Get AI-powered farm management guidance based on crop and soil type only"""
+    
+    try:
+        data = request.json
+        
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+            
+        crop_type = data.get('crop_type')
+        soil_type = data.get('soil_type')
+        
+        if not crop_type or not soil_type:
+            return jsonify({'error': 'Crop type and soil type are required'}), 400
+        
+        # Create a temporary field object with minimal information
+        from types import SimpleNamespace
+        temp_field = SimpleNamespace(
+            name="Quick Analysis",
+            location=None,
+            area=None, 
+            crop_type=crop_type,
+            soil_type=soil_type,
+            planting_date=None,
+            notes=None
+        )
+        
+        # Generate guidance using the same function used for regular fields
+        guidance = generate_farm_guidance(temp_field)
+        
+        # Return structured guidance
+        return jsonify({
+            'crop_type': crop_type,
+            'soil_type': soil_type,
+            'guidance': guidance
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'Failed to generate quick farm guidance: {str(e)}'}), 500
+
 # Run the Flask app
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5002, debug=True)
