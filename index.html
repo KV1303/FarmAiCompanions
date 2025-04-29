@@ -305,6 +305,68 @@
         </div>
       </div>
 
+      <!-- AI Farm Guidance Section -->
+      <div class="container mt-5">
+        <div class="row">
+          <div class="col-md-12">
+            <div class="card border-success">
+              <div class="card-header bg-success text-white">
+                <h3 class="mb-0"><i class="fas fa-robot me-2"></i> AI Farm Guidance System</h3>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-6">
+                    <h4>Get personalized farming recommendations</h4>
+                    <p>Our AI-powered farm guidance system provides comprehensive recommendations tailored to your specific crops, soil type, and location.</p>
+                    
+                    <form id="quickGuidanceForm" class="mt-4">
+                      <div class="mb-3">
+                        <label for="quickCropType" class="form-label">Crop Type</label>
+                        <select class="form-select" id="quickCropType" required>
+                          <option value="">Select a crop</option>
+                          <option value="Rice">Rice</option>
+                          <option value="Wheat">Wheat</option>
+                          <option value="Cotton">Cotton</option>
+                          <option value="Sugarcane">Sugarcane</option>
+                          <option value="Maize">Maize</option>
+                          <option value="Potato">Potato</option>
+                          <option value="Tomato">Tomato</option>
+                          <option value="Chickpea">Chickpea</option>
+                        </select>
+                      </div>
+                      <div class="mb-3">
+                        <label for="quickSoilType" class="form-label">Soil Type</label>
+                        <select class="form-select" id="quickSoilType" required>
+                          <option value="">Select soil type</option>
+                          <option value="Sandy">Sandy</option>
+                          <option value="Clay">Clay</option>
+                          <option value="Loamy">Loamy</option>
+                          <option value="Silt">Silt</option>
+                          <option value="Black">Black</option>
+                          <option value="Red">Red</option>
+                        </select>
+                      </div>
+                      <button type="submit" class="btn btn-success" id="getGuidanceBtn">
+                        <i class="fas fa-lightbulb me-2"></i>Get Farm Guidance
+                      </button>
+                    </form>
+                  </div>
+                  <div class="col-md-6">
+                    <div id="guidanceResults" class="p-3 border rounded">
+                      <div class="text-center py-5">
+                        <i class="fas fa-seedling fa-3x text-success mb-3"></i>
+                        <h5>AI Farm Guidance</h5>
+                        <p class="text-muted">Select your crop and soil type to get personalized farming recommendations.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Features -->
       <div class="container my-5">
         <h2 class="text-center mb-5">What FarmAssist AI Can Do For You</h2>
