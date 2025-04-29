@@ -5,6 +5,7 @@ const cors = require('cors');
 const fetch = require('node-fetch');
 const fs = require('fs');
 const multer = require('multer');
+const FormData = require('form-data');
 
 const app = express();
 const PORT = 5000;
@@ -80,8 +81,66 @@ function startPythonAPI() {
   return pythonProcess;
 }
 
-// API proxy middleware
+// Handle image uploads directly
+const apiUpload = multer({ dest: 'uploads/' });
+app.post('/api/disease_detect', apiUpload.single('image'), async (req, res) => {
+  const url = `http://localhost:${API_PORT}/api/disease_detect`;
+  try {
+    // Create formData with the file path
+    const formData = new FormData();
+    formData.append('image_path', req.file.path);
+    
+    // Add other form fields
+    for (const key in req.body) {
+      formData.append(key, req.body[key]);
+    }
+    
+    console.log(`[Proxy] POST ${url} with image from ${req.file.path}`);
+    
+    // Forward to Python API
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        image_path: req.file.path,
+        crop_type: req.body.crop_type || 'unknown',
+        user_id: req.body.user_id,
+        field_id: req.body.field_id
+      })
+    });
+    
+    // Check if response is ok
+    if (!response.ok) {
+      console.error(`[Proxy] API request failed with status ${response.status}`);
+      const errorText = await response.text();
+      let errorData;
+      try {
+        errorData = JSON.parse(errorText);
+      } catch(e) {
+        errorData = { error: errorText };
+      }
+      return res.status(response.status).json(errorData);
+    }
+    
+    const data = await response.json();
+    console.log(`[Proxy] Response from ${url}:`, typeof data === 'object' ? 'object' : data);
+    return res.json(data);
+  } catch (err) {
+    console.error('Disease Detection API Proxy Error:', err);
+    return res.status(500).json({
+      error: 'Failed to connect to API server',
+      details: err.message
+    });
+  }
+});
+
+// API proxy middleware for other endpoints
 app.use('/api', async (req, res) => {
+  // Skip the disease_detect endpoint as it's handled separately
+  if (req.path === '/disease_detect' && req.method.toLowerCase() === 'post') {
+    return;
+  }
+  
   const url = `http://localhost:${API_PORT}${req.originalUrl}`;
   const method = req.method.toLowerCase();
   let retries = 3;

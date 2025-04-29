@@ -919,24 +919,52 @@ function setupDiseaseDetection() {
     }
   });
   
+  // Add crop type options if needed
+  const cropType = document.getElementById('cropType');
+  if (cropType && cropType.options.length <= 1) {
+    const cropTypes = [
+      'Rice', 'Wheat', 'Maize', 'Potato', 'Tomato', 
+      'Cotton', 'Soybean', 'Sugarcane', 'Chili', 'Onion'
+    ];
+    
+    cropTypes.forEach(crop => {
+      const option = document.createElement('option');
+      option.value = crop;
+      option.textContent = crop;
+      cropType.appendChild(option);
+    });
+  }
+  
+  // Add info message for better user guidance
+  const infoEl = document.createElement('div');
+  infoEl.className = 'mt-3 small text-muted';
+  infoEl.innerHTML = '<i class="fas fa-info-circle"></i> For best results, upload a clear, well-lit image of the affected plant part and select the correct crop type.';
+  uploadArea.parentNode.appendChild(infoEl);
+
   // Analyze button
   analyzeBtn.addEventListener('click', async () => {
-    if (!imageInput.files.length) return;
+    if (!imageInput.files.length) {
+      alert('Please select an image first');
+      return;
+    }
     
     // Show loading indicator
-    previewContainer.classList.add('hidden');
-    loadingIndicator.classList.remove('hidden');
+    analyzeBtn.disabled = true;
+    analyzeBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Analyzing...';
     resultContainer.classList.add('hidden');
     
     try {
+      console.log('Starting image analysis...');
       const result = await analyzeImage(imageInput.files[0]);
+      console.log('Analysis complete:', result);
       displayDiseaseResult(result);
     } catch (error) {
+      console.error('Analysis error:', error);
       alert(`Error analyzing image: ${error.message}`);
     } finally {
-      // Hide loading indicator
-      loadingIndicator.classList.add('hidden');
-      previewContainer.classList.remove('hidden');
+      // Reset button state
+      analyzeBtn.disabled = false;
+      analyzeBtn.innerHTML = 'Analyze Image';
     }
   });
   
