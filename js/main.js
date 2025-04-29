@@ -1,5 +1,159 @@
 // FarmAssist AI - Main JavaScript File
 
+// AI Farm Guidance functions
+async function getQuickFarmGuidance(cropType, soilType) {
+  if (!cropType || !soilType) {
+    return {
+      error: 'Please select both crop type and soil type'
+    };
+  }
+
+  const guidanceResults = document.getElementById('guidanceResults');
+  guidanceResults.innerHTML = `
+    <div class="text-center py-5">
+      <div class="spinner-border text-success" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="mt-3">Generating AI farming recommendations...</p>
+    </div>
+  `;
+
+  try {
+    // Use the farm guidance API with a special parameter for quick guidance
+    const response = await fetchAPI('guidance/quick', 'POST', {
+      crop_type: cropType,
+      soil_type: soilType
+    });
+
+    console.log('Quick guidance response:', response);
+    
+    if (response && response.guidance) {
+      displayQuickGuidance(response);
+    } else {
+      throw new Error('Invalid response from guidance API');
+    }
+  } catch (error) {
+    console.error('Error getting farm guidance:', error);
+    guidanceResults.innerHTML = `
+      <div class="alert alert-danger">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        Failed to get farm guidance: ${error.message || 'Connection error'}
+        <button class="btn btn-sm btn-outline-danger mt-2" onclick="location.reload()">Try Again</button>
+      </div>
+    `;
+  }
+}
+
+function displayQuickGuidance(data) {
+  const guidanceResults = document.getElementById('guidanceResults');
+  const { crop_type, soil_type, guidance } = data;
+  
+  // Format the guidance data
+  let html = `
+    <div class="guidance-header mb-3">
+      <h5 class="text-success mb-2">
+        <i class="fas fa-check-circle me-2"></i>AI Farm Guidance
+      </h5>
+      <p class="mb-0"><strong>Crop:</strong> ${crop_type} | <strong>Soil:</strong> ${soil_type}</p>
+      <hr>
+    </div>
+  `;
+  
+  // Key recommendations
+  if (guidance) {
+    // Add tabs for different sections
+    html += `
+      <ul class="nav nav-tabs nav-fill mb-3" id="guidanceTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="general-tab" data-bs-toggle="tab" 
+            data-bs-target="#general-content" type="button" role="tab" aria-selected="true">
+            General
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="crop-tab" data-bs-toggle="tab" 
+            data-bs-target="#crop-content" type="button" role="tab" aria-selected="false">
+            Crop Care
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="fert-tab" data-bs-toggle="tab" 
+            data-bs-target="#fert-content" type="button" role="tab" aria-selected="false">
+            Fertilizer
+          </button>
+        </li>
+      </ul>
+      
+      <div class="tab-content" id="guidanceTabContent">
+        <!-- General Recommendations -->
+        <div class="tab-pane fade show active" id="general-content" role="tabpanel">
+          <ul class="list-group list-group-flush">
+            ${guidance.general_recommendations ? 
+              guidance.general_recommendations.map(item => 
+                `<li class="list-group-item">
+                  <i class="fas fa-check-circle text-success me-2"></i>${item}
+                </li>`
+              ).join('') : 
+              '<li class="list-group-item">No general recommendations available</li>'
+            }
+          </ul>
+        </div>
+        
+        <!-- Crop Specific -->
+        <div class="tab-pane fade" id="crop-content" role="tabpanel">
+          <ul class="list-group list-group-flush">
+            ${guidance.crop_specific ? 
+              guidance.crop_specific.map(item => 
+                `<li class="list-group-item">
+                  <i class="fas fa-leaf text-success me-2"></i>${item}
+                </li>`
+              ).join('') : 
+              '<li class="list-group-item">No crop-specific recommendations available</li>'
+            }
+          </ul>
+        </div>
+        
+        <!-- Fertilizer Recommendations -->
+        <div class="tab-pane fade" id="fert-content" role="tabpanel">
+          <ul class="list-group list-group-flush">
+            ${guidance.fertilizer ? 
+              guidance.fertilizer.map(item => 
+                `<li class="list-group-item">
+                  <i class="fas fa-flask text-success me-2"></i>${item}
+                </li>`
+              ).join('') : 
+              '<li class="list-group-item">No fertilizer recommendations available</li>'
+            }
+          </ul>
+        </div>
+      </div>
+    `;
+  } else {
+    html += `<div class="alert alert-warning">No guidance data available for this combination.</div>`;
+  }
+  
+  // Add a register button for non-logged-in users
+  if (!isLoggedIn()) {
+    html += `
+      <div class="mt-3 p-3 bg-light rounded">
+        <p class="mb-2"><strong>Want more detailed guidance?</strong></p>
+        <p class="small mb-2">Register to add specific fields, track health conditions, and get more personalized recommendations.</p>
+        <button class="btn btn-sm btn-success" id="guidanceRegisterBtn">
+          <i class="fas fa-user-plus me-2"></i>Register Now
+        </button>
+      </div>
+    `;
+  }
+  
+  guidanceResults.innerHTML = html;
+  
+  // Add click event for the register button
+  const registerBtn = document.getElementById('guidanceRegisterBtn');
+  if (registerBtn) {
+    registerBtn.addEventListener('click', () => showSection('registerSection'));
+  }
+}
+
 // Utility functions
 function showSection(sectionId) {
   // Hide all sections
@@ -1483,6 +1637,21 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Initialize disease detection
   setupDiseaseDetection();
+  
+  // Quick Farm Guidance form
+  document.getElementById('quickGuidanceForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const cropType = document.getElementById('quickCropType').value;
+    const soilType = document.getElementById('quickSoilType').value;
+    
+    if (!cropType || !soilType) {
+      alert('Please select both crop type and soil type');
+      return;
+    }
+    
+    await getQuickFarmGuidance(cropType, soilType);
+  });
   
   // Update auth UI
   updateAuthUI();
