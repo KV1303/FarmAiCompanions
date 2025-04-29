@@ -295,22 +295,38 @@
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav me-auto">
           <li class="nav-item">
-            <a class="nav-link" href="#" id="homeNav">Home</a>
+            <a class="nav-link" href="#" id="homeNav" data-i18n="home">Home</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="#" id="dashboardNav">Dashboard</a>
+            <a class="nav-link" href="#" id="dashboardNav" data-i18n="dashboard">Dashboard</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="#" id="diseaseDetectNav">Disease Detection</a>
+            <a class="nav-link" href="#" id="diseaseDetectNav" data-i18n="disease_detection">Disease Detection</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="#" id="marketPricesNav">Market Prices</a>
+            <a class="nav-link" href="#" id="marketPricesNav" data-i18n="market_prices">Market Prices</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="#" id="weatherNav">Weather</a>
+            <a class="nav-link" href="#" id="weatherNav" data-i18n="weather">Weather</a>
           </li>
         </ul>
-        <div class="d-flex">
+        <div class="d-flex align-items-center">
+          <!-- Language Selector Dropdown -->
+          <div class="dropdown me-3">
+            <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="fas fa-globe me-1"></i> <span class="language-text">English</span>
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="languageDropdown">
+              <li><a class="dropdown-item language-option" href="#" data-lang="en">English</a></li>
+              <li><a class="dropdown-item language-option" href="#" data-lang="hi">हिन्दी (Hindi)</a></li>
+              <li><a class="dropdown-item language-option" href="#" data-lang="ta">தமிழ் (Tamil)</a></li>
+              <li><a class="dropdown-item language-option" href="#" data-lang="te">తెలుగు (Telugu)</a></li>
+              <li><a class="dropdown-item language-option" href="#" data-lang="bn">বাংলা (Bengali)</a></li>
+              <li><a class="dropdown-item language-option" href="#" data-lang="pa">ਪੰਜਾਬੀ (Punjabi)</a></li>
+            </ul>
+          </div>
+          
+          <!-- Auth Buttons -->
           <button class="btn btn-outline-light me-2" id="loginNav">Login</button>
           <button class="btn btn-outline-light" id="registerNav">Register</button>
           <button class="btn btn-outline-light hidden" id="logoutBtn">Logout</button>
@@ -1256,7 +1272,8 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://kit.fontawesome.com/08a4d17c86.js" crossorigin="anonymous"></script>
   
-  <!-- Add your custom JavaScript file -->
+  <!-- Add translations and custom JavaScript files -->
+  <script src="js/translations.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>
