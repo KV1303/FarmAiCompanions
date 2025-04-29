@@ -669,6 +669,28 @@ async function displayFieldDetails(field) {
   document.getElementById('scanForDiseaseBtn')?.addEventListener('click', () => {
     showSection('diseaseDetectionSection');
   });
+  
+  // Set up the tab navigation
+  document.querySelectorAll('#fieldTabs .nav-link').forEach(tab => {
+    tab.addEventListener('click', function() {
+      // Remove active class from all tabs
+      document.querySelectorAll('#fieldTabs .nav-link').forEach(t => {
+        t.classList.remove('active');
+      });
+      
+      // Add active class to clicked tab
+      this.classList.add('active');
+      
+      // Hide all tab panes
+      document.querySelectorAll('#fieldTabsContent .tab-pane').forEach(pane => {
+        pane.classList.remove('show', 'active');
+      });
+      
+      // Show the corresponding tab pane
+      const target = this.getAttribute('data-bs-target');
+      document.querySelector(target).classList.add('show', 'active');
+    });
+  });
 }
 
 function displayFieldMonitoring(data) {
