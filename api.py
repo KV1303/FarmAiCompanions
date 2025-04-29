@@ -21,6 +21,460 @@ GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
+# ------ Helper Functions ------
+
+def generate_farm_guidance(field):
+    """
+    Generate AI-powered farming guidance based on field details
+    
+    Args:
+        field: Field object with crop_type, soil_type, location, etc.
+    
+    Returns:
+        dict: Structured guidance including general recommendations, crop-specific advice,
+              fertilizer recommendations, pest management, and sustainable practices
+    """
+    # Default structured response
+    guidance = {
+        'general_recommendations': [],
+        'crop_specific': [],
+        'fertilizer': [],
+        'pest_management': [],
+        'irrigation': [],
+        'sustainability': []
+    }
+    
+    try:
+        # If Gemini API key is available, use AI for guidance
+        if GEMINI_API_KEY:
+            model = genai.GenerativeModel('gemini-pro')
+            
+            # Construct the prompt for the AI model with field details
+            prompt = f"""
+            As an agricultural expert, provide comprehensive farming guidance for the following field:
+            
+            Field Name: {field.name}
+            Location: {field.location or 'Unknown'}
+            Area: {field.area or 'Unknown'} hectares
+            Crop Type: {field.crop_type or 'Unknown'}
+            Soil Type: {field.soil_type or 'Unknown'}
+            Planting Date: {field.planting_date.strftime('%Y-%m-%d') if field.planting_date else 'Not specified'}
+            
+            Please provide structured farming recommendations in the following categories:
+            1. General Recommendations: Overall management practices for this field
+            2. Crop-Specific Advice: Best practices for growing {field.crop_type} successfully
+            3. Fertilizer Recommendations: What fertilizers to use, when and how much
+            4. Pest Management: Common pests/diseases for {field.crop_type} and how to prevent/treat them
+            5. Irrigation Guidance: Best irrigation practices for {field.crop_type} in {field.soil_type or 'this'} soil
+            6. Sustainable Practices: Environmentally friendly farming techniques
+            
+            Format the response in JSON with arrays of advice for each category.
+            """
+            
+            response = model.generate_content(prompt)
+            
+            # Process the response
+            if response and response.text:
+                try:
+                    # Try to parse as JSON first
+                    import json
+                    response_text = response.text.strip()
+                    
+                    # Look for JSON content in the response
+                    if '```json' in response_text:
+                        # Extract JSON from markdown code block
+                        json_text = response_text.split('```json')[1].split('```')[0].strip()
+                        parsed_guidance = json.loads(json_text)
+                    elif '{' in response_text and '}' in response_text:
+                        # Try to extract JSON object
+                        json_text = response_text[response_text.find('{'):response_text.rfind('}')+1]
+                        parsed_guidance = json.loads(json_text)
+                    else:
+                        # Manually parse the text response
+                        raise ValueError("JSON not found in response")
+                    
+                    # Update guidance with AI response
+                    for key in guidance.keys():
+                        if key in parsed_guidance and isinstance(parsed_guidance[key], list):
+                            guidance[key] = parsed_guidance[key]
+                
+                except (json.JSONDecodeError, ValueError, KeyError) as e:
+                    print(f"Error parsing AI response: {str(e)}")
+                    # Manually parse the text response if JSON parsing fails
+                    sections = response.text.split('\n\n')
+                    current_section = None
+                    
+                    for section in sections:
+                        if ':' in section.split('\n')[0]:
+                            section_title = section.split('\n')[0].split(':')[0].strip().lower()
+                            if 'general' in section_title:
+                                current_section = 'general_recommendations'
+                            elif 'crop' in section_title:
+                                current_section = 'crop_specific'
+                            elif 'fertilizer' in section_title:
+                                current_section = 'fertilizer'
+                            elif 'pest' in section_title:
+                                current_section = 'pest_management'
+                            elif 'irrigation' in section_title or 'water' in section_title:
+                                current_section = 'irrigation'
+                            elif 'sustainable' in section_title or 'environment' in section_title:
+                                current_section = 'sustainability'
+                            
+                            if current_section:
+                                # Extract bullet points
+                                points = [line.strip().lstrip('- ').lstrip('* ') for line in section.split('\n')[1:] if line.strip()]
+                                if points and current_section in guidance:
+                                    guidance[current_section] = points
+        
+        # If no AI is available, or if AI fails, use structured knowledge base
+        if not GEMINI_API_KEY or not any(guidance.values()):
+            # Provide basic guidance based on crop type and soil type
+            crop_type = field.crop_type.lower() if field.crop_type else ''
+            soil_type = field.soil_type.lower() if field.soil_type else ''
+            
+            # Basic crop-specific recommendations
+            crop_guidance = get_crop_specific_guidance(crop_type)
+            guidance.update(crop_guidance)
+            
+            # Add soil-specific advice
+            soil_guidance = get_soil_specific_guidance(soil_type, crop_type)
+            
+            # Merge soil guidance into the main guidance
+            for key, value in soil_guidance.items():
+                if key in guidance and value:
+                    guidance[key].extend(value)
+        
+        return guidance
+    
+    except Exception as e:
+        print(f"Error generating farm guidance: {str(e)}")
+        # Return basic guidance in case of error
+        return {
+            'general_recommendations': [
+                "Schedule regular monitoring of your field", 
+                "Keep detailed records of all farming activities", 
+                "Consider soil testing to optimize fertility management"
+            ],
+            'crop_specific': [
+                "Research best practices specific to your crop variety", 
+                "Consider crop rotation to improve soil health and reduce pest pressure"
+            ],
+            'fertilizer': [
+                "Apply balanced NPK fertilizer based on crop needs", 
+                "Consider organic amendments to improve soil structure"
+            ],
+            'pest_management': [
+                "Regularly scout for pests and diseases", 
+                "Consider integrated pest management (IPM) approaches"
+            ],
+            'irrigation': [
+                "Adjust irrigation based on crop growth stage", 
+                "Consider water conservation techniques"
+            ],
+            'sustainability': [
+                "Minimize soil disturbance to reduce erosion", 
+                "Consider cover crops to improve soil health"
+            ]
+        }
+
+def get_crop_specific_guidance(crop_type):
+    """Provide guidance specific to crop type"""
+    crop_type = crop_type.lower()
+    
+    # Dictionary of crop-specific guidance
+    crop_guidance = {
+        'rice': {
+            'general_recommendations': [
+                "Maintain proper water levels during different growth stages",
+                "Regularly check for signs of water stress or excess",
+                "Consider direct seeding techniques to reduce labor costs",
+                "Implement proper drainage systems to prevent waterlogging"
+            ],
+            'crop_specific': [
+                "Transplant at optimal spacing (20x15 cm) for most varieties",
+                "Maintain water level of 2-5 cm during vegetative stage",
+                "Allow field to dry periodically during tillering to encourage root growth",
+                "Drain field 2-3 weeks before harvest to facilitate ripening and harvesting"
+            ],
+            'fertilizer': [
+                "Apply basal dose of NPK before transplanting",
+                "Top dress with nitrogen at tillering and panicle initiation stages",
+                "Consider zinc application in deficient soils",
+                "Incorporate rice straw after harvest to improve soil organic matter"
+            ],
+            'pest_management': [
+                "Monitor for stem borers, plant hoppers, and leaf folders",
+                "Watch for rice blast, bacterial leaf blight, and sheath blight diseases",
+                "Use resistant varieties where disease pressure is high",
+                "Consider biological controls like Trichogramma for egg parasitization"
+            ],
+            'irrigation': [
+                "Maintain flooded conditions but periodically allow soil to dry slightly",
+                "Critical irrigation periods: tillering, flowering, and grain filling",
+                "Consider alternate wetting and drying technique to save water",
+                "Ensure good drainage capacity to prevent submergence during heavy rains"
+            ],
+            'sustainability': [
+                "Consider direct seeded rice to reduce water and labor requirements",
+                "Implement crop rotation with legumes to improve soil fertility",
+                "Use azolla as biofertilizer to reduce nitrogen requirements",
+                "Practice integrated pest management to reduce pesticide use"
+            ]
+        },
+        'wheat': {
+            'general_recommendations': [
+                "Ensure proper seed bed preparation for good germination",
+                "Timely sowing is critical for optimal yields",
+                "Monitor growth stages to time management practices appropriately",
+                "Control weeds early to prevent yield loss"
+            ],
+            'crop_specific': [
+                "Optimal sowing time: October-November for most regions in India",
+                "Seed rate: 100-125 kg/ha for timely sowing, increase by 25% for late sowing",
+                "First irrigation at crown root initiation stage is critical",
+                "Monitor for heading and flowering for disease management"
+            ],
+            'fertilizer': [
+                "Apply 50% N, full P and K as basal dose",
+                "Top dress remaining N in two splits: at first irrigation and tillering",
+                "Consider foliar spray of 2% urea at grain filling if needed",
+                "Apply sulfur in sulfur-deficient soils for improved protein content"
+            ],
+            'pest_management': [
+                "Monitor for aphids, especially during cool, humid weather",
+                "Watch for rust diseases (yellow, brown, black) and powdery mildew",
+                "Take preventive measures against termites in sandy soils",
+                "Apply fungicides at boot and heading stages for disease control"
+            ],
+            'irrigation': [
+                "Critical irrigation stages: crown root initiation, tillering, jointing, flowering, and grain filling",
+                "Avoid over-irrigation to prevent lodging and disease",
+                "Ensure good drainage to prevent waterlogging",
+                "Consider sprinkler irrigation for water conservation and uniform application"
+            ],
+            'sustainability': [
+                "Practice conservation tillage to reduce soil erosion",
+                "Incorporate crop residues to improve soil health",
+                "Consider legume rotation to improve soil nitrogen",
+                "Use precision agriculture tools for targeted input application"
+            ]
+        },
+        'cotton': {
+            'general_recommendations': [
+                "Ensure adequate soil moisture at planting",
+                "Implement regular monitoring for pest pressure",
+                "Consider high-density planting for improved yields",
+                "Monitor plant growth regulators and defoliation timing"
+            ],
+            'crop_specific': [
+                "Plant at appropriate spacing (75-90 cm between rows, 30-45 cm within row)",
+                "Thin to maintain optimal plant population",
+                "Monitor square formation and retention",
+                "Consider topping to control excessive vegetative growth"
+            ],
+            'fertilizer': [
+                "Apply balanced NPK with higher K for improved fiber quality",
+                "Split nitrogen application over growing season",
+                "Apply micronutrients like boron and zinc based on soil test",
+                "Consider foliar sprays during boll development"
+            ],
+            'pest_management': [
+                "Monitor for bollworms, whiteflies, aphids, and pink bollworm",
+                "Implement IPM practices including pheromone traps",
+                "Watch for bacterial blight and Alternaria leaf spot",
+                "Use economic thresholds to guide control decisions"
+            ],
+            'irrigation': [
+                "Critical irrigation stages: seedling establishment, squaring, flowering, boll formation",
+                "Maintain adequate moisture during boll development",
+                "Avoid water stress during flowering and early boll development",
+                "Reduce irrigation during boll opening and before harvest"
+            ],
+            'sustainability': [
+                "Implement trap crops for pest management",
+                "Consider organic mulching to reduce weed pressure",
+                "Practice crop rotation to break pest cycles",
+                "Use drip irrigation for water conservation"
+            ]
+        },
+        'sugarcane': {
+            'general_recommendations': [
+                "Prepare land thoroughly with deep plowing",
+                "Select disease-free seed material",
+                "Implement proper trash management after harvest",
+                "Consider stubble shaving for ratoon management"
+            ],
+            'crop_specific': [
+                "Plant setts with 2-3 buds at 5 cm depth",
+                "Space rows 90-100 cm apart for optimal growth",
+                "Practice propping to prevent lodging during later growth stages",
+                "Monitor for tiller formation and growth"
+            ],
+            'fertilizer': [
+                "Apply high organic matter before planting",
+                "Use balanced NPK with higher N for vegetative growth",
+                "Split nitrogen application over growing season",
+                "Consider trash mulching to enhance soil fertility"
+            ],
+            'pest_management': [
+                "Monitor for early shoot borer, pyrilla, and top borer",
+                "Watch for red rot, smut, and ratoon stunting disease",
+                "Use hot water treatment for seed material to prevent disease",
+                "Implement pheromone traps for borers"
+            ],
+            'irrigation': [
+                "Maintain consistent soil moisture, especially during germination and tillering",
+                "Implement furrow irrigation for water conservation",
+                "Reduce irrigation during ripening phase",
+                "Consider drip irrigation for improved water use efficiency"
+            ],
+            'sustainability': [
+                "Implement trash mulching to improve soil health",
+                "Consider intercropping with legumes in early growth stages",
+                "Practice green manuring to improve soil fertility",
+                "Use biofertilizers to reduce chemical fertilizer requirements"
+            ]
+        }
+    }
+    
+    # Default guidance for other crops
+    default_guidance = {
+        'general_recommendations': [
+            "Implement regular field monitoring",
+            "Keep records of all farming activities",
+            "Maintain field sanitation to reduce pest pressure",
+            "Analyze results each season to improve practices"
+        ],
+        'crop_specific': [
+            "Research optimal planting densities for your variety",
+            "Monitor key growth stages to time management practices",
+            "Consider varietal selection based on local conditions",
+            "Implement proper harvest and post-harvest handling"
+        ],
+        'fertilizer': [
+            "Conduct soil testing to determine nutrient requirements",
+            "Apply balanced nutrients based on crop needs",
+            "Split fertilizer applications to improve efficiency",
+            "Consider organic amendments to improve soil health"
+        ],
+        'pest_management': [
+            "Regularly scout for pests and diseases",
+            "Implement cultural practices to reduce pest pressure",
+            "Consider resistant varieties when available",
+            "Apply pesticides only when economically justified"
+        ],
+        'irrigation': [
+            "Monitor soil moisture to guide irrigation decisions",
+            "Identify critical growth stages for irrigation",
+            "Implement water conservation techniques",
+            "Consider irrigation scheduling based on ET rates"
+        ],
+        'sustainability': [
+            "Implement crop rotation to break pest cycles",
+            "Minimize soil disturbance to reduce erosion",
+            "Consider cover crops to improve soil health",
+            "Reduce chemical inputs through integrated management"
+        ]
+    }
+    
+    # Return crop-specific guidance if available, otherwise default
+    for crop, guidance in crop_guidance.items():
+        if crop in crop_type:
+            return guidance
+    
+    return default_guidance
+
+def get_soil_specific_guidance(soil_type, crop_type):
+    """Provide guidance specific to soil type and crop combination"""
+    
+    # Default advice for different soil types
+    soil_guidance = {
+        'sandy': {
+            'general_recommendations': [
+                "Incorporate organic matter to improve water holding capacity",
+                "Consider more frequent but lighter irrigation"
+            ],
+            'fertilizer': [
+                "Apply fertilizers in smaller, more frequent doses to prevent leaching",
+                "Increase organic matter to improve nutrient retention"
+            ],
+            'irrigation': [
+                "Monitor soil moisture closely as sandy soils drain quickly",
+                "Consider drip irrigation for efficient water use"
+            ]
+        },
+        'clay': {
+            'general_recommendations': [
+                "Improve drainage to prevent waterlogging",
+                "Implement proper tillage to prevent compaction"
+            ],
+            'fertilizer': [
+                "Avoid heavy applications of nitrogen at once",
+                "Consider adding gypsum to improve soil structure"
+            ],
+            'irrigation': [
+                "Avoid overwatering as clay soils drain slowly",
+                "Allow sufficient drying between irrigations"
+            ]
+        },
+        'loam': {
+            'general_recommendations': [
+                "Maintain organic matter for optimal soil structure",
+                "Implement minimal tillage to preserve soil quality"
+            ],
+            'fertilizer': [
+                "Apply balanced fertilization program",
+                "Consider split applications for better uptake"
+            ],
+            'irrigation': [
+                "Monitor soil moisture at multiple depths",
+                "Use efficient irrigation methods to prevent waste"
+            ]
+        },
+        'black': {
+            'general_recommendations': [
+                "Implement proper drainage systems",
+                "Careful moisture management to prevent cracking"
+            ],
+            'fertilizer': [
+                "Monitor for micronutrient deficiencies",
+                "Consider soil amendments to improve structure"
+            ],
+            'irrigation': [
+                "Implement careful irrigation to prevent waterlogging",
+                "Allow appropriate drying cycle between irrigations"
+            ]
+        },
+        'red': {
+            'general_recommendations': [
+                "Focus on soil conservation practices",
+                "Add organic matter to improve soil quality"
+            ],
+            'fertilizer': [
+                "Apply micronutrients, especially zinc and iron",
+                "Increase organic inputs to improve CEC"
+            ],
+            'irrigation': [
+                "Implement water conservation techniques",
+                "Consider mulching to reduce evaporation"
+            ]
+        }
+    }
+    
+    # Default return empty guidance if no match
+    result = {
+        'general_recommendations': [],
+        'fertilizer': [],
+        'irrigation': []
+    }
+    
+    # Check for matching soil type
+    for soil, guidance in soil_guidance.items():
+        if soil in soil_type:
+            return guidance
+    
+    return result
+
 # ------ API Routes ------
 
 @app.route('/api/weather', methods=['GET'])
@@ -814,10 +1268,14 @@ def handle_fields():
             db.session.add(field)
             db.session.commit()
             
+            # Generate AI farming guidance
+            guidance = generate_farm_guidance(field)
+            
             return jsonify({
                 'id': field.id,
                 'name': field.name,
-                'message': 'Field created successfully'
+                'message': 'Field created successfully',
+                'guidance': guidance
             }), 201
             
         except Exception as e:
