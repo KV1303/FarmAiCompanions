@@ -830,3 +830,19 @@ window.farmAssistTranslations = {
   translations,
   setLanguage
 };
+
+// Initialize the language from localStorage or default to 'en' when the script loads
+document.addEventListener('DOMContentLoaded', function() {
+  const savedLanguage = localStorage.getItem('preferred_language') || 'en';
+  setLanguage(savedLanguage);
+  
+  // Add event listeners to language selection options
+  const languageOptions = document.querySelectorAll('.language-option');
+  languageOptions.forEach(option => {
+    option.addEventListener('click', function(e) {
+      e.preventDefault();
+      const lang = this.getAttribute('data-lang');
+      setLanguage(lang);
+    });
+  });
+});

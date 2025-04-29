@@ -2285,23 +2285,4 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Update auth UI
   updateAuthUI();
-  
-  // Language selection
-  // Initialize the language from localStorage or default to 'en'
-  const savedLanguage = localStorage.getItem('preferred_language') || 'en';
-  if (window.farmAssistTranslations && typeof window.farmAssistTranslations.setLanguage === 'function') {
-    window.farmAssistTranslations.setLanguage(savedLanguage);
-  }
-  
-  // Add event listeners to language selection options
-  const languageOptions = document.querySelectorAll('.language-option');
-  languageOptions.forEach(option => {
-    option.addEventListener('click', function(e) {
-      e.preventDefault();
-      const lang = this.getAttribute('data-lang');
-      if (window.farmAssistTranslations && typeof window.farmAssistTranslations.setLanguage === 'function') {
-        window.farmAssistTranslations.setLanguage(lang);
-      }
-    });
-  });
 });
