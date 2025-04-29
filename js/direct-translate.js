@@ -1,10 +1,21 @@
-// Direct translation script
+// Comprehensive translation script for the entire application
 console.log("Direct translate script loaded");
+
+// Current language selected (default: English)
+let currentLanguage = "en";
 
 document.addEventListener("DOMContentLoaded", function() {
   console.log("DOM content loaded - setting up language switcher");
   
-  // Simple language translations for key elements
+  // Load previously selected language from localStorage if available
+  const savedLanguage = localStorage.getItem('selectedLanguage');
+  if (savedLanguage) {
+    currentLanguage = savedLanguage;
+    console.log("Loading saved language: " + currentLanguage);
+    setTimeout(() => applyTranslations(currentLanguage), 500);
+  }
+  
+  // Global translations for all UI elements
   const translations = {
     hi: {
       "home": "होम",
@@ -41,7 +52,65 @@ document.addEventListener("DOMContentLoaded", function() {
       "get_recommendations": "सिफारिशें प्राप्त करें",
       "irrigation_feature": "सिंचाई प्रबंधन",
       "irrigation_desc": "अपनी फसलों, मिट्टी के प्रकार और स्थानीय मौसम की स्थिति के अनुसार AI-जनित सिंचाई कार्यक्रम के साथ अपने पानी के उपयोग को अनुकूलित करें। पानी बचाएं और फसल स्वास्थ्य में सुधार करें।",
-      "plan_irrigation": "सिंचाई की योजना बनाएं"
+      "plan_irrigation": "सिंचाई की योजना बनाएं",
+      
+      // Form elements
+      "username": "यूजरनेम",
+      "password": "पासवर्ड",
+      "email": "ईमेल",
+      "confirm_password": "पासवर्ड की पुष्टि करें",
+      "no_account": "खाता नहीं है?",
+      "register_now": "अभी रजिस्टर करें",
+      "have_account": "पहले से ही खाता है?",
+      
+      // Testimonials
+      "what_farmers_say": "किसान क्या कहते हैं",
+      "testimonial_1": "\"फार्मअसिस्ट AI ने मुझे जल्दी से फंगल संक्रमण की पहचान करने में मदद की, जिससे मेरी पूरी टमाटर फसल बच गई। सिफारिशें बिल्कुल सही थीं!\"",
+      "farmer_1": "- राजेश कुमार, टमाटर किसान",
+      "testimonial_2": "\"मैंने बाजार मूल्य अलर्ट का उपयोग करके अपनी फसल बिक्री के समय को अनुकूलित कर अपने मुनाफे में 20% की वृद्धि की है। यह ऐप गेम-चेंजर है!\"",
+      "farmer_2": "- अनन्या सिंह, चावल किसान",
+      "testimonial_3": "\"मौसम पूर्वानुमान अविश्वसनीय रूप से सटीक हैं। मैं अनिश्चित मौसम के दौरान भी आत्मविश्वास के साथ सिंचाई और फसल कटाई की योजना बना सकता हूँ।\"",
+      "farmer_3": "- विक्रम पटेल, गेहूँ किसान",
+      
+      // Disease Detection
+      "crop_disease_detection": "फसल रोग पहचान",
+      "upload_photo": "अपनी फसल की फोटो अपलोड करें",
+      "take_clear_photo": "प्रभावित पौधे के हिस्से (पत्ती, तना, फल) की एक स्पष्ट फोटो लें और नीचे अपलोड करें।",
+      "drag_drop": "खींचें और छोड़ें या अपलोड करने के लिए क्लिक करें",
+      "supported_formats": "समर्थित प्रारूप: JPG, PNG",
+      "reset": "रीसेट",
+      "analyze_image": "छवि का विश्लेषण करें",
+      "analyzing_image": "छवि का विश्लेषण किया जा रहा है... इसमें कुछ समय लग सकता है।",
+      "confidence": "विश्वास:",
+      "symptoms": "लक्षण:",
+      "recommended_treatment": "अनुशंसित उपचार:",
+      "save_report": "रिपोर्ट सहेजें",
+      
+      // Market Prices
+      "market_prices_title": "बाजार भाव",
+      "all_crops": "सभी फसलें",
+      "apply": "लागू करें",
+      "crop": "फसल",
+      "market": "बाजार",
+      "price": "मूल्य (₹/क्विंटल)",
+      "min_price": "न्यूनतम मूल्य",
+      "max_price": "अधिकतम मूल्य",
+      "date": "दिनांक",
+      "action": "कार्रवाई",
+      "price_alerts": "मूल्य अलर्ट",
+      "set_up_alerts": "मूल्य आपके लक्ष्य स्तर तक पहुंचने पर सूचित किए जाने के लिए अलर्ट सेट करें।",
+      
+      // Dashboard
+      "farmer_dashboard": "किसान डैशबोर्ड",
+      "fields": "खेत",
+      "crops": "फसलें",
+      "alerts": "अलर्ट",
+      "health_index": "स्वास्थ्य सूचकांक",
+      "your_fields": "आपके खेत",
+      "no_fields": "अभी तक कोई खेत नहीं जोड़ा गया",
+      "add_field": "नया खेत जोड़ें",
+      "field_details": "खेत का विवरण",
+      "select_field": "विवरण देखने के लिए एक खेत चुनें"
     },
     ta: {
       "home": "முகப்பு",
@@ -193,72 +262,229 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   };
   
+  // Translation table for crop types - will be used for dropdown options
+  const cropTranslations = {
+    hi: {
+      "Rice": "चावल",
+      "Wheat": "गेहूँ",
+      "Maize": "मक्का",
+      "Cotton": "कपास",
+      "Sugarcane": "गन्ना",
+      "Potato": "आलू",
+      "Tomato": "टमाटर",
+      "Onion": "प्याज",
+      "Chilli": "मिर्च",
+      "Soybean": "सोयाबीन",
+      "Chickpea": "चना",
+      "Groundnut": "मूंगफली",
+      "Mustard": "सरसों",
+      "Turmeric": "हल्दी",
+      "Garlic": "लहसुन",
+      "Okra": "भिंडी",
+      "Millet": "बाजरा",
+      "Barley": "जौ",
+      "Sunflower": "सूरजमुखी"
+    },
+    ta: {
+      "Rice": "அரிசி",
+      "Wheat": "கோதுமை",
+      "Maize": "மக்காச்சோளம்",
+      "Cotton": "பருத்தி",
+      "Sugarcane": "கரும்பு",
+      "Potato": "உருளைக்கிழங்கு",
+      "Tomato": "தக்காளி",
+      "Onion": "வெங்காயம்",
+      "Chilli": "மிளகாய்",
+      "Soybean": "சோயாபீன்",
+      "Chickpea": "கடலை",
+      "Groundnut": "நிலக்கடலை",
+      "Mustard": "கடுகு",
+      "Turmeric": "மஞ்சள்",
+      "Garlic": "பூண்டு",
+      "Okra": "வெண்டைக்காய்",
+      "Millet": "கம்பு",
+      "Barley": "பார்லி",
+      "Sunflower": "சூரியகாந்தி"
+    },
+    te: {
+      "Rice": "వరి",
+      "Wheat": "గోధుమ",
+      "Maize": "మొక్కజొన్న",
+      "Cotton": "పత్తి",
+      "Sugarcane": "చెరకు",
+      "Potato": "బంగాళాదుంప",
+      "Tomato": "టమాటో",
+      "Onion": "ఉల్లిపాయ",
+      "Chilli": "మిరప",
+      "Soybean": "సోయాబీన్",
+      "Chickpea": "శనగలు",
+      "Groundnut": "వేరుశెనగ",
+      "Mustard": "ఆవాలు",
+      "Turmeric": "పసుపు",
+      "Garlic": "వెల్లుల్లి",
+      "Okra": "బెండకాయ",
+      "Millet": "సజ్జలు",
+      "Barley": "బార్లీ",
+      "Sunflower": "సూర్యకాంతం"
+    },
+    bn: {
+      "Rice": "চাল",
+      "Wheat": "গম",
+      "Maize": "ভুট্টা",
+      "Cotton": "তুলা",
+      "Sugarcane": "আখ",
+      "Potato": "আলু",
+      "Tomato": "টমেটো",
+      "Onion": "পেঁয়াজ",
+      "Chilli": "মরিচ",
+      "Soybean": "সয়াবিন",
+      "Chickpea": "ছোলা",
+      "Groundnut": "চিনাবাদাম",
+      "Mustard": "সরিষা",
+      "Turmeric": "হলুদ",
+      "Garlic": "রসুন",
+      "Okra": "ঢেঁড়স",
+      "Millet": "বাজরা",
+      "Barley": "বার্লি",
+      "Sunflower": "সূর্যমুখী"
+    },
+    pa: {
+      "Rice": "ਚਾਵਲ",
+      "Wheat": "ਕਣਕ",
+      "Maize": "ਮੱਕੀ",
+      "Cotton": "ਕਪਾਹ",
+      "Sugarcane": "ਗੰਨਾ",
+      "Potato": "ਆਲੂ",
+      "Tomato": "ਟਮਾਟਰ",
+      "Onion": "ਪਿਆਜ਼",
+      "Chilli": "ਮਿਰਚ",
+      "Soybean": "ਸੋਯਾਬੀਨ",
+      "Chickpea": "ਛੋਲੇ",
+      "Groundnut": "ਮੂੰਗਫਲੀ",
+      "Mustard": "ਸਰ੍ਹੋਂ",
+      "Turmeric": "ਹਲਦੀ",
+      "Garlic": "ਲਸਣ",
+      "Okra": "ਭਿੰਡੀ",
+      "Millet": "ਬਾਜਰਾ",
+      "Barley": "ਜੌਂ",
+      "Sunflower": "ਸੂਰਜਮੁਖੀ"
+    }
+  };
+
+  // Translation table for soil types
+  const soilTranslations = {
+    hi: {
+      "Sandy": "रेतीली मिट्टी",
+      "Clay": "चिकनी मिट्टी",
+      "Loamy": "दोमट मिट्टी",
+      "Silt": "गाद मिट्टी",
+      "Black": "काली मिट्टी",
+      "Red": "लाल मिट्टी",
+      "Alluvial": "जलोढ़ मिट्टी",
+      "Laterite": "लेटराइट मिट्टी",
+      "Peaty": "पीटी मिट्टी",
+      "Calcareous": "चूना युक्त मिट्टी",
+      "Saline": "लवणीय मिट्टी",
+      "Acidic": "अम्लीय मिट्टी"
+    },
+    ta: {
+      "Sandy": "மணல் மண்",
+      "Clay": "களிமண்",
+      "Loamy": "வண்டல் மண்",
+      "Silt": "மென்மணல் மண்",
+      "Black": "கருப்பு மண்",
+      "Red": "சிவப்பு மண்",
+      "Alluvial": "வண்டல் மண்",
+      "Laterite": "சிவப்பு பாறை மண்",
+      "Peaty": "மதகு மண்",
+      "Calcareous": "சுண்ணாம்பு மண்",
+      "Saline": "உப்பு மண்",
+      "Acidic": "அமில மண்"
+    },
+    te: {
+      "Sandy": "ఇసుక నేల",
+      "Clay": "బంక మట్టి",
+      "Loamy": "లోమీ మట్టి",
+      "Silt": "పురడు మట్టి",
+      "Black": "నల్ల మట్టి",
+      "Red": "ఎర్ర మట్టి",
+      "Alluvial": "ఒండ్రు మట్టి",
+      "Laterite": "ఎర్ర రాతి మట్టి",
+      "Peaty": "పీటీ మట్టి",
+      "Calcareous": "సున్నపు రాయి మట్టి",
+      "Saline": "ఉప్పు మట్టి",
+      "Acidic": "ఆమ్ల మట్టి"
+    },
+    bn: {
+      "Sandy": "বালুময় মাটি",
+      "Clay": "কাদামাটি",
+      "Loamy": "দোআঁশ মাটি",
+      "Silt": "পলি মাটি",
+      "Black": "কালো মাটি",
+      "Red": "লাল মাটি",
+      "Alluvial": "পলি মাটি",
+      "Laterite": "লাল মাটি",
+      "Peaty": "পিট মাটি",
+      "Calcareous": "চুনযুক্ত মাটি",
+      "Saline": "লবণাক্ত মাটি",
+      "Acidic": "অম্লীয় মাটি"
+    },
+    pa: {
+      "Sandy": "ਰੇਤਲੀ ਮਿੱਟੀ",
+      "Clay": "ਚੀਕਣੀ ਮਿੱਟੀ",
+      "Loamy": "ਦੋਮਟ ਮਿੱਟੀ",
+      "Silt": "ਗਾਰਾ ਮਿੱਟੀ",
+      "Black": "ਕਾਲੀ ਮਿੱਟੀ",
+      "Red": "ਲਾਲ ਮਿੱਟੀ",
+      "Alluvial": "ਜਲੋੜ੍ਹ ਮਿੱਟੀ",
+      "Laterite": "ਲੈਟਰਾਈਟ ਮਿੱਟੀ",
+      "Peaty": "ਪੀਟੀ ਮਿੱਟੀ",
+      "Calcareous": "ਚੂਨਾ ਵਾਲੀ ਮਿੱਟੀ",
+      "Saline": "ਲੂਣੀ ਮਿੱਟੀ",
+      "Acidic": "ਤੇਜ਼ਾਬੀ ਮਿੱਟੀ"
+    }
+  };
+
   // Get all language selector options
   const languageSelectors = document.querySelectorAll(".language-option");
   console.log("Found language selectors:", languageSelectors.length);
   
-  // Add click handlers
+  // Add click handlers to language options
   languageSelectors.forEach(selector => {
     selector.addEventListener("click", function(e) {
       e.preventDefault();
       const language = this.getAttribute("data-lang");
-      console.log("Language selected:", language);
+      console.log(`Language changed to: ${language} (${this.textContent.split(" ")[0]})`);
       
-      // Don't do anything for English
+      // Save selected language
+      currentLanguage = language;
+      localStorage.setItem('selectedLanguage', language);
+      
+      // Apply translations
       if (language === "en") {
+        location.reload(); // Simplest way to reset to English
         return;
       }
       
-      if (!translations[language]) {
-        console.log("No translations available for", language);
-        return;
-      }
-      
-      // Update the dropdown text
-      document.querySelector(".language-text").textContent = 
-        this.textContent.split(" ")[0];
-      
-      // Update all elements with data-i18n attributes
-      document.querySelectorAll("[data-i18n]").forEach(element => {
-        const key = element.getAttribute("data-i18n");
-        if (translations[language][key]) {
-          console.log(`Translating ${key} to ${translations[language][key]}`);
-          
-          // Special handling for buttons with icons
-          if (element.tagName === "BUTTON" && element.querySelector("i")) {
-            const icon = element.querySelector("i").outerHTML;
-            element.innerHTML = icon + " " + translations[language][key];
-          } else {
-            element.textContent = translations[language][key];
-          }
-        }
-      });
+      applyTranslations(language);
     });
   });
   
-  // Direct handlers for each language (just in case)
-  document.querySelector('[data-lang="hi"]').onclick = function() {
-    console.log("Hindi clicked directly");
-    applyTranslations("hi");
-  };
-  
-  document.querySelector('[data-lang="ta"]').onclick = function() {
-    console.log("Tamil clicked directly");
-    applyTranslations("ta");
-  };
-  
+  // Main function to apply translations throughout the app
   function applyTranslations(language) {
     if (!translations[language]) {
       console.log("No translations available for", language);
       return;
     }
+
+    // 1. Update the language dropdown text
+    document.querySelector(".language-text").textContent = 
+      document.querySelector(`[data-lang="${language}"]`).textContent.split(" ")[0];
     
-    // Update all translatable elements
-    Object.keys(translations[language]).forEach(key => {
-      const elements = document.querySelectorAll(`[data-i18n="${key}"]`);
-      elements.forEach(element => {
-        console.log(`Direct translate: ${key} to ${translations[language][key]}`);
-        
+    // 2. Update all elements with data-i18n attributes
+    document.querySelectorAll("[data-i18n]").forEach(element => {
+      const key = element.getAttribute("data-i18n");
+      if (translations[language][key]) {
         // Special handling for buttons with icons
         if (element.tagName === "BUTTON" && element.querySelector("i")) {
           const icon = element.querySelector("i").outerHTML;
@@ -266,11 +492,279 @@ document.addEventListener("DOMContentLoaded", function() {
         } else {
           element.textContent = translations[language][key];
         }
+      }
+    });
+    
+    // 3. Translate all dropdown options for crops
+    document.querySelectorAll('select[id*="Crop"] option').forEach(option => {
+      const cropValue = option.value;
+      if (cropValue && cropTranslations[language] && cropTranslations[language][cropValue]) {
+        option.textContent = cropTranslations[language][cropValue];
+      }
+    });
+    
+    // 4. Translate all dropdown options for soil types
+    document.querySelectorAll('select[id*="Soil"] option').forEach(option => {
+      const soilValue = option.value;
+      if (soilValue && soilTranslations[language] && soilTranslations[language][soilValue]) {
+        option.textContent = soilTranslations[language][soilValue];
+      }
+    });
+    
+    // 5. Translate other specific sections that don't have data-i18n attributes
+    translateLoginRegisterSections(language);
+    translateDiseaseDetectionSection(language);
+    translateWeatherSection(language);
+    translateMarketSection(language);
+    translateAIGuidanceResults(language);
+    translateFooter(language);
+  }
+  
+  // Helper functions for translating specific sections
+  function translateLoginRegisterSections(language) {
+    const loginSectionTranslations = {
+      hi: {
+        "Login": "लॉगिन",
+        "Username": "यूजरनेम",
+        "Password": "पासवर्ड",
+        "Don't have an account?": "खाता नहीं है?",
+        "Register now": "अभी रजिस्टर करें",
+        "Register": "रजिस्टर",
+        "Email": "ईमेल",
+        "Confirm Password": "पासवर्ड की पुष्टि करें",
+        "Already have an account?": "पहले से ही खाता है?",
+        "Farmer Dashboard": "किसान डैशबोर्ड",
+        "Fields": "खेत",
+        "Crops": "फसलें",
+        "Alerts": "अलर्ट",
+        "Health Index": "स्वास्थ्य सूचकांक",
+        "Your Fields": "आपके खेत",
+        "No fields added yet": "अभी तक कोई खेत नहीं जोड़ा गया",
+        "Add New Field": "नया खेत जोड़ें",
+        "Weather": "मौसम",
+        "Field Details": "खेत का विवरण",
+        "Select a field to view details": "विवरण देखने के लिए एक खेत चुनें"
+      },
+      // Add other languages similarly
+    };
+    
+    if (loginSectionTranslations[language]) {
+      // Apply translations for login/register/dashboard section
+      // This is just an example - you would need to fill in the actual implementation
+      
+      // For example:
+      document.querySelectorAll("#loginSection label, #registerSection label").forEach(label => {
+        const originalText = label.textContent;
+        if (loginSectionTranslations[language][originalText]) {
+          label.textContent = loginSectionTranslations[language][originalText];
+        }
+      });
+    }
+  }
+  
+  function translateDiseaseDetectionSection(language) {
+    const diseaseTranslations = {
+      hi: {
+        "Crop Disease Detection": "फसल रोग पहचान",
+        "Upload a Photo of Your Crop": "अपनी फसल की फोटो अपलोड करें",
+        "Take a clear photo of the affected plant part (leaf, stem, fruit) and upload it below.": "प्रभावित पौधे के हिस्से (पत्ती, तना, फल) की एक स्पष्ट फोटो लें और नीचे अपलोड करें।",
+        "Drag & Drop or Click to Upload": "खींचें और छोड़ें या अपलोड करने के लिए क्लिक करें",
+        "Supported formats: JPG, PNG": "समर्थित प्रारूप: JPG, PNG",
+        "Reset": "रीसेट",
+        "Analyze Image": "छवि का विश्लेषण करें",
+        "Analyzing image... This may take a moment.": "छवि का विश्लेषण किया जा रहा है... इसमें कुछ समय लग सकता है।",
+        "Confidence:": "विश्वास:",
+        "Symptoms:": "लक्षण:",
+        "Recommended Treatment:": "अनुशंसित उपचार:",
+        "Save Report": "रिपोर्ट सहेजें"
+      },
+      // Add translations for other languages
+    };
+    
+    if (diseaseTranslations[language]) {
+      // Example implementation
+      const diseaseSection = document.getElementById("diseaseDetectionSection");
+      if (diseaseSection) {
+        diseaseSection.querySelectorAll("h2, h4, h5, p:not([id]), label, button").forEach(element => {
+          const originalText = element.textContent.trim();
+          if (diseaseTranslations[language][originalText]) {
+            // Preserve any inner HTML for buttons with icons
+            if (element.tagName === "BUTTON" && element.querySelector("i")) {
+              const icon = element.querySelector("i").outerHTML;
+              element.innerHTML = icon + " " + diseaseTranslations[language][originalText];
+            } else {
+              element.textContent = diseaseTranslations[language][originalText];
+            }
+          }
+        });
+      }
+    }
+  }
+  
+  function translateWeatherSection(language) {
+    // Similar implementation for weather section
+  }
+  
+  function translateMarketSection(language) {
+    // Similar implementation for market prices section
+  }
+  
+  function translateAIGuidanceResults(language) {
+    // Check if guidance results are displayed
+    const guidanceResults = document.getElementById('guidanceResults');
+    if (!guidanceResults || !translations[language]) return;
+    
+    // Translate article headers
+    guidanceResults.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(header => {
+      // Get first few words to identify the section
+      const headerText = header.textContent.trim();
+      
+      // Translate common article headers
+      if (headerText.includes('Introduction') && translations[language]['introduction']) {
+        header.textContent = translations[language]['introduction'];
+      } else if (headerText.includes('Cultivation') && translations[language]['cultivation']) {
+        header.textContent = translations[language]['cultivation'];
+      } else if (headerText.includes('Fertilizer') && translations[language]['fertilizer_recommendations']) {
+        header.textContent = translations[language]['fertilizer_recommendations'];
+      } else if (headerText.includes('Irrigation') && translations[language]['irrigation_recommendations']) {
+        header.textContent = translations[language]['irrigation_recommendations'];
+      } else if (headerText.includes('Diseases') && translations[language]['diseases_and_pests']) {
+        header.textContent = translations[language]['diseases_and_pests'];
+      } else if (headerText.includes('Harvesting') && translations[language]['harvesting']) {
+        header.textContent = translations[language]['harvesting'];
+      }
+    });
+  }
+  
+  function translateFooter(language) {
+    if (!translations[language]) return;
+    
+    // Get footer elements
+    const footer = document.querySelector('footer');
+    if (!footer) return;
+    
+    // Translate footer headings
+    footer.querySelectorAll('h5').forEach(heading => {
+      const originalText = heading.textContent.trim();
+      if (originalText === "FarmAssist AI" && translations[language]['farmassist_ai']) {
+        heading.textContent = translations[language]['farmassist_ai'];
+      } else if (originalText === "Quick Links" && translations[language]['quick_links']) {
+        heading.textContent = translations[language]['quick_links'];
+      } else if (originalText === "Contact" && translations[language]['contact']) {
+        heading.textContent = translations[language]['contact'];
+      }
+    });
+    
+    // Translate footer text
+    footer.querySelectorAll('p').forEach(paragraph => {
+      const originalText = paragraph.textContent.trim();
+      if (originalText === "Your AI-powered farming companion" && translations[language]['ai_companion']) {
+        paragraph.textContent = translations[language]['ai_companion'];
+      } else if (originalText.includes("All rights reserved") && translations[language]['copyright']) {
+        paragraph.textContent = translations[language]['copyright'];
+      }
+    });
+    
+    // Translate quick links
+    footer.querySelectorAll('ul.list-unstyled li a').forEach(link => {
+      const originalText = link.textContent.trim();
+      if (originalText === "Home" && translations[language]['home']) {
+        link.textContent = translations[language]['home'];
+      } else if (originalText === "Disease Detection" && translations[language]['disease_detection']) {
+        link.textContent = translations[language]['disease_detection'];
+      } else if (originalText === "Market Prices" && translations[language]['market_prices']) {
+        link.textContent = translations[language]['market_prices'];
+      } else if (originalText === "Weather" && translations[language]['weather']) {
+        link.textContent = translations[language]['weather'];
+      }
+    });
+  }
+  
+  // Function to translate dynamic content loaded from API calls
+  function translateAPIResponse(element, language) {
+    if (!element || !translations[language]) return;
+    
+    // First, translate any data-i18n attributes
+    element.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (translations[language][key]) {
+        el.textContent = translations[language][key];
+      }
+    });
+    
+    // Then try to translate common elements without data-i18n attributes
+    // For example, crop names and soil types in the results
+    element.querySelectorAll('p, h1, h2, h3, h4, h5, h6, li, td, th, button, label').forEach(el => {
+      const text = el.textContent.trim();
+      
+      // Check if text contains crop names
+      Object.keys(cropTranslations[language] || {}).forEach(cropName => {
+        if (text.includes(cropName)) {
+          el.textContent = el.textContent.replace(
+            cropName, 
+            cropTranslations[language][cropName]
+          );
+        }
+      });
+      
+      // Check if text contains soil types
+      Object.keys(soilTranslations[language] || {}).forEach(soilType => {
+        if (text.includes(soilType)) {
+          el.textContent = el.textContent.replace(
+            soilType, 
+            soilTranslations[language][soilType]
+          );
+        }
       });
     });
     
-    // Update dropdown display
-    document.querySelector(".language-text").textContent = 
-      document.querySelector(`[data-lang="${language}"]`).textContent.split(" ")[0];
+    // Special handling for AI-generated guidance article
+    if (element.id === 'guidanceResults') {
+      translateAIGuidanceResults(language);
+    }
+  }
+  
+  // Export important functions for global access
+  window.applyTranslations = applyTranslations;
+  window.currentLanguage = currentLanguage;
+  window.translateAPIResponse = translateAPIResponse;
+  
+  // Add event listener for dynamic content loading
+  document.addEventListener("contentLoaded", function(e) {
+    if (currentLanguage !== "en") {
+      // Translate newly loaded content
+      setTimeout(() => applyTranslations(currentLanguage), 100);
+    }
+  });
+  
+  // Modify the main.js functions for API processing
+  // When API responses are processed, call translateAPIResponse on the container element
+  const originalFetchAPI = window.fetchAPI;
+  if (originalFetchAPI) {
+    window.fetchAPI = async function(...args) {
+      const response = await originalFetchAPI(...args);
+      
+      // After processing API response, translate content if needed
+      if (currentLanguage !== "en") {
+        setTimeout(() => {
+          // Translate results in commonly updated containers
+          const containers = [
+            document.getElementById('guidanceResults'),
+            document.getElementById('marketPricesTable'),
+            document.getElementById('currentWeather'),
+            document.getElementById('resultContainer'),
+            document.getElementById('fieldDetails')
+          ];
+          
+          containers.forEach(container => {
+            if (container && !container.classList.contains('hidden')) {
+              translateAPIResponse(container, currentLanguage);
+            }
+          });
+        }, 500);
+      }
+      
+      return response;
+    };
   }
 });

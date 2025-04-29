@@ -495,29 +495,29 @@
 
       <!-- Testimonials -->
       <div class="container my-5 py-5 bg-light">
-        <h2 class="text-center mb-5">What Farmers Say</h2>
+        <h2 class="text-center mb-5" data-i18n="what_farmers_say">What Farmers Say</h2>
         <div class="row">
           <div class="col-md-4">
             <div class="card mb-4">
               <div class="card-body">
-                <p class="card-text">"FarmAssist AI helped me identify a fungal infection early, saving my entire tomato crop. The recommendations were spot on!"</p>
-                <p class="card-text"><small class="text-muted">- Rajesh Kumar, Tomato Farmer</small></p>
+                <p class="card-text" data-i18n="testimonial_1">"FarmAssist AI helped me identify a fungal infection early, saving my entire tomato crop. The recommendations were spot on!"</p>
+                <p class="card-text"><small class="text-muted" data-i18n="farmer_1">- Rajesh Kumar, Tomato Farmer</small></p>
               </div>
             </div>
           </div>
           <div class="col-md-4">
             <div class="card mb-4">
               <div class="card-body">
-                <p class="card-text">"I've increased my profits by 20% by using the market price alerts to time my crop sales. This app is a game-changer!"</p>
-                <p class="card-text"><small class="text-muted">- Ananya Singh, Rice Farmer</small></p>
+                <p class="card-text" data-i18n="testimonial_2">"I've increased my profits by 20% by using the market price alerts to time my crop sales. This app is a game-changer!"</p>
+                <p class="card-text"><small class="text-muted" data-i18n="farmer_2">- Ananya Singh, Rice Farmer</small></p>
               </div>
             </div>
           </div>
           <div class="col-md-4">
             <div class="card mb-4">
               <div class="card-body">
-                <p class="card-text">"The weather forecasts are incredibly accurate. I can plan irrigation and harvesting with confidence, even during uncertain seasons."</p>
-                <p class="card-text"><small class="text-muted">- Vikram Patel, Wheat Farmer</small></p>
+                <p class="card-text" data-i18n="testimonial_3">"The weather forecasts are incredibly accurate. I can plan irrigation and harvesting with confidence, even during uncertain seasons."</p>
+                <p class="card-text"><small class="text-muted" data-i18n="farmer_3">- Vikram Patel, Wheat Farmer</small></p>
               </div>
             </div>
           </div>
@@ -528,19 +528,19 @@
     <!-- Login Section -->
     <section id="loginSection" class="hidden">
       <div class="container">
-        <h2 class="text-center mb-4">Login</h2>
+        <h2 class="text-center mb-4" data-i18n="login">Login</h2>
         <form id="loginForm">
           <div class="mb-3">
-            <label for="loginUsername" class="form-label">Username</label>
+            <label for="loginUsername" class="form-label" data-i18n="username">Username</label>
             <input type="text" class="form-control" id="loginUsername" required>
           </div>
           <div class="mb-3">
-            <label for="loginPassword" class="form-label">Password</label>
+            <label for="loginPassword" class="form-label" data-i18n="password">Password</label>
             <input type="password" class="form-control" id="loginPassword" required>
           </div>
           <div id="loginError" class="alert alert-danger hidden"></div>
-          <button type="submit" class="btn btn-primary w-100">Login</button>
-          <p class="mt-3 text-center">Don't have an account? <a href="#" id="switchToRegister">Register now</a></p>
+          <button type="submit" class="btn btn-primary w-100" data-i18n="login">Login</button>
+          <p class="mt-3 text-center"><span data-i18n="no_account">Don't have an account?</span> <a href="#" id="switchToRegister" data-i18n="register_now">Register now</a></p>
         </form>
       </div>
     </section>
@@ -548,27 +548,27 @@
     <!-- Register Section -->
     <section id="registerSection" class="hidden">
       <div class="container">
-        <h2 class="text-center mb-4">Register</h2>
+        <h2 class="text-center mb-4" data-i18n="register">Register</h2>
         <form id="registerForm">
           <div class="mb-3">
-            <label for="registerUsername" class="form-label">Username</label>
+            <label for="registerUsername" class="form-label" data-i18n="username">Username</label>
             <input type="text" class="form-control" id="registerUsername" required>
           </div>
           <div class="mb-3">
-            <label for="registerEmail" class="form-label">Email</label>
+            <label for="registerEmail" class="form-label" data-i18n="email">Email</label>
             <input type="email" class="form-control" id="registerEmail" required>
           </div>
           <div class="mb-3">
-            <label for="registerPassword" class="form-label">Password</label>
+            <label for="registerPassword" class="form-label" data-i18n="password">Password</label>
             <input type="password" class="form-control" id="registerPassword" required>
           </div>
           <div class="mb-3">
-            <label for="registerConfirmPassword" class="form-label">Confirm Password</label>
+            <label for="registerConfirmPassword" class="form-label" data-i18n="confirm_password">Confirm Password</label>
             <input type="password" class="form-control" id="registerConfirmPassword" required>
           </div>
           <div id="registerError" class="alert alert-danger hidden"></div>
-          <button type="submit" class="btn btn-primary w-100">Register</button>
-          <p class="mt-3 text-center">Already have an account? <a href="#" id="switchToLogin">Login</a></p>
+          <button type="submit" class="btn btn-primary w-100" data-i18n="register">Register</button>
+          <p class="mt-3 text-center"><span data-i18n="have_account">Already have an account?</span> <a href="#" id="switchToLogin" data-i18n="login">Login</a></p>
         </form>
       </div>
     </section>
@@ -654,25 +654,25 @@
     <!-- Disease Detection Section -->
     <section id="diseaseDetectionSection" class="hidden">
       <div class="container py-5">
-        <h2 class="mb-4">Crop Disease Detection</h2>
+        <h2 class="mb-4" data-i18n="crop_disease_detection">Crop Disease Detection</h2>
         <div class="row">
           <div class="col-lg-6">
             <div class="disease-detection-container">
-              <h4>Upload a Photo of Your Crop</h4>
-              <p>Take a clear photo of the affected plant part (leaf, stem, fruit) and upload it below.</p>
+              <h4 data-i18n="upload_photo">Upload a Photo of Your Crop</h4>
+              <p data-i18n="take_clear_photo">Take a clear photo of the affected plant part (leaf, stem, fruit) and upload it below.</p>
               
               <div class="upload-area" id="uploadArea">
                 <i class="fas fa-cloud-upload-alt fa-3x mb-3"></i>
-                <h5>Drag & Drop or Click to Upload</h5>
-                <p>Supported formats: JPG, PNG</p>
+                <h5 data-i18n="drag_drop">Drag & Drop or Click to Upload</h5>
+                <p data-i18n="supported_formats">Supported formats: JPG, PNG</p>
                 <input type="file" id="diseaseImageInput" class="hidden" accept="image/*">
               </div>
               
               <div id="imagePreviewContainer" class="hidden">
                 <img id="imagePreview" class="preview-image">
                 <div class="text-center mt-3">
-                  <button class="btn btn-danger me-2" id="resetImageBtn">Reset</button>
-                  <button class="btn btn-primary" id="analyzeImageBtn">Analyze Image</button>
+                  <button class="btn btn-danger me-2" id="resetImageBtn" data-i18n="reset">Reset</button>
+                  <button class="btn btn-primary" id="analyzeImageBtn" data-i18n="analyze_image">Analyze Image</button>
                 </div>
               </div>
               
@@ -680,7 +680,7 @@
                 <div class="spinner-border text-primary" role="status">
                   <span class="visually-hidden">Loading...</span>
                 </div>
-                <p class="mt-2">Analyzing image... This may take a moment.</p>
+                <p class="mt-2" data-i18n="analyzing_image">Analyzing image... This may take a moment.</p>
               </div>
             </div>
           </div>
@@ -690,7 +690,7 @@
               <h4 id="diseaseResult">Disease Name</h4>
               
               <div>
-                <p><strong>Confidence:</strong></p>
+                <p><strong data-i18n="confidence">Confidence:</strong></p>
                 <div class="confidence-bar">
                   <div class="confidence-level" id="confidenceLevel"></div>
                 </div>
@@ -698,16 +698,16 @@
               </div>
               
               <div class="mt-4">
-                <h5>Symptoms:</h5>
+                <h5 data-i18n="symptoms">Symptoms:</h5>
                 <p id="symptomsText">-</p>
               </div>
               
               <div class="mt-4">
-                <h5>Recommended Treatment:</h5>
+                <h5 data-i18n="recommended_treatment">Recommended Treatment:</h5>
                 <p id="treatmentText">-</p>
               </div>
               
-              <button class="btn btn-primary mt-3" id="saveReportBtn">Save Report</button>
+              <button class="btn btn-primary mt-3" id="saveReportBtn" data-i18n="save_report">Save Report</button>
             </div>
           </div>
         </div>
@@ -717,13 +717,13 @@
     <!-- Market Prices Section -->
     <section id="marketPricesSection" class="hidden">
       <div class="container py-5">
-        <h2 class="mb-4">Market Prices</h2>
+        <h2 class="mb-4" data-i18n="market_prices_title">Market Prices</h2>
         
         <div class="row mb-4">
           <div class="col-md-6">
             <div class="input-group">
               <select class="form-select" id="cropFilter">
-                <option value="">All Crops</option>
+                <option value="" data-i18n="all_crops">All Crops</option>
                 <option value="Rice">Rice</option>
                 <option value="Wheat">Wheat</option>
                 <option value="Cotton">Cotton</option>
@@ -744,7 +744,7 @@
                 <option value="Jute">Jute</option>
                 <option value="Sunflower">Sunflower</option>
               </select>
-              <button class="btn btn-primary" id="applyFilterBtn">Apply</button>
+              <button class="btn btn-primary" id="applyFilterBtn" data-i18n="apply">Apply</button>
             </div>
           </div>
         </div>
@@ -753,13 +753,13 @@
           <table class="table table-striped">
             <thead>
               <tr>
-                <th>Crop</th>
-                <th>Market</th>
-                <th>Price (₹/quintal)</th>
-                <th>Min Price</th>
-                <th>Max Price</th>
-                <th>Date</th>
-                <th>Action</th>
+                <th data-i18n="crop">Crop</th>
+                <th data-i18n="market">Market</th>
+                <th data-i18n="price">Price (₹/quintal)</th>
+                <th data-i18n="min_price">Min Price</th>
+                <th data-i18n="max_price">Max Price</th>
+                <th data-i18n="date">Date</th>
+                <th data-i18n="action">Action</th>
               </tr>
             </thead>
             <tbody id="marketPricesTable">
@@ -775,8 +775,8 @@
         </div>
         
         <div class="mt-4">
-          <h4>Price Alerts</h4>
-          <p>Set up alerts to be notified when prices reach your target levels.</p>
+          <h4 data-i18n="price_alerts">Price Alerts</h4>
+          <p data-i18n="set_up_alerts">Set up alerts to be notified when prices reach your target levels.</p>
           
           <div class="card">
             <div class="card-body">
