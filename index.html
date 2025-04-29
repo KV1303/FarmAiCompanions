@@ -416,7 +416,7 @@
         <h2 class="text-center mb-5">What FarmAssist AI Can Do For You</h2>
         <div class="row g-4">
           <!-- Feature 1 -->
-          <div class="col-md-4">
+          <div class="col-md-4 mb-4">
             <div class="feature-card p-4 text-center">
               <div class="feature-icon">
                 <i class="fas fa-bug"></i>
@@ -428,7 +428,7 @@
           </div>
           
           <!-- Feature 2 -->
-          <div class="col-md-4">
+          <div class="col-md-4 mb-4">
             <div class="feature-card p-4 text-center">
               <div class="feature-icon">
                 <i class="fas fa-chart-line"></i>
@@ -440,7 +440,7 @@
           </div>
           
           <!-- Feature 3 -->
-          <div class="col-md-4">
+          <div class="col-md-4 mb-4">
             <div class="feature-card p-4 text-center">
               <div class="feature-icon">
                 <i class="fas fa-cloud-sun-rain"></i>
@@ -448,6 +448,30 @@
               <h4>Weather Forecasts</h4>
               <p>Get accurate weather forecasts for your specific location to plan your farming activities effectively.</p>
               <button class="btn btn-primary" id="featureWeatherBtn">View Weather</button>
+            </div>
+          </div>
+          
+          <!-- Feature 4: Advanced Fertilizer Recommendations -->
+          <div class="col-md-6 mb-4">
+            <div class="feature-card p-4 text-center">
+              <div class="feature-icon">
+                <i class="fas fa-flask"></i>
+              </div>
+              <h4>Advanced Fertilizer Recommendations</h4>
+              <p>Get AI-powered fertilizer recommendations based on your crop type, soil conditions, and growth stage. Maximize yield with precise nutrient management.</p>
+              <button class="btn btn-primary" id="featureFertilizerBtn" data-bs-toggle="modal" data-bs-target="#fertilizerModal">Get Recommendations</button>
+            </div>
+          </div>
+          
+          <!-- Feature 5: Irrigation Management -->
+          <div class="col-md-6 mb-4">
+            <div class="feature-card p-4 text-center">
+              <div class="feature-icon">
+                <i class="fas fa-tint"></i>
+              </div>
+              <h4>Irrigation Management</h4>
+              <p>Optimize your water usage with AI-generated irrigation schedules tailored to your crops, soil type, and local weather conditions. Save water and improve crop health.</p>
+              <button class="btn btn-primary" id="featureIrrigationBtn" data-bs-toggle="modal" data-bs-target="#irrigationModal">Plan Irrigation</button>
             </div>
           </div>
         </div>
@@ -949,6 +973,280 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
           <button type="button" class="btn btn-primary" id="saveFieldBtn">Save Field</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Advanced Fertilizer Recommendations Modal -->
+  <div class="modal fade" id="fertilizerModal" tabindex="-1" aria-labelledby="fertilizerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title" id="fertilizerModalLabel">Advanced Fertilizer Recommendations</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="fertilizerForm">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="fertCropType" class="form-label">Crop Type</label>
+                  <select class="form-select" id="fertCropType" required>
+                    <option value="">Select a crop</option>
+                    <option value="Rice">Rice</option>
+                    <option value="Wheat">Wheat</option>
+                    <option value="Cotton">Cotton</option>
+                    <option value="Sugarcane">Sugarcane</option>
+                    <option value="Maize">Maize</option>
+                    <option value="Potato">Potato</option>
+                    <option value="Tomato">Tomato</option>
+                    <option value="Chickpea">Chickpea</option>
+                    <option value="Soybean">Soybean</option>
+                    <option value="Mustard">Mustard</option>
+                    <option value="Groundnut">Groundnut</option>
+                    <option value="Turmeric">Turmeric</option>
+                    <option value="Onion">Onion</option>
+                    <option value="Garlic">Garlic</option>
+                    <option value="Chilli">Chilli</option>
+                    <option value="Okra">Okra (Bhindi)</option>
+                    <option value="Millet">Millet (Bajra)</option>
+                    <option value="Barley">Barley</option>
+                    <option value="Sunflower">Sunflower</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="fertSoilType" class="form-label">Soil Type</label>
+                  <select class="form-select" id="fertSoilType" required>
+                    <option value="">Select soil type</option>
+                    <option value="Sandy">Sandy</option>
+                    <option value="Clay">Clay</option>
+                    <option value="Loamy">Loamy</option>
+                    <option value="Silt">Silt</option>
+                    <option value="Black">Black</option>
+                    <option value="Red">Red</option>
+                    <option value="Alluvial">Alluvial</option>
+                    <option value="Laterite">Laterite</option>
+                    <option value="Peaty">Peaty</option>
+                    <option value="Calcareous">Calcareous</option>
+                    <option value="Saline">Saline</option>
+                    <option value="Acidic">Acidic</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="fertGrowthStage" class="form-label">Growth Stage</label>
+                  <select class="form-select" id="fertGrowthStage" required>
+                    <option value="seedling">Seedling</option>
+                    <option value="vegetative">Vegetative</option>
+                    <option value="flowering">Flowering</option>
+                    <option value="fruiting">Fruiting</option>
+                    <option value="maturity">Maturity</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="fertFieldSize" class="form-label">Field Size (hectares)</label>
+                  <input type="number" class="form-control" id="fertFieldSize" value="1.0" min="0.1" step="0.1" required>
+                </div>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <h5>Soil Test Results (Optional)</h5>
+              <div class="row">
+                <div class="col-md-4">
+                  <label for="fertNitrogen" class="form-label">Nitrogen Level</label>
+                  <select class="form-select" id="fertNitrogen">
+                    <option value="low">Low</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="high">High</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label for="fertPhosphorus" class="form-label">Phosphorus Level</label>
+                  <select class="form-select" id="fertPhosphorus">
+                    <option value="low">Low</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="high">High</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label for="fertPotassium" class="form-label">Potassium Level</label>
+                  <select class="form-select" id="fertPotassium">
+                    <option value="low">Low</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="high">High</option>
+                  </select>
+                </div>
+              </div>
+              <div class="row mt-3">
+                <div class="col-md-6">
+                  <label for="fertPH" class="form-label">pH Level</label>
+                  <input type="number" class="form-control" id="fertPH" value="7.0" min="0" max="14" step="0.1">
+                </div>
+                <div class="col-md-6">
+                  <label for="fertOrganicMatter" class="form-label">Organic Matter</label>
+                  <select class="form-select" id="fertOrganicMatter">
+                    <option value="low">Low</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="high">High</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </form>
+          
+          <div id="fertilizerResults" class="hidden mt-4">
+            <div class="text-center mb-4">
+              <div class="spinner-border text-success" role="status" id="fertilizerSpinner">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+            </div>
+            <div id="fertilizerRecommendationsContent" class="border rounded p-3 bg-light">
+              <!-- Results will be inserted here -->
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-success" id="generateFertilizerBtn">Generate Recommendations</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Irrigation Management Modal -->
+  <div class="modal fade" id="irrigationModal" tabindex="-1" aria-labelledby="irrigationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title" id="irrigationModalLabel">Irrigation Management</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="irrigationForm">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="irrCropType" class="form-label">Crop Type</label>
+                  <select class="form-select" id="irrCropType" required>
+                    <option value="">Select a crop</option>
+                    <option value="Rice">Rice</option>
+                    <option value="Wheat">Wheat</option>
+                    <option value="Cotton">Cotton</option>
+                    <option value="Sugarcane">Sugarcane</option>
+                    <option value="Maize">Maize</option>
+                    <option value="Potato">Potato</option>
+                    <option value="Tomato">Tomato</option>
+                    <option value="Chickpea">Chickpea</option>
+                    <option value="Soybean">Soybean</option>
+                    <option value="Mustard">Mustard</option>
+                    <option value="Groundnut">Groundnut</option>
+                    <option value="Turmeric">Turmeric</option>
+                    <option value="Onion">Onion</option>
+                    <option value="Garlic">Garlic</option>
+                    <option value="Chilli">Chilli</option>
+                    <option value="Okra">Okra (Bhindi)</option>
+                    <option value="Millet">Millet (Bajra)</option>
+                    <option value="Barley">Barley</option>
+                    <option value="Sunflower">Sunflower</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="irrSoilType" class="form-label">Soil Type</label>
+                  <select class="form-select" id="irrSoilType" required>
+                    <option value="">Select soil type</option>
+                    <option value="Sandy">Sandy</option>
+                    <option value="Clay">Clay</option>
+                    <option value="Loamy">Loamy</option>
+                    <option value="Silt">Silt</option>
+                    <option value="Black">Black</option>
+                    <option value="Red">Red</option>
+                    <option value="Alluvial">Alluvial</option>
+                    <option value="Laterite">Laterite</option>
+                    <option value="Peaty">Peaty</option>
+                    <option value="Calcareous">Calcareous</option>
+                    <option value="Saline">Saline</option>
+                    <option value="Acidic">Acidic</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="irrGrowthStage" class="form-label">Growth Stage</label>
+                  <select class="form-select" id="irrGrowthStage" required>
+                    <option value="seedling">Seedling</option>
+                    <option value="vegetative" selected>Vegetative</option>
+                    <option value="flowering">Flowering</option>
+                    <option value="fruiting">Fruiting</option>
+                    <option value="maturity">Maturity</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="irrSoilMoisture" class="form-label">Current Soil Moisture</label>
+                  <select class="form-select" id="irrSoilMoisture" required>
+                    <option value="dry">Dry</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="wet">Wet</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="irrSystem" class="form-label">Irrigation System</label>
+                  <select class="form-select" id="irrSystem" required>
+                    <option value="drip" selected>Drip</option>
+                    <option value="sprinkler">Sprinkler</option>
+                    <option value="flood">Flood</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <h5>Weather Information (Optional)</h5>
+              <div class="row">
+                <div class="col-md-6">
+                  <label for="irrTemperature" class="form-label">Temperature (°C)</label>
+                  <input type="number" class="form-control" id="irrTemperature" value="25" min="0" max="50">
+                </div>
+                <div class="col-md-6">
+                  <label for="irrHumidity" class="form-label">Humidity (%)</label>
+                  <input type="number" class="form-control" id="irrHumidity" value="50" min="0" max="100">
+                </div>
+              </div>
+            </div>
+          </form>
+          
+          <div id="irrigationResults" class="hidden mt-4">
+            <div class="text-center mb-4">
+              <div class="spinner-border text-primary" role="status" id="irrigationSpinner">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+            </div>
+            <div id="irrigationRecommendationsContent" class="border rounded p-3 bg-light">
+              <!-- Results will be inserted here -->
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" id="generateIrrigationBtn">Generate Recommendations</button>
         </div>
       </div>
     </div>
