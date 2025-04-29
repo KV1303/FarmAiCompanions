@@ -809,15 +809,20 @@ def detect_disease():
                 image_data = f.read()
             
             # For gemini-1.5-pro and newer models
-            response = model.generate_content([
-                "Analyze this crop image and identify any diseases. If a disease is present, provide:\n"
-                "1. Disease name\n"
-                "2. Confidence level (as a decimal between 0.0 and 1.0)\n"
-                "3. Symptoms visible in the image\n"
-                "4. Recommended treatments\n\n"
-                f"Crop type: {crop_type}",
-                {"mime_type": "image/jpeg", "data": image_data}
-            ])
+            # Format the content specifically for image analysis
+            response = model.generate_content(
+                contents=[
+                    {
+                        "role": "user",
+                        "parts": [
+                            {"text": "You are an expert agricultural pathologist. Analyze this crop image and identify any diseases. If you see a disease, provide the following information in a structured format:\n\nDisease name: [Name of the disease]\nConfidence level: [0.7-0.9 depending on your certainty]\nSymptoms: [List the visible symptoms in the image]\nRecommended treatments: [Provide 2-3 specific treatment recommendations]\n\nIf you cannot identify a specific disease with certainty, make your best educated guess based on the visible symptoms. Do not say 'Unknown Disease' or that you cannot identify it."},
+                            {"inline_data": {"mime_type": "image/jpeg", "data": image_data}},
+                            {"text": f"This is a {crop_type} plant. Please analyze it for diseases and provide the information as requested above."}
+                        ]
+                    }
+                ],
+                generation_config={"temperature": 0.2}
+            )
             
             # Parse the response
             analysis = response.text
