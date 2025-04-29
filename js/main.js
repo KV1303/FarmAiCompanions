@@ -357,32 +357,68 @@ function setupDiseaseDetection() {
 }
 
 async function analyzeImage(imageFile) {
-  const formData = new FormData();
-  formData.append('image', imageFile);
-  formData.append('crop_type', document.getElementById('cropType')?.value || 'unknown');
-  
-  // Add user/field if logged in
-  if (isLoggedIn()) {
-    formData.append('user_id', getCurrentUserId());
-    // If we're in field context, add field_id
-    const fieldId = localStorage.getItem('current_field_id');
-    if (fieldId) {
-      formData.append('field_id', fieldId);
+  // First, upload the image to the server
+  try {
+    const uploadFormData = new FormData();
+    uploadFormData.append('image', imageFile);
+    
+    console.log("Uploading image file:", imageFile.name, imageFile.type, imageFile.size);
+    
+    const uploadResponse = await fetch('/upload', {
+      method: 'POST',
+      body: uploadFormData
+    });
+    
+    if (!uploadResponse.ok) {
+      const errorText = await uploadResponse.text();
+      console.error("Upload failed:", errorText);
+      throw new Error(`Upload failed: ${errorText}`);
     }
+    
+    const uploadResult = await uploadResponse.json();
+    console.log("Upload successful:", uploadResult);
+    
+    // Now send the analysis request with the path to the uploaded image
+    const analyzeFormData = new FormData();
+    analyzeFormData.append('image_path', uploadResult.path);
+    analyzeFormData.append('crop_type', document.getElementById('cropType')?.value || 'unknown');
+    
+    // Add user/field if logged in
+    if (isLoggedIn()) {
+      analyzeFormData.append('user_id', getCurrentUserId());
+      // If we're in field context, add field_id
+      const fieldId = localStorage.getItem('current_field_id');
+      if (fieldId) {
+        analyzeFormData.append('field_id', fieldId);
+      }
+    }
+    
+    // Send analysis request to API
+    const analyzeResponse = await fetch('/api/disease_detect', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(Object.fromEntries(analyzeFormData))
+    });
+    
+    if (!analyzeResponse.ok) {
+      let errorMessage = 'Failed to analyze image';
+      try {
+        const errorData = await analyzeResponse.json();
+        errorMessage = errorData.error || errorMessage;
+      } catch (e) {
+        // If response is not JSON
+        errorMessage = await analyzeResponse.text() || errorMessage;
+      }
+      throw new Error(errorMessage);
+    }
+    
+    return await analyzeResponse.json();
+  } catch (error) {
+    console.error("Disease detection error:", error);
+    throw error;
   }
-  
-  // Send to API
-  const response = await fetch('/api/disease_detect', {
-    method: 'POST',
-    body: formData
-  });
-  
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.error || 'Failed to analyze image');
-  }
-  
-  return await response.json();
 }
 
 function displayDiseaseResult(result) {

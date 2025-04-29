@@ -168,22 +168,41 @@ def get_market_prices():
 @app.route('/api/disease_detect', methods=['POST'])
 def detect_disease():
     """Detect crop disease from image using AI"""
-    # Check if an image was uploaded
-    if 'image' not in request.files:
-        return jsonify({'error': 'No image provided'}), 400
-        
-    image = request.files['image']
-    crop_type = request.form.get('crop_type', 'unknown')
-    field_id = request.form.get('field_id')
-    user_id = request.form.get('user_id')
+    # Check how the image is provided
+    data = request.get_json() if request.is_json else None
     
-    if not image.filename:
-        return jsonify({'error': 'Empty image file'}), 400
+    if data and 'image_path' in data:
+        # Image already uploaded, use the provided path
+        image_path = data['image_path']
+        crop_type = data.get('crop_type', 'unknown')
+        field_id = data.get('field_id')
+        user_id = data.get('user_id')
         
-    # Save the image to a temporary location
-    image_path = f"uploads/{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{image.filename}"
-    os.makedirs('uploads', exist_ok=True)
-    image.save(image_path)
+        print(f"Using pre-uploaded image: {image_path}")
+        
+        if not os.path.exists(image_path):
+            return jsonify({'error': f'Image file not found at path: {image_path}'}), 400
+    
+    elif 'image' in request.files:
+        # Direct image upload
+        image = request.files['image']
+        crop_type = request.form.get('crop_type', 'unknown')
+        field_id = request.form.get('field_id')
+        user_id = request.form.get('user_id')
+        
+        if not image.filename:
+            return jsonify({'error': 'Empty image file'}), 400
+            
+        # Save the image to a temporary location
+        image_path = f"uploads/{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{image.filename}"
+        os.makedirs('uploads', exist_ok=True)
+        image.save(image_path)
+        
+        print(f"Image uploaded and saved to: {image_path}")
+    
+    else:
+        # No image provided
+        return jsonify({'error': 'No image provided. Send either an image file or an image_path.'}), 400
     
     # AI detection logic - using Gemini API if available
     disease_name = "Unknown Disease"
