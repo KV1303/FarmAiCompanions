@@ -782,12 +782,33 @@ def detect_disease():
     
     try:
         if GEMINI_API_KEY:
-            # Use Gemini for image analysis
-            model = genai.GenerativeModel('gemini-pro-vision')
+            # Use Gemini for image analysis with proper model selection
+            try:
+                # Try to use the newer multimodal model first
+                model = genai.GenerativeModel('gemini-1.5-pro')
+                print(f"Using gemini-1.5-pro for disease detection")
+            except:
+                # Fallback model selection logic
+                vision_model = None
+                for m in genai.list_models():
+                    if 'gemini' in m.name and 'vision' in m.name and 'generateContent' in m.supported_generation_methods:
+                        vision_model = m.name.replace('models/', '')
+                        print(f"Using fallback vision model: {vision_model}")
+                        model = genai.GenerativeModel(vision_model)
+                        break
+                
+                if not vision_model:
+                    for m in genai.list_models():
+                        if 'gemini' in m.name and 'generateContent' in m.supported_generation_methods:
+                            model_name = m.name.replace('models/', '')
+                            print(f"Using general model: {model_name}")
+                            model = genai.GenerativeModel(model_name)
+                            break
             
             with open(image_path, 'rb') as f:
                 image_data = f.read()
             
+            # For gemini-1.5-pro and newer models
             response = model.generate_content([
                 "Analyze this crop image and identify any diseases. If a disease is present, provide:\n"
                 "1. Disease name\n"
