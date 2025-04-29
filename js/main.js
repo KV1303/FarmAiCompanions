@@ -239,6 +239,34 @@ function displayMarketPrices(prices) {
     return;
   }
   
+  // Get data source and date from the first price entry
+  const dataSource = prices[0].source || 'Market Data';
+  const updateDate = prices[0].date || new Date().toISOString().split('T')[0];
+  
+  // Update the data source info at the top of the table
+  const sourceBadgeEl = document.getElementById('marketDataSource');
+  if (sourceBadgeEl) {
+    sourceBadgeEl.innerHTML = `
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <div>
+          <span class="badge bg-info">Source: ${dataSource}</span>
+          <span class="badge bg-secondary ms-2">Updated: ${updateDate}</span>
+        </div>
+        <button class="btn btn-sm btn-outline-primary refresh-prices-btn">
+          <i class="fas fa-sync-alt"></i> Refresh
+        </button>
+      </div>
+    `;
+    
+    // Add event listener to the refresh button
+    setTimeout(() => {
+      document.querySelector('.refresh-prices-btn')?.addEventListener('click', () => {
+        const currentCropType = document.getElementById('cropFilter').value;
+        loadMarketPrices(currentCropType);
+      });
+    }, 100);
+  }
+  
   let html = '';
   prices.forEach(price => {
     html += `
