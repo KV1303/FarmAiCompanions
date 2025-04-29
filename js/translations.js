@@ -780,8 +780,16 @@ function setLanguage(languageCode) {
   localStorage.setItem('preferred_language', languageCode);
   
   // Update the language display in the dropdown
-  document.querySelector('.language-text').textContent = 
-    document.querySelector(`.language-option[data-lang="${languageCode}"]`).textContent.split(' ')[0];
+  const selectedOption = document.querySelector(`.language-option[data-lang="${languageCode}"]`);
+  if (selectedOption) {
+    // Get the first part of the language option text (before the space if there is one)
+    const displayText = selectedOption.textContent.split(' ')[0];
+    document.querySelector('.language-text').textContent = displayText;
+    
+    console.log(`Language changed to: ${languageCode} - Display text: ${displayText}`);
+  } else {
+    console.error(`Could not find language option for code: ${languageCode}`);
+  }
   
   // Get all elements with data-i18n attribute
   const elements = document.querySelectorAll('[data-i18n]');
@@ -843,6 +851,22 @@ document.addEventListener('DOMContentLoaded', function() {
       e.preventDefault();
       const lang = this.getAttribute('data-lang');
       setLanguage(lang);
+      
+      // Use Bootstrap's dropdown API to hide the dropdown
+      // Bootstrap 5 uses data-bs-toggle
+      const dropdownToggle = document.getElementById('languageDropdown');
+      const bsDropdown = bootstrap.Dropdown.getInstance(dropdownToggle);
+      if (bsDropdown) {
+        bsDropdown.hide();
+      } else {
+        // Fallback to manual method if Bootstrap API is not available
+        const dropdownMenu = this.closest('.dropdown-menu');
+        if (dropdownMenu) {
+          dropdownMenu.classList.remove('show');
+          dropdownToggle.setAttribute('aria-expanded', 'false');
+          dropdownToggle.closest('.dropdown').classList.remove('show');
+        }
+      }
     });
   });
 });
