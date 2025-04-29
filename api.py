@@ -1282,6 +1282,31 @@ def handle_fields():
             db.session.rollback()
             return jsonify({'error': f'Failed to create field: {str(e)}'}), 500
 
+@app.route('/api/farm_guidance/<int:field_id>', methods=['GET'])
+def get_farm_guidance(field_id):
+    """Get AI-powered farm management guidance for a specific field"""
+    
+    try:
+        # Get the field
+        field = Field.query.get(field_id)
+        
+        if not field:
+            return jsonify({'error': 'Field not found'}), 404
+            
+        # Generate guidance
+        guidance = generate_farm_guidance(field)
+        
+        # Return structured guidance
+        return jsonify({
+            'field_id': field.id,
+            'field_name': field.name,
+            'crop_type': field.crop_type,
+            'guidance': guidance
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'Failed to generate farm guidance: {str(e)}'}), 500
+
 # Run the Flask app
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5002, debug=True)

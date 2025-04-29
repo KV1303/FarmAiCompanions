@@ -650,14 +650,17 @@ async function displayFieldDetails(field) {
     `;
   }
   
-  // Load recommendations
+  // Load AI farm guidance
   try {
-    const recommendations = await fetchAPI(`fertilizer_recommendations?field_id=${field.id}`);
-    displayRecommendations(recommendations);
+    const guidance = await fetchAPI(`farm_guidance/${field.id}`);
+    displayFarmGuidance(guidance);
   } catch (error) {
     document.getElementById('recommendations').innerHTML = `
       <div class="alert alert-danger">
-        Failed to load recommendations: ${error.message}
+        <p><strong>Failed to load AI-powered farming guidance:</strong> ${error.message}</p>
+        <button class="btn btn-sm btn-outline-danger mt-2" onclick="retryLoadFarmGuidance(${field.id})">
+          <i class="fas fa-sync-alt"></i> Retry
+        </button>
       </div>
     `;
   }
@@ -780,6 +783,257 @@ function displayFieldMonitoring(data) {
     data.ndvi ? (data.ndvi * 100).toFixed(0) + '%' : '--';
 }
 
+function displayFarmGuidance(data) {
+  const recommendationsTab = document.getElementById('recommendations');
+  
+  if (!data || !data.guidance) {
+    recommendationsTab.innerHTML = '<p>No AI farming guidance available for this field</p>';
+    return;
+  }
+  
+  const guidance = data.guidance;
+  
+  // Build HTML content for the various guidance sections
+  let html = `
+    <div class="mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4>AI-Powered Farming Guidance</h4>
+        <span class="badge bg-primary">Crop: ${data.crop_type || 'Unknown'}</span>
+      </div>
+      <p class="text-muted mb-4">Tailored recommendations for ${data.field_name} based on field details and agricultural best practices.</p>
+      
+      <div class="accordion" id="guidanceAccordion">
+  `;
+  
+  // General Recommendations
+  if (guidance.general_recommendations && guidance.general_recommendations.length > 0) {
+    html += `
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="headingGeneral">
+          <button class="accordion-button" type="button" data-bs-toggle="collapse" 
+                  data-bs-target="#collapseGeneral" aria-expanded="true" aria-controls="collapseGeneral">
+            <i class="fas fa-check-circle me-2"></i> General Management
+          </button>
+        </h2>
+        <div id="collapseGeneral" class="accordion-collapse collapse show" 
+             aria-labelledby="headingGeneral" data-bs-parent="#guidanceAccordion">
+          <div class="accordion-body">
+            <ul class="list-group list-group-flush">
+              ${guidance.general_recommendations.map(rec => `
+                <li class="list-group-item">
+                  <i class="fas fa-angle-right text-primary me-2"></i>${rec}
+                </li>
+              `).join('')}
+            </ul>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  
+  // Crop-Specific Advice
+  if (guidance.crop_specific && guidance.crop_specific.length > 0) {
+    html += `
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="headingCrop">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                  data-bs-target="#collapseCrop" aria-expanded="false" aria-controls="collapseCrop">
+            <i class="fas fa-seedling me-2"></i> Crop-Specific Advice
+          </button>
+        </h2>
+        <div id="collapseCrop" class="accordion-collapse collapse" 
+             aria-labelledby="headingCrop" data-bs-parent="#guidanceAccordion">
+          <div class="accordion-body">
+            <ul class="list-group list-group-flush">
+              ${guidance.crop_specific.map(rec => `
+                <li class="list-group-item">
+                  <i class="fas fa-angle-right text-success me-2"></i>${rec}
+                </li>
+              `).join('')}
+            </ul>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  
+  // Fertilizer Recommendations
+  if (guidance.fertilizer && guidance.fertilizer.length > 0) {
+    html += `
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="headingFertilizer">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                  data-bs-target="#collapseFertilizer" aria-expanded="false" aria-controls="collapseFertilizer">
+            <i class="fas fa-flask me-2"></i> Fertilizer Recommendations
+          </button>
+        </h2>
+        <div id="collapseFertilizer" class="accordion-collapse collapse" 
+             aria-labelledby="headingFertilizer" data-bs-parent="#guidanceAccordion">
+          <div class="accordion-body">
+            <ul class="list-group list-group-flush">
+              ${guidance.fertilizer.map(rec => `
+                <li class="list-group-item">
+                  <i class="fas fa-angle-right text-info me-2"></i>${rec}
+                </li>
+              `).join('')}
+            </ul>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  
+  // Pest Management
+  if (guidance.pest_management && guidance.pest_management.length > 0) {
+    html += `
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="headingPests">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                  data-bs-target="#collapsePests" aria-expanded="false" aria-controls="collapsePests">
+            <i class="fas fa-bug me-2"></i> Pest & Disease Management
+          </button>
+        </h2>
+        <div id="collapsePests" class="accordion-collapse collapse" 
+             aria-labelledby="headingPests" data-bs-parent="#guidanceAccordion">
+          <div class="accordion-body">
+            <ul class="list-group list-group-flush">
+              ${guidance.pest_management.map(rec => `
+                <li class="list-group-item">
+                  <i class="fas fa-angle-right text-warning me-2"></i>${rec}
+                </li>
+              `).join('')}
+            </ul>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  
+  // Irrigation Guidance
+  if (guidance.irrigation && guidance.irrigation.length > 0) {
+    html += `
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="headingIrrigation">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                  data-bs-target="#collapseIrrigation" aria-expanded="false" aria-controls="collapseIrrigation">
+            <i class="fas fa-tint me-2"></i> Irrigation Management
+          </button>
+        </h2>
+        <div id="collapseIrrigation" class="accordion-collapse collapse" 
+             aria-labelledby="headingIrrigation" data-bs-parent="#guidanceAccordion">
+          <div class="accordion-body">
+            <ul class="list-group list-group-flush">
+              ${guidance.irrigation.map(rec => `
+                <li class="list-group-item">
+                  <i class="fas fa-angle-right text-primary me-2"></i>${rec}
+                </li>
+              `).join('')}
+            </ul>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  
+  // Sustainable Practices
+  if (guidance.sustainability && guidance.sustainability.length > 0) {
+    html += `
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="headingSustainable">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                  data-bs-target="#collapseSustainable" aria-expanded="false" aria-controls="collapseSustainable">
+            <i class="fas fa-leaf me-2"></i> Sustainable Practices
+          </button>
+        </h2>
+        <div id="collapseSustainable" class="accordion-collapse collapse" 
+             aria-labelledby="headingSustainable" data-bs-parent="#guidanceAccordion">
+          <div class="accordion-body">
+            <ul class="list-group list-group-flush">
+              ${guidance.sustainability.map(rec => `
+                <li class="list-group-item">
+                  <i class="fas fa-angle-right text-success me-2"></i>${rec}
+                </li>
+              `).join('')}
+            </ul>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  
+  html += `
+      </div>
+      <div class="mt-3 text-center">
+        <button class="btn btn-outline-primary" onclick="printGuidance()">
+          <i class="fas fa-print me-2"></i> Print Guidance
+        </button>
+      </div>
+    </div>
+  `;
+  
+  recommendationsTab.innerHTML = html;
+}
+
+// Function to retry loading farm guidance if it fails
+async function retryLoadFarmGuidance(fieldId) {
+  try {
+    document.getElementById('recommendations').innerHTML = `
+      <div class="text-center py-3">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2">Regenerating AI farm guidance...</p>
+      </div>
+    `;
+    
+    const guidance = await fetchAPI(`farm_guidance/${fieldId}`);
+    displayFarmGuidance(guidance);
+  } catch (error) {
+    document.getElementById('recommendations').innerHTML = `
+      <div class="alert alert-danger">
+        <p><strong>Failed to load AI-powered farming guidance:</strong> ${error.message}</p>
+        <button class="btn btn-sm btn-outline-danger mt-2" onclick="retryLoadFarmGuidance(${fieldId})">
+          <i class="fas fa-sync-alt"></i> Retry
+        </button>
+      </div>
+    `;
+  }
+}
+
+// Function to print the guidance
+function printGuidance() {
+  const printContent = document.getElementById('recommendations').innerHTML;
+  const printWindow = window.open('', '_blank');
+  
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Farm Management Guidance</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+        <style>
+          body { padding: 20px; }
+          @media print {
+            .btn { display: none !important; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h3 class="text-center mb-4">Farm Management Guidance</h3>
+          <hr>
+          ${printContent}
+        </div>
+        <script>
+          window.onload = function() { window.print(); }
+        </script>
+      </body>
+    </html>
+  `);
+  
+  printWindow.document.close();
+}
+
+// Legacy function for backward compatibility
 function displayRecommendations(data) {
   const recommendationsTab = document.getElementById('recommendations');
   
