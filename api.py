@@ -502,6 +502,75 @@ def get_fertilizer_recommendations():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/market_favorites', methods=['GET', 'POST'])
+def handle_market_favorites():
+    """Handle market price favorites/alerts"""
+    
+    if request.method == 'POST':
+        # Create new market favorite/alert
+        data = request.json
+        
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+            
+        if 'user_id' not in data or 'crop_type' not in data:
+            return jsonify({'error': 'Missing required fields: user_id and crop_type are required'}), 400
+        
+        try:
+            # Check if user exists
+            user = User.query.get(data['user_id'])
+            if not user:
+                return jsonify({'error': 'User not found'}), 404
+                
+            # Create new favorite
+            favorite = MarketFavorite(
+                user_id=data['user_id'],
+                crop_type=data['crop_type'],
+                market_name=data.get('market_name', ''),
+                price_alert_min=data.get('price_alert_min'),
+                price_alert_max=data.get('price_alert_max')
+            )
+            
+            db.session.add(favorite)
+            db.session.commit()
+            
+            return jsonify({
+                'id': favorite.id,
+                'user_id': favorite.user_id,
+                'crop_type': favorite.crop_type,
+                'market_name': favorite.market_name,
+                'price_alert_min': favorite.price_alert_min,
+                'price_alert_max': favorite.price_alert_max
+            })
+            
+        except Exception as e:
+            print(f"Error creating market favorite: {str(e)}")
+            return jsonify({'error': f'Failed to create market favorite: {str(e)}'}), 500
+    
+    else:
+        # GET method - retrieve favorites for a user
+        user_id = request.args.get('user_id')
+        
+        if not user_id:
+            return jsonify({'error': 'User ID is required'}), 400
+            
+        try:
+            favorites = MarketFavorite.query.filter_by(user_id=user_id).all()
+            
+            return jsonify({
+                'favorites': [{
+                    'id': f.id,
+                    'user_id': f.user_id,
+                    'crop_type': f.crop_type,
+                    'market_name': f.market_name,
+                    'price_alert_min': f.price_alert_min,
+                    'price_alert_max': f.price_alert_max
+                } for f in favorites]
+            })
+            
+        except Exception as e:
+            return jsonify({'error': f'Failed to retrieve market favorites: {str(e)}'}), 500
+
 @app.route('/api/users/register', methods=['POST'])
 def register_user():
     """Register a new user"""

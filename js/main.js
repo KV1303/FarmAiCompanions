@@ -840,6 +840,9 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('featureMarketBtn').addEventListener('click', () => {
     showSection('marketPricesSection');
     loadMarketPrices();
+    if (isLoggedIn()) {
+      loadUserAlerts();
+    }
   });
   document.getElementById('featureWeatherBtn').addEventListener('click', () => {
     showSection('weatherSection');
@@ -992,22 +995,102 @@ document.addEventListener('DOMContentLoaded', function() {
       return;
     }
     
+    // Validate crop type
+    const cropType = document.getElementById('alertCropType').value;
+    if (!cropType) {
+      alert('Please select a crop type');
+      return;
+    }
+    
+    // Form data
     const alertData = {
       user_id: getCurrentUserId(),
-      crop_type: document.getElementById('alertCropType').value,
+      crop_type: cropType,
       market_name: document.getElementById('alertMarket').value,
-      price_alert_min: document.getElementById('alertMinPrice').value,
-      price_alert_max: document.getElementById('alertMaxPrice').value
+      price_alert_min: document.getElementById('alertMinPrice').value || null,
+      price_alert_max: document.getElementById('alertMaxPrice').value || null
     };
     
+    console.log('Setting price alert:', alertData);
+    
+    // Disable form during submission
+    const submitBtn = document.querySelector('#priceAlertForm button[type="submit"]');
+    const originalBtnText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Setting alert...';
+    
     try {
-      await fetchAPI('market_favorites', 'POST', alertData);
+      const response = await fetchAPI('market_favorites', 'POST', alertData, 3);
+      console.log('Price alert set successfully:', response);
+      
+      // Success message
       alert('Price alert set successfully!');
       document.getElementById('priceAlertForm').reset();
+      
+      // Reload user alerts
+      loadUserAlerts();
     } catch (error) {
-      alert(`Failed to set price alert: ${error.message}`);
+      console.error('Error setting price alert:', error);
+      alert(`Failed to set price alert: ${error.message || 'Connection error'}`);
+    } finally {
+      // Re-enable form
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalBtnText;
     }
   });
+  
+  // Function to load user's price alerts
+  async function loadUserAlerts() {
+    if (!isLoggedIn()) return;
+    
+    const alertsList = document.getElementById('alertsList');
+    
+    // Show loading indicator
+    alertsList.innerHTML = `
+      <li class="list-group-item text-center">
+        <div class="spinner-border spinner-border-sm text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <span class="ms-2">Loading alerts...</span>
+      </li>
+    `;
+    
+    try {
+      const userId = getCurrentUserId();
+      const data = await fetchAPI(`market_favorites?user_id=${userId}`, 'GET', null, 3);
+      console.log('User alerts loaded:', data);
+      
+      if (data && Array.isArray(data.favorites) && data.favorites.length > 0) {
+        let html = '';
+        data.favorites.forEach(alert => {
+          html += `
+            <li class="list-group-item">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <strong>${alert.crop_type}</strong>
+                  ${alert.market_name ? `<span class="badge bg-secondary ms-2">${alert.market_name}</span>` : ''}
+                </div>
+                <div>
+                  ${alert.price_alert_min ? `<span class="badge bg-success">Min: ₹${alert.price_alert_min}</span>` : ''}
+                  ${alert.price_alert_max ? `<span class="badge bg-danger ms-1">Max: ₹${alert.price_alert_max}</span>` : ''}
+                </div>
+              </div>
+            </li>
+          `;
+        });
+        alertsList.innerHTML = html;
+      } else {
+        alertsList.innerHTML = '<li class="list-group-item text-center">No alerts set</li>';
+      }
+    } catch (error) {
+      console.error('Error loading user alerts:', error);
+      alertsList.innerHTML = `
+        <li class="list-group-item text-center text-danger">
+          Failed to load alerts: ${error.message || 'Connection error'}
+        </li>
+      `;
+    }
+  }
   
   // Weather location
   document.getElementById('getWeatherBtn').addEventListener('click', function() {
