@@ -1033,6 +1033,60 @@ function printGuidance() {
   printWindow.document.close();
 }
 
+// Function to directly view a field's guidance
+async function viewFieldGuidance(fieldId) {
+  try {
+    // Show loading indicator
+    document.getElementById('alertsContainer').innerHTML = `
+      <div class="alert alert-info">
+        <div class="d-flex align-items-center">
+          <div class="spinner-border spinner-border-sm me-2" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <span>Loading farm guidance...</span>
+        </div>
+      </div>
+    `;
+    
+    // Get field details first
+    const fieldsResponse = await fetchAPI(`fields?user_id=${getCurrentUserId()}`);
+    const field = fieldsResponse.fields.find(f => f.id === fieldId);
+    
+    if (!field) {
+      throw new Error('Field not found');
+    }
+    
+    // Navigate to dashboard section
+    showSection('dashboardSection');
+    
+    // Display field details which will also load the guidance
+    displayFieldDetails(field);
+    
+    // Switch to the recommendations tab
+    setTimeout(() => {
+      document.getElementById('recommendations-tab').click();
+      
+      // Scroll to the recommendations tab
+      document.getElementById('fieldDetails').scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+      
+      // Clear the alert
+      document.getElementById('alertsContainer').innerHTML = '';
+    }, 500);
+    
+  } catch (error) {
+    // Show error message
+    document.getElementById('alertsContainer').innerHTML = `
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        Failed to load field guidance: ${error.message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    `;
+  }
+}
+
 // Legacy function for backward compatibility
 function displayRecommendations(data) {
   const recommendationsTab = document.getElementById('recommendations');
@@ -1243,12 +1297,25 @@ document.addEventListener('DOMContentLoaded', function() {
       const response = await fetchAPI('fields', 'POST', fieldData);
       console.log('Field saved successfully:', response);
       
-      // Show success message
-      alert('Field saved successfully!');
+      // Show success message with AI guidance information
+      document.getElementById('alertsContainer').innerHTML = `
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+          <h5><i class="fas fa-check-circle me-2"></i>Field "${response.name}" created successfully!</h5>
+          ${response.guidance ? 
+            `<hr>
+             <p><strong><i class="fas fa-robot me-2"></i>AI-Powered Farm Guidance Generated!</strong></p>
+             <p>Comprehensive farming recommendations are now available for your field.</p>
+             <button class="btn btn-sm btn-primary" onclick="viewFieldGuidance(${response.id})">
+               <i class="fas fa-eye me-2"></i>View Farm Guidance
+             </button>`
+            : ''}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      `;
       
       // Close modal and refresh fields
       bootstrap.Modal.getInstance(document.getElementById('addFieldModal')).hide();
-      document.getElementById('addFieldForm').reset();
+      document.getElementById('fieldForm').reset();
       
       // Reload the fields list
       loadFields();
