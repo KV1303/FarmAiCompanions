@@ -973,6 +973,10 @@ function setupDiseaseDetection() {
 async function analyzeImage(imageFile) {
   // First, upload the image to the server
   try {
+    // Show loading state
+    document.getElementById('analyzeImageBtn').disabled = true;
+    document.getElementById('analyzeImageBtn').innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Analyzing...';
+    
     const uploadFormData = new FormData();
     uploadFormData.append('image', imageFile);
     
@@ -993,27 +997,28 @@ async function analyzeImage(imageFile) {
     console.log("Upload successful:", uploadResult);
     
     // Now send the analysis request with the path to the uploaded image
-    const analyzeFormData = new FormData();
-    analyzeFormData.append('image_path', uploadResult.path);
-    analyzeFormData.append('crop_type', document.getElementById('cropType')?.value || 'unknown');
+    const formData = new FormData();
+    
+    // For debugging, send directly as multipart form to the backend
+    formData.append('image', imageFile);
+    formData.append('crop_type', document.getElementById('cropType')?.value || 'unknown');
     
     // Add user/field if logged in
     if (isLoggedIn()) {
-      analyzeFormData.append('user_id', getCurrentUserId());
+      formData.append('user_id', getCurrentUserId());
       // If we're in field context, add field_id
       const fieldId = localStorage.getItem('current_field_id');
       if (fieldId) {
-        analyzeFormData.append('field_id', fieldId);
+        formData.append('field_id', fieldId);
       }
     }
     
-    // Send analysis request to API
+    console.log("Sending disease detection request with form data");
+    
+    // Send analysis request to API using FormData directly
     const analyzeResponse = await fetch('/api/disease_detect', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(Object.fromEntries(analyzeFormData))
+      body: formData
     });
     
     if (!analyzeResponse.ok) {
@@ -1025,13 +1030,27 @@ async function analyzeImage(imageFile) {
         // If response is not JSON
         errorMessage = await analyzeResponse.text() || errorMessage;
       }
+      console.error("Disease detection API error:", errorMessage);
       throw new Error(errorMessage);
     }
     
-    return await analyzeResponse.json();
+    const responseData = await analyzeResponse.json();
+    console.log("Disease detection result:", responseData);
+    return responseData;
   } catch (error) {
     console.error("Disease detection error:", error);
+    // Show error in the result container
+    document.getElementById('diseaseResult').textContent = "Error: " + error.message;
+    document.getElementById('confidenceLevel').style.width = "0%";
+    document.getElementById('confidenceText').textContent = "0%";
+    document.getElementById('symptomsText').textContent = "An error occurred while analyzing the image.";
+    document.getElementById('treatmentText').textContent = "Please try again with a different image.";
+    document.getElementById('resultContainer').classList.remove('hidden');
     throw error;
+  } finally {
+    // Reset button state
+    document.getElementById('analyzeImageBtn').disabled = false;
+    document.getElementById('analyzeImageBtn').innerHTML = 'Analyze Image';
   }
 }
 
