@@ -457,15 +457,45 @@ function displayDiseaseResult(result) {
 async function loadFields() {
   if (!isLoggedIn()) return;
   
+  // Show loading indicator
+  document.getElementById('fieldsList').innerHTML = `
+    <li class="text-center py-4">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="mt-2">Loading your fields...</p>
+    </li>
+  `;
+  
   try {
     const userId = getCurrentUserId();
-    const data = await fetchAPI(`fields?user_id=${userId}`);
-    displayFields(data.fields);
+    console.log('Loading fields for user ID:', userId);
+    
+    // Use the improved fetchAPI with retry logic
+    const data = await fetchAPI(`fields?user_id=${userId}`, 'GET', null, 3);
+    console.log('Fields loaded:', data);
+    
+    if (data && Array.isArray(data.fields)) {
+      displayFields(data.fields);
+    } else {
+      console.error('Invalid fields data:', data);
+      document.getElementById('fieldsList').innerHTML = `
+        <li class="text-center py-4">
+          <div class="alert alert-warning">
+            No fields found. Click "Add Field" to create your first field.
+          </div>
+        </li>
+      `;
+    }
   } catch (error) {
+    console.error('Error loading fields:', error);
     document.getElementById('fieldsList').innerHTML = `
       <li class="text-center py-4">
         <div class="alert alert-danger">
-          Failed to load fields: ${error.message}
+          <p><strong>Failed to load fields:</strong> ${error.message || 'Connection error'}</p>
+          <button class="btn btn-sm btn-outline-danger mt-2" onclick="loadFields()">
+            <i class="fas fa-sync-alt"></i> Retry
+          </button>
         </div>
       </li>
     `;
@@ -820,16 +850,40 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('loginForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
-    const username = document.getElementById('loginUsername').value;
+    const username = document.getElementById('loginUsername').value.trim();
     const password = document.getElementById('loginPassword').value;
     
+    if (!username || !password) {
+      showError('loginError', 'Username and password are required');
+      return;
+    }
+    
+    // Disable form during submission
+    const loginBtn = document.querySelector('#loginForm button[type="submit"]');
+    const originalBtnText = loginBtn.textContent;
+    loginBtn.disabled = true;
+    loginBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Logging in...';
+    
     try {
-      const data = await fetchAPI('users/login', 'POST', { username, password });
-      login(data.id, data.username);
-      showSection('dashboardSection');
-      loadFields();
+      console.log('Attempting login for user:', username);
+      // Use the improved fetchAPI with retry logic
+      const data = await fetchAPI('users/login', 'POST', { username, password }, 3);
+      console.log('Login successful:', data);
+      
+      if (data && data.id) {
+        login(data.id, data.username);
+        showSection('dashboardSection');
+        loadFields();
+      } else {
+        showError('loginError', 'Invalid login response from server');
+      }
     } catch (error) {
-      showError('loginError', error.message || 'Login failed');
+      console.error('Login error:', error);
+      showError('loginError', error.message || 'Login failed. Please try again.');
+    } finally {
+      // Re-enable form
+      loginBtn.disabled = false;
+      loginBtn.textContent = originalBtnText;
     }
   });
   
@@ -871,27 +925,55 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Save field
   document.getElementById('saveFieldBtn').addEventListener('click', async function() {
+    // Validate required fields
+    const fieldName = document.getElementById('fieldName').value.trim();
+    if (!fieldName) {
+      alert('Field name is required');
+      document.getElementById('fieldName').focus();
+      return;
+    }
+
+    // Get the form data
     const fieldData = {
       user_id: getCurrentUserId(),
-      name: document.getElementById('fieldName').value,
-      location: document.getElementById('fieldLocation').value,
-      area: document.getElementById('fieldArea').value,
+      name: fieldName,
+      location: document.getElementById('fieldLocation').value.trim(),
+      area: parseFloat(document.getElementById('fieldArea').value) || 0,
       crop_type: document.getElementById('cropType').value,
       planting_date: document.getElementById('plantingDate').value,
       soil_type: document.getElementById('soilType').value,
-      notes: document.getElementById('fieldNotes').value
+      notes: document.getElementById('fieldNotes').value.trim()
     };
     
+    console.log('Submitting field data:', fieldData);
+    
+    // Disable the save button to prevent double submission
+    const saveBtn = document.getElementById('saveFieldBtn');
+    const originalText = saveBtn.textContent;
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
+    
     try {
-      await fetchAPI('fields', 'POST', fieldData);
+      // Make API call with explicit error handling
+      const response = await fetchAPI('fields', 'POST', fieldData);
+      console.log('Field saved successfully:', response);
+      
+      // Show success message
+      alert('Field saved successfully!');
       
       // Close modal and refresh fields
       bootstrap.Modal.getInstance(document.getElementById('addFieldModal')).hide();
       document.getElementById('addFieldForm').reset();
       
+      // Reload the fields list
       loadFields();
     } catch (error) {
-      alert(`Failed to save field: ${error.message}`);
+      console.error('Error saving field:', error);
+      alert(`Failed to save field: ${error.message || 'Connection error'}`);
+    } finally {
+      // Re-enable the save button
+      saveBtn.disabled = false;
+      saveBtn.textContent = originalText;
     }
   });
   
