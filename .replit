@@ -2,7 +2,7 @@ modules = ["flutter", "nodejs-20", "python-3.11", "postgresql-16"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["flutter", "wget", "jq"]
+packages = ["flutter", "jq", "wget"]
 
 [workflows]
 runButton = "Project"
