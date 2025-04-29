@@ -1,0 +1,4 @@
+healthy
+bacterial_leaf_blight
+powdery_mildew
+late_blight

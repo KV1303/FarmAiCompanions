@@ -1,0 +1,33 @@
+modules = ["flutter", "nodejs-20"]
+
+[nix]
+channel = "stable-24_05"
+packages = ["flutter", "wget"]
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "FarmAssistAI"
+
+[[workflows.workflow]]
+name = "FarmAssistAI"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node server.js"
+waitForPort = 5000
+
+[deployment]
+run = ["sh", "-c", "flutter run -d web-server --web-port 5000 --web-hostname 0.0.0.0"]
+
+[[ports]]
+localPort = 5000
+externalPort = 80
