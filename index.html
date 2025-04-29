@@ -327,9 +327,9 @@
           </div>
           
           <!-- Auth Buttons -->
-          <button class="btn btn-outline-light me-2" id="loginNav">Login</button>
-          <button class="btn btn-outline-light" id="registerNav">Register</button>
-          <button class="btn btn-outline-light hidden" id="logoutBtn">Logout</button>
+          <button class="btn btn-outline-light me-2" id="loginNav" data-i18n="login">Login</button>
+          <button class="btn btn-outline-light" id="registerNav" data-i18n="register">Register</button>
+          <button class="btn btn-outline-light hidden" id="logoutBtn" data-i18n="logout">Logout</button>
         </div>
       </div>
     </div>
@@ -342,9 +342,9 @@
       <!-- Hero Section -->
       <div class="hero-section text-center">
         <div class="container">
-          <h1 class="display-4">Revolutionize Your Farming</h1>
-          <p class="lead">AI-powered companion for modern farmers</p>
-          <button class="btn btn-outline-light btn-lg mt-3" id="getStartedBtn">Get Started</button>
+          <h1 class="display-4" data-i18n="revolutionize_farming">Revolutionize Your Farming</h1>
+          <p class="lead" data-i18n="ai_companion">AI-powered companion for modern farmers</p>
+          <button class="btn btn-outline-light btn-lg mt-3" id="getStartedBtn" data-i18n="get_started">Get Started</button>
         </div>
       </div>
 
@@ -354,19 +354,19 @@
           <div class="col-md-12">
             <div class="card border-success">
               <div class="card-header bg-success text-white">
-                <h3 class="mb-0"><i class="fas fa-robot me-2"></i> AI Farm Guidance System</h3>
+                <h3 class="mb-0"><i class="fas fa-robot me-2"></i> <span data-i18n="ai_farm_guidance">AI Farm Guidance System</span></h3>
               </div>
               <div class="card-body">
                 <div class="row">
                   <div class="col-md-6">
-                    <h4>Get personalized farming recommendations</h4>
-                    <p>Our AI-powered farm guidance system provides comprehensive recommendations tailored to your specific crops, soil type, and location.</p>
+                    <h4 data-i18n="personalized_recommendations">Get personalized farming recommendations</h4>
+                    <p data-i18n="guidance_description">Our AI-powered farm guidance system provides comprehensive recommendations tailored to your specific crops, soil type, and location.</p>
                     
                     <form id="quickGuidanceForm" class="mt-4">
                       <div class="mb-3">
-                        <label for="quickCropType" class="form-label">Crop Type</label>
+                        <label for="quickCropType" class="form-label" data-i18n="crop_type">Crop Type</label>
                         <select class="form-select" id="quickCropType" required>
-                          <option value="">Select a crop</option>
+                          <option value="" data-i18n="select_crop">Select a crop</option>
                           <option value="Rice">Rice</option>
                           <option value="Wheat">Wheat</option>
                           <option value="Cotton">Cotton</option>
@@ -389,9 +389,9 @@
                         </select>
                       </div>
                       <div class="mb-3">
-                        <label for="quickSoilType" class="form-label">Soil Type</label>
+                        <label for="quickSoilType" class="form-label" data-i18n="soil_type">Soil Type</label>
                         <select class="form-select" id="quickSoilType" required>
-                          <option value="">Select soil type</option>
+                          <option value="" data-i18n="select_soil">Select soil type</option>
                           <option value="Sandy">Sandy</option>
                           <option value="Clay">Clay</option>
                           <option value="Loamy">Loamy</option>
@@ -407,7 +407,7 @@
                         </select>
                       </div>
                       <button type="submit" class="btn btn-success" id="getGuidanceBtn">
-                        <i class="fas fa-lightbulb me-2"></i>Get Farm Guidance
+                        <i class="fas fa-lightbulb me-2"></i><span data-i18n="get_farm_guidance">Get Farm Guidance</span>
                       </button>
                     </form>
                   </div>
@@ -415,8 +415,8 @@
                     <div id="guidanceResults" class="p-3 border rounded">
                       <div class="text-center py-5">
                         <i class="fas fa-seedling fa-3x text-success mb-3"></i>
-                        <h5>AI Farm Guidance</h5>
-                        <p class="text-muted">Select your crop and soil type to get personalized farming recommendations.</p>
+                        <h5 data-i18n="ai_farm_guidance">AI Farm Guidance</h5>
+                        <p class="text-muted" data-i18n="guidance_description">Select your crop and soil type to get personalized farming recommendations.</p>
                       </div>
                     </div>
                   </div>
