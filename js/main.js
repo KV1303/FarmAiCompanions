@@ -61,12 +61,12 @@ function displayQuickGuidance(data) {
   
   // Key recommendations
   if (guidance) {
-    // Add tabs for different sections
+    // Add tabs for different sections including detailed article
     html += `
       <ul class="nav nav-tabs nav-fill mb-3" id="guidanceTabs" role="tablist">
         <li class="nav-item" role="presentation">
-          <button class="nav-link active" id="general-tab" data-bs-toggle="tab" 
-            data-bs-target="#general-content" type="button" role="tab" aria-selected="true">
+          <button class="nav-link ${guidance.detailed_article ? '' : 'active'}" id="general-tab" data-bs-toggle="tab" 
+            data-bs-target="#general-content" type="button" role="tab" aria-selected="${guidance.detailed_article ? 'false' : 'true'}">
             General
           </button>
         </li>
@@ -82,11 +82,25 @@ function displayQuickGuidance(data) {
             Fertilizer
           </button>
         </li>
+        ${guidance.detailed_article ? `
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="article-tab" data-bs-toggle="tab" 
+            data-bs-target="#article-content" type="button" role="tab" aria-selected="true">
+            Detailed Guide
+          </button>
+        </li>
+        ` : ''}
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="pest-tab" data-bs-toggle="tab" 
+            data-bs-target="#pest-content" type="button" role="tab" aria-selected="false">
+            Pest Control
+          </button>
+        </li>
       </ul>
       
       <div class="tab-content" id="guidanceTabContent">
         <!-- General Recommendations -->
-        <div class="tab-pane fade show active" id="general-content" role="tabpanel">
+        <div class="tab-pane fade ${guidance.detailed_article ? '' : 'show active'}" id="general-content" role="tabpanel">
           <ul class="list-group list-group-flush">
             ${guidance.general_recommendations ? 
               guidance.general_recommendations.map(item => 
@@ -126,6 +140,36 @@ function displayQuickGuidance(data) {
             }
           </ul>
         </div>
+        
+        <!-- Pest Management -->
+        <div class="tab-pane fade" id="pest-content" role="tabpanel">
+          <ul class="list-group list-group-flush">
+            ${guidance.pest_management ? 
+              guidance.pest_management.map(item => 
+                `<li class="list-group-item">
+                  <i class="fas fa-bug text-danger me-2"></i>${item}
+                </li>`
+              ).join('') : 
+              '<li class="list-group-item">No pest management recommendations available</li>'
+            }
+          </ul>
+        </div>
+        
+        ${guidance.detailed_article ? `
+        <!-- Detailed Article -->
+        <div class="tab-pane fade show active" id="article-content" role="tabpanel">
+          <div class="detailed-guide p-2">
+            <div class="article-content">
+              ${formatArticleContent(guidance.detailed_article)}
+            </div>
+            <div class="text-end mt-3">
+              <button class="btn btn-sm btn-outline-success" onclick="printArticle('${crop_type}', '${soil_type}')">
+                <i class="fas fa-print me-2"></i>Print Guide
+              </button>
+            </div>
+          </div>
+        </div>
+        ` : ''}
       </div>
     `;
   } else {
@@ -1187,6 +1231,147 @@ async function retryLoadFarmGuidance(fieldId) {
 }
 
 // Function to print the guidance
+function formatArticleContent(articleText) {
+  if (!articleText) return '<p>No detailed article available</p>';
+  
+  // Replace markdown-style headers with HTML
+  let formattedContent = articleText
+    .replace(/^# (.*?)$/gm, '<h1>$1</h1>')
+    .replace(/^## (.*?)$/gm, '<h2>$1</h2>')
+    .replace(/^### (.*?)$/gm, '<h3>$1</h3>')
+    .replace(/^#### (.*?)$/gm, '<h4>$1</h4>')
+    .replace(/^##### (.*?)$/gm, '<h5>$1</h5>')
+    .replace(/^###### (.*?)$/gm, '<h6>$1</h6>');
+  
+  // Replace markdown-style lists
+  formattedContent = formattedContent
+    .replace(/^- (.*?)$/gm, '<li>$1</li>')
+    .replace(/^  - (.*?)$/gm, '<li class="ms-4">$1</li>')
+    .replace(/^    - (.*?)$/gm, '<li class="ms-5">$1</li>');
+  
+  // Wrap adjacent list items in <ul> tags
+  formattedContent = formattedContent.replace(/<li>.*?<\/li>(\s*<li>.*?<\/li>)*/g, match => {
+    return '<ul class="mb-3">' + match + '</ul>';
+  });
+  
+  // Replace two or more newlines with a paragraph break
+  formattedContent = formattedContent.replace(/\n\s*\n/g, '</p><p>');
+  
+  // Turn single newlines within paragraphs into <br>
+  formattedContent = formattedContent.replace(/([^>])\n([^<])/g, '$1<br>$2');
+  
+  // Remove any Markdown code blocks (```json etc.)
+  formattedContent = formattedContent.replace(/```[\s\S]*?```/g, '');
+  
+  // Wrap the content in paragraphs
+  formattedContent = '<p>' + formattedContent + '</p>';
+  
+  // Style and enhance headings
+  formattedContent = formattedContent
+    .replace(/<h1>/g, '<h1 class="text-success mb-3">')
+    .replace(/<h2>/g, '<h2 class="text-success mb-3 mt-4">')
+    .replace(/<h3>/g, '<h3 class="text-success mb-2 mt-3">');
+  
+  // Apply article styling
+  const styledContent = `
+    <div class="article-container">
+      ${formattedContent}
+    </div>
+  `;
+  
+  return styledContent;
+}
+
+function printArticle(cropType, soilType) {
+  const articleContent = document.querySelector('.article-content').innerHTML;
+  const printWindow = window.open('', '_blank');
+  
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Farm Management Guide: ${cropType} in ${soilType} Soil</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+        <style>
+          body { 
+            padding: 20px; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          }
+          .article-container {
+            max-width: 800px;
+            margin: 0 auto;
+          }
+          h1, h2, h3 {
+            color: #2e7d32;
+            margin-top: 1.5em;
+            margin-bottom: 0.8em;
+          }
+          h1 { font-size: 24px; }
+          h2 { font-size: 20px; }
+          h3 { font-size: 18px; }
+          p { 
+            line-height: 1.6;
+            margin-bottom: 1em;
+          }
+          ul {
+            margin-bottom: 1em;
+          }
+          li {
+            margin-bottom: 0.5em;
+            line-height: 1.5;
+          }
+          .header {
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #ccc;
+          }
+          @media print {
+            .no-print { display: none !important; }
+            body { font-size: 12pt; }
+            h1 { font-size: 18pt; }
+            h2 { font-size: 16pt; }
+            h3 { font-size: 14pt; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1 class="text-center">Comprehensive Growing Guide</h1>
+            <h2 class="text-center">${cropType} Cultivation in ${soilType} Soil</h2>
+            <p class="text-center text-muted">Generated by FarmAssist AI on ${new Date().toLocaleDateString()}</p>
+            <div class="text-center mt-3 no-print">
+              <button class="btn btn-success" onclick="window.print()">
+                <i class="fas fa-print me-2"></i>Print Guide
+              </button>
+            </div>
+          </div>
+          
+          <div class="article-container">
+            ${articleContent}
+          </div>
+          
+          <div class="footer mt-4 text-center">
+            <p class="small text-muted">
+              © ${new Date().getFullYear()} FarmAssist AI - Personalized farming guidance for modern agriculture
+            </p>
+          </div>
+        </div>
+        <script>
+          window.onload = function() {
+            // Auto print after a short delay to ensure styles are loaded
+            setTimeout(function() {
+              // window.print();
+            }, 500);
+          }
+        </script>
+      </body>
+    </html>
+  `);
+  
+  printWindow.document.close();
+}
+
 function printGuidance() {
   const printContent = document.getElementById('recommendations-content').innerHTML;
   const printWindow = window.open('', '_blank');

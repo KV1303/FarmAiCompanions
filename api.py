@@ -1324,20 +1324,127 @@ def get_quick_farm_guidance():
         if not crop_type or not soil_type:
             return jsonify({'error': 'Crop type and soil type are required'}), 400
         
-        # Create a temporary field object with minimal information
-        from types import SimpleNamespace
-        temp_field = SimpleNamespace(
-            name="Quick Analysis",
-            location=None,
-            area=None, 
-            crop_type=crop_type,
-            soil_type=soil_type,
-            planting_date=None,
-            notes=None
-        )
+        # Use a more detailed approach for quick guidance with narrative content
+        guidance = {
+            'general_recommendations': [],
+            'crop_specific': [],
+            'fertilizer': [],
+            'pest_management': [],
+            'irrigation': [],
+            'sustainability': [],
+            'detailed_article': ''  # New field for detailed narrative content
+        }
         
-        # Generate guidance using the same function used for regular fields
-        guidance = generate_farm_guidance(temp_field)
+        try:
+            # If Gemini API key is available, use AI for detailed guidance
+            if GEMINI_API_KEY:
+                model = genai.GenerativeModel('gemini-pro')
+                
+                # Create a more comprehensive prompt for detailed guidance
+                prompt = f"""
+                As an agricultural expert, write a detailed farming guide for {crop_type} cultivation in {soil_type} soil. 
+                
+                Structure your response as an informative article that covers:
+                
+                1. Introduction to {crop_type} farming in {soil_type} soil with its advantages and challenges
+                
+                2. Detailed Cultivation Timeline:
+                   - Pre-planting preparation with exact timing
+                   - Planting techniques with precise spacing measurements
+                   - Growth stages with expected durations
+                   - Harvest timing indicators and techniques
+                
+                3. Soil Management for {soil_type} soil:
+                   - How to optimize {soil_type} soil for {crop_type}
+                   - Soil amendments and their application rates
+                   - pH management specific to this combination
+                
+                4. Irrigation Requirements:
+                   - Watering schedule throughout growth stages
+                   - Water conservation techniques
+                   - Signs of over/under watering
+                
+                5. Fertilization Strategy:
+                   - Detailed NPK requirements with exact ratios
+                   - Timing of fertilizer applications
+                   - Organic alternatives and their application rates
+                
+                6. Pest and Disease Management:
+                   - Common pests and diseases specific to {crop_type} in {soil_type} soil
+                   - Prevention measures with timing
+                   - Organic and conventional treatment options
+                
+                7. Modern Farming Technologies:
+                   - Advanced techniques applicable to this crop-soil combination
+                   - Precision farming approaches
+                   - Technology integration suggestions
+                
+                8. Sustainable Practices:
+                   - Crop rotation recommendations
+                   - Cover cropping strategies
+                   - Reducing environmental impact
+                
+                Provide specific, actionable information with exact measurements, timings, and rates wherever possible.
+                Also include a structured JSON response with concise bullet-point recommendations for each category.
+                """
+                
+                response = model.generate_content(prompt)
+                
+                # Process the response
+                if response and response.text:
+                    # Extract detailed article content
+                    article_text = response.text.strip()
+                    guidance['detailed_article'] = article_text
+                    
+                    try:
+                        # Try to extract JSON for structured bullet points
+                        import json
+                        if '```json' in article_text:
+                            # Extract JSON from markdown code block
+                            json_text = article_text.split('```json')[1].split('```')[0].strip()
+                            parsed_guidance = json.loads(json_text)
+                            
+                            # Update structured guidance fields
+                            for key in parsed_guidance:
+                                if key in guidance:
+                                    guidance[key] = parsed_guidance[key]
+                    except:
+                        # If JSON extraction fails, use basic guidance
+                        from types import SimpleNamespace
+                        temp_field = SimpleNamespace(
+                            name="Quick Analysis",
+                            location=None,
+                            area=None, 
+                            crop_type=crop_type,
+                            soil_type=soil_type,
+                            planting_date=None,
+                            notes=None
+                        )
+                        
+                        # Get structured bullet points only
+                        basic_guidance = generate_farm_guidance(temp_field)
+                        for key in basic_guidance:
+                            if key in guidance and key != 'detailed_article':
+                                guidance[key] = basic_guidance[key]
+        except Exception as e:
+            print(f"Error generating detailed guidance: {str(e)}")
+            # Fallback to simple guidance
+            from types import SimpleNamespace
+            temp_field = SimpleNamespace(
+                name="Quick Analysis",
+                location=None,
+                area=None, 
+                crop_type=crop_type,
+                soil_type=soil_type,
+                planting_date=None,
+                notes=None
+            )
+            
+            # Generate basic guidance using the same function used for regular fields
+            basic_guidance = generate_farm_guidance(temp_field)
+            for key in basic_guidance:
+                if key in guidance:
+                    guidance[key] = basic_guidance[key]
         
         # Return structured guidance
         return jsonify({
