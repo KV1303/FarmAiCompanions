@@ -84,27 +84,52 @@ function startPythonAPI() {
 app.use('/api', async (req, res) => {
   const url = `http://localhost:${API_PORT}${req.originalUrl}`;
   const method = req.method.toLowerCase();
+  let retries = 3;
   
-  try {
-    const options = {
-      method,
-      headers: { 'Content-Type': 'application/json' }
-    };
-    
-    if (['post', 'put', 'patch'].includes(method) && req.body) {
-      options.body = JSON.stringify(req.body);
+  async function attemptRequest() {
+    try {
+      const options = {
+        method,
+        headers: { 'Content-Type': 'application/json' }
+      };
+      
+      if (['post', 'put', 'patch'].includes(method) && req.body) {
+        options.body = JSON.stringify(req.body);
+      }
+      
+      console.log(`[Proxy] ${method.toUpperCase()} ${url}`);
+      const response = await fetch(url, options);
+      
+      // Check if response is ok
+      if (!response.ok) {
+        console.error(`[Proxy] API request failed with status ${response.status}`);
+        const errorData = await response.json();
+        return res.status(response.status).json(errorData);
+      }
+      
+      const data = await response.json();
+      console.log(`[Proxy] Response from ${url}:`, typeof data === 'object' ? 'object' : data);
+      return res.json(data);
+    } catch (err) {
+      console.error('API Proxy Error:', err);
+      
+      // If there are remaining retries and it's a network error (not a server error)
+      if (retries > 0 && (err.code === 'ECONNREFUSED' || err.type === 'system')) {
+        retries--;
+        const delay = (3 - retries) * 1000; // Exponential backoff
+        console.log(`[Proxy] Connection failed, retrying in ${delay}ms (${retries} retries left)...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return attemptRequest();
+      }
+      
+      return res.status(500).json({
+        error: 'Failed to connect to API server',
+        details: err.message
+      });
     }
-    
-    const response = await fetch(url, options);
-    const data = await response.json();
-    res.json(data);
-  } catch (err) {
-    console.error('API Proxy Error:', err);
-    res.status(500).json({
-      error: 'Failed to connect to API server',
-      details: err.message
-    });
   }
+  
+  return attemptRequest();
 });
 
 // Start the API and web server

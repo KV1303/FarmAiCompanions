@@ -26,7 +26,7 @@ function showError(elementId, message) {
 }
 
 // API functions
-async function fetchAPI(endpoint, method = 'GET', data = null) {
+async function fetchAPI(endpoint, method = 'GET', data = null, retries = 3) {
   const url = `/api/${endpoint}`;
   const options = {
     method: method,
@@ -40,14 +40,27 @@ async function fetchAPI(endpoint, method = 'GET', data = null) {
   }
   
   try {
+    console.log(`Sending ${method} request to ${url}`, data);
     const response = await fetch(url, options);
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || 'API request failed');
+      throw new Error(errorData.error || `API request failed with status ${response.status}`);
     }
-    return await response.json();
+    const responseData = await response.json();
+    console.log(`Response from ${url}:`, responseData);
+    return responseData;
   } catch (error) {
     console.error(`API Error (${endpoint}):`, error);
+    
+    // Implement retry logic for GET requests or when we have network errors
+    if (retries > 0 && (method === 'GET' || error.message.includes('Failed to fetch'))) {
+      console.log(`Retrying ${endpoint} (${retries} attempts left)...`);
+      // Wait for a short time before retrying (exponential backoff)
+      const delay = (3 - retries + 1) * 1000;
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return fetchAPI(endpoint, method, data, retries - 1);
+    }
+    
     throw error;
   }
 }
