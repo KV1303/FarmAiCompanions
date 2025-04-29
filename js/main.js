@@ -1264,6 +1264,11 @@ function formatArticleContent(articleText) {
   // Remove any Markdown code blocks (```json etc.)
   formattedContent = formattedContent.replace(/```[\s\S]*?```/g, '');
   
+  // Replace asterisks with emphasis (bold/italic)
+  formattedContent = formattedContent
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold text
+    .replace(/\*(.*?)\*/g, '<em>$1</em>'); // Italic text
+  
   // Wrap the content in paragraphs
   formattedContent = '<p>' + formattedContent + '</p>';
   
