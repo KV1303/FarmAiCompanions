@@ -575,6 +575,13 @@ function displayQuickGuidance(data) {
 
 // Utility functions
 function showSection(sectionId) {
+  // Check if user is logged in - only allow access to login/register section and home section if not logged in
+  if (!isLoggedIn() && sectionId !== 'loginSection' && sectionId !== 'registerSection' && sectionId !== 'homeSection') {
+    // If trying to access protected section, show login instead
+    alert('Please login to access this feature');
+    sectionId = 'loginSection';
+  }
+  
   // Hide all sections
   document.querySelectorAll('main section').forEach(section => {
     section.classList.add('hidden');
@@ -584,6 +591,11 @@ function showSection(sectionId) {
   const section = document.getElementById(sectionId);
   if (section) {
     section.classList.remove('hidden');
+  }
+  
+  // If we're in the home section, check for free trial or subscription status
+  if (sectionId === 'homeSection' && isLoggedIn()) {
+    checkSubscriptionStatus();
   }
 }
 
@@ -670,6 +682,335 @@ function updateAuthUI() {
   
   // Enable/disable protected sections
   document.getElementById('dashboardNav').classList.toggle('disabled', !isAuthenticated);
+  
+  // If user is authenticated, check subscription status
+  if (isAuthenticated) {
+    checkSubscriptionStatus();
+  }
+}
+
+// Subscription-related functions
+function checkSubscriptionStatus() {
+  const userId = getCurrentUserId();
+  if (!userId) return;
+  
+  // Get subscription data from localStorage or fetch from server
+  const subscriptionData = getSubscriptionData();
+  
+  if (!subscriptionData) {
+    // New user - set up free trial
+    setupFreeTrial();
+    return;
+  }
+  
+  // Check if subscription is active
+  if (subscriptionData.status === 'active') {
+    // Subscription is active - do nothing
+    console.log('Subscription active until:', new Date(subscriptionData.expiryDate));
+    return;
+  }
+  
+  // Check if free trial is still valid
+  if (subscriptionData.status === 'trial') {
+    const trialEnd = new Date(subscriptionData.trialEndDate);
+    const now = new Date();
+    
+    if (trialEnd > now) {
+      // Trial still valid - show days remaining
+      const daysRemaining = Math.ceil((trialEnd - now) / (1000 * 60 * 60 * 24));
+      console.log('Trial active, days remaining:', daysRemaining);
+      showTrialBanner(daysRemaining);
+    } else {
+      // Trial expired - show subscription needed
+      console.log('Trial expired, subscription needed');
+      showSubscriptionNeededBanner();
+    }
+    return;
+  }
+  
+  // If we get here, subscription is expired
+  showSubscriptionNeededBanner();
+}
+
+function getSubscriptionData() {
+  // Get subscription data from localStorage
+  const subscriptionData = localStorage.getItem('subscription_data');
+  if (subscriptionData) {
+    return JSON.parse(subscriptionData);
+  }
+  
+  // If no data in localStorage, return null
+  return null;
+}
+
+function setupFreeTrial() {
+  // Set up a 7-day free trial
+  const now = new Date();
+  const trialEndDate = new Date(now);
+  trialEndDate.setDate(now.getDate() + 7); // 7 days from now
+  
+  // Save trial info to localStorage
+  const subscriptionData = {
+    status: 'trial',
+    startDate: now.toISOString(),
+    trialEndDate: trialEndDate.toISOString()
+  };
+  
+  localStorage.setItem('subscription_data', JSON.stringify(subscriptionData));
+  
+  // Show trial welcome message
+  showTrialWelcomeBanner();
+}
+
+function showTrialBanner(daysRemaining) {
+  // Check if banner container exists, otherwise create it
+  let bannerContainer = document.getElementById('subscription-banner');
+  if (!bannerContainer) {
+    bannerContainer = document.createElement('div');
+    bannerContainer.id = 'subscription-banner';
+    bannerContainer.className = 'alert alert-info alert-dismissible fade show subscription-banner';
+    document.body.insertBefore(bannerContainer, document.body.firstChild);
+  }
+  
+  // Set banner content for trial
+  bannerContainer.innerHTML = `
+    <strong>Free Trial:</strong> ${daysRemaining} day${daysRemaining !== 1 ? 's' : ''} remaining in your trial. 
+    <a href="#" class="subscribe-link">Subscribe now</a> for uninterrupted access at just ₹99/year.
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  `;
+  
+  // Add event listener to subscribe link
+  document.querySelector('.subscribe-link')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    showSubscriptionModal();
+  });
+}
+
+function showTrialWelcomeBanner() {
+  // Check if banner container exists, otherwise create it
+  let bannerContainer = document.getElementById('subscription-banner');
+  if (!bannerContainer) {
+    bannerContainer = document.createElement('div');
+    bannerContainer.id = 'subscription-banner';
+    bannerContainer.className = 'alert alert-success alert-dismissible fade show subscription-banner';
+    document.body.insertBefore(bannerContainer, document.body.firstChild);
+  }
+  
+  // Set banner content for trial welcome
+  bannerContainer.innerHTML = `
+    <strong>Welcome to FarmAssist AI!</strong> Your 7-day free trial has started. Enjoy full access to all features. 
+    <a href="#" class="subscribe-link">Subscribe now</a> for just ₹99/year after your trial.
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  `;
+  
+  // Add event listener to subscribe link
+  document.querySelector('.subscribe-link')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    showSubscriptionModal();
+  });
+}
+
+function showSubscriptionNeededBanner() {
+  // Check if banner container exists, otherwise create it
+  let bannerContainer = document.getElementById('subscription-banner');
+  if (!bannerContainer) {
+    bannerContainer = document.createElement('div');
+    bannerContainer.id = 'subscription-banner';
+    bannerContainer.className = 'alert alert-warning alert-dismissible fade show subscription-banner';
+    document.body.insertBefore(bannerContainer, document.body.firstChild);
+  }
+  
+  // Set banner content for subscription needed
+  bannerContainer.innerHTML = `
+    <strong>Subscription Required:</strong> Your free trial has ended. 
+    <a href="#" class="subscribe-link">Subscribe now</a> for just ₹99/year to continue using all features.
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  `;
+  
+  // Add event listener to subscribe link
+  document.querySelector('.subscribe-link')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    showSubscriptionModal();
+  });
+}
+
+function showSubscriptionModal() {
+  // Create modal if it doesn't exist
+  let modal = document.getElementById('subscriptionModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'subscriptionModal';
+    modal.className = 'modal fade';
+    modal.tabIndex = '-1';
+    modal.setAttribute('aria-labelledby', 'subscriptionModalLabel');
+    modal.setAttribute('aria-hidden', 'true');
+    
+    modal.innerHTML = `
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="subscriptionModalLabel">Subscribe to FarmAssist AI</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="subscription-details mb-4">
+              <h4>Premium Subscription</h4>
+              <div class="price-tag my-3">
+                <span class="currency">₹</span>
+                <span class="price">99</span>
+                <span class="period">/year</span>
+              </div>
+              <ul class="subscription-features list-group mb-3">
+                <li class="list-group-item"><i class="fas fa-check text-success me-2"></i> AI Crop Disease Detection</li>
+                <li class="list-group-item"><i class="fas fa-check text-success me-2"></i> Real-time Market Prices</li>
+                <li class="list-group-item"><i class="fas fa-check text-success me-2"></i> AI-powered Farming Guidance</li>
+                <li class="list-group-item"><i class="fas fa-check text-success me-2"></i> Precision Fertilizer Recommendations</li>
+                <li class="list-group-item"><i class="fas fa-check text-success me-2"></i> Accurate Weather Forecasts</li>
+                <li class="list-group-item"><i class="fas fa-check text-success me-2"></i> Unlimited Field Management</li>
+              </ul>
+            </div>
+            
+            <form id="payment-form" class="mb-3">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label for="card-name" class="form-label">Name on Card</label>
+                  <input type="text" class="form-control" id="card-name" required>
+                </div>
+                <div class="col-md-6">
+                  <label for="card-number" class="form-label">Card Number</label>
+                  <input type="text" class="form-control" id="card-number" placeholder="1234 5678 9012 3456" required>
+                </div>
+                <div class="col-md-4">
+                  <label for="card-expiry-month" class="form-label">Month</label>
+                  <select class="form-select" id="card-expiry-month" required>
+                    <option value="">MM</option>
+                    <option value="01">01</option>
+                    <option value="02">02</option>
+                    <option value="03">03</option>
+                    <option value="04">04</option>
+                    <option value="05">05</option>
+                    <option value="06">06</option>
+                    <option value="07">07</option>
+                    <option value="08">08</option>
+                    <option value="09">09</option>
+                    <option value="10">10</option>
+                    <option value="11">11</option>
+                    <option value="12">12</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label for="card-expiry-year" class="form-label">Year</label>
+                  <select class="form-select" id="card-expiry-year" required>
+                    <option value="">YYYY</option>
+                    <option value="2025">2025</option>
+                    <option value="2026">2026</option>
+                    <option value="2027">2027</option>
+                    <option value="2028">2028</option>
+                    <option value="2029">2029</option>
+                    <option value="2030">2030</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label for="card-cvv" class="form-label">CVV</label>
+                  <input type="text" class="form-control" id="card-cvv" placeholder="123" required maxlength="4">
+                </div>
+              </div>
+              
+              <div class="mt-4">
+                <button type="submit" id="submit-payment" class="btn btn-primary btn-lg w-100">Pay ₹99</button>
+              </div>
+            </form>
+            
+            <div class="text-center text-muted small">
+              <p class="mb-1">This is a demo payment form. No real payment is processed.</p>
+              <p class="mb-0">For testing purposes, any card details will be accepted.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Add event listener to the payment form
+    document.getElementById('payment-form')?.addEventListener('submit', function(e) {
+      e.preventDefault();
+      processPayment();
+    });
+  }
+  
+  // Show the modal
+  const bsModal = new bootstrap.Modal(modal);
+  bsModal.show();
+}
+
+function processPayment() {
+  // Show processing state
+  const submitButton = document.getElementById('submit-payment');
+  submitButton.disabled = true;
+  submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+  
+  // Simulate payment processing
+  setTimeout(() => {
+    // Generate a mock transaction ID
+    const transactionId = 'TXN' + Math.floor(Math.random() * 1000000000);
+    
+    // Handle successful payment
+    handleSubscriptionSuccess({
+      transaction_id: transactionId,
+      amount: 99,
+      currency: 'INR'
+    });
+  }, 2000);
+}
+
+function handleSubscriptionSuccess(paymentResponse) {
+  // Set up subscription for 1 year
+  const now = new Date();
+  const expiryDate = new Date(now);
+  expiryDate.setFullYear(now.getFullYear() + 1); // 1 year from now
+  
+  // Save subscription info to localStorage
+  const subscriptionData = {
+    status: 'active',
+    startDate: now.toISOString(),
+    expiryDate: expiryDate.toISOString(),
+    paymentId: paymentResponse.transaction_id
+  };
+  
+  localStorage.setItem('subscription_data', JSON.stringify(subscriptionData));
+  
+  // Close the modal
+  const modal = document.getElementById('subscriptionModal');
+  const bsModal = bootstrap.Modal.getInstance(modal);
+  if (bsModal) bsModal.hide();
+  
+  // Remove any existing banner
+  const banner = document.getElementById('subscription-banner');
+  if (banner) banner.remove();
+  
+  // Show success message
+  showSubscriptionSuccessBanner();
+}
+
+function showSubscriptionSuccessBanner() {
+  // Check if banner container exists, otherwise create it
+  let bannerContainer = document.getElementById('subscription-banner');
+  if (!bannerContainer) {
+    bannerContainer = document.createElement('div');
+    bannerContainer.id = 'subscription-banner';
+    bannerContainer.className = 'alert alert-success alert-dismissible fade show subscription-banner';
+    document.body.insertBefore(bannerContainer, document.body.firstChild);
+  } else {
+    bannerContainer.className = 'alert alert-success alert-dismissible fade show subscription-banner';
+  }
+  
+  // Set banner content for subscription success
+  bannerContainer.innerHTML = `
+    <strong>Thank You!</strong> Your subscription to FarmAssist AI has been activated. 
+    You now have full access to all premium features for 1 year.
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  `;
 }
 
 // Weather functions
