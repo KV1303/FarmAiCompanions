@@ -2757,14 +2757,6 @@ function loadChatHistory() {
     // Scroll to bottom
     scrollChatToBottom();
   }
-  
-  // Add chat history
-  chatHistory.forEach(message => {
-    addChatMessage(message.text, message.sender, false);
-  });
-  
-  // Scroll to bottom
-  scrollChatToBottom();
 }
 
 function addChatMessage(text, sender, saveToHistory = true) {
@@ -2839,12 +2831,24 @@ function clearChat() {
     localStorage.removeItem(`chat_history_${userId}`);
   }
   
-  // Clear chat UI (keep welcome message)
+  // Clear chat UI and add a new welcome message
   const chatMessages = document.getElementById('chatMessages');
   if (chatMessages) {
-    const welcomeMessage = chatMessages.firstElementChild;
     chatMessages.innerHTML = '';
-    chatMessages.appendChild(welcomeMessage);
+    
+    // Add a new welcome message
+    const welcomeMessage = `
+      Hello! I'm AI Kisan, your personal farming assistant. I can help with:
+      
+      • Crop advice and best practices
+      • Disease identification and treatment
+      • Weather impact on farming
+      • Fertilizer and irrigation recommendations
+      • Sustainable farming methods
+      
+      Go ahead and ask me any farming-related question! Type your message below and press Enter.
+    `;
+    addChatMessage(welcomeMessage, 'bot', false);
   }
 }
 
