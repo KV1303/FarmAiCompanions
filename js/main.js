@@ -425,9 +425,22 @@ function displayQuickGuidance(data) {
   // Format the guidance data
   let html = `
     <div class="guidance-header mb-3">
-      <h5 class="text-success mb-2">
-        <i class="fas fa-check-circle me-2"></i>AI Farm Guidance
-      </h5>
+      <div class="d-flex justify-content-between align-items-center">
+        <h5 class="text-success mb-2">
+          <i class="fas fa-check-circle me-2"></i>AI Farm Guidance
+        </h5>
+        <div class="guidance-actions">
+          <button class="btn btn-sm btn-outline-primary" onclick="printGuidance()">
+            <i class="fas fa-print me-1"></i> Print
+          </button>
+          <button class="btn btn-sm btn-outline-secondary ms-2" onclick="downloadGuidance()">
+            <i class="fas fa-download me-1"></i> Download
+          </button>
+          <button class="btn btn-sm btn-outline-success ms-2" onclick="saveGuidanceToDashboard('${crop_type}', '${soil_type}')">
+            <i class="fas fa-save me-1"></i> Save
+          </button>
+        </div>
+      </div>
       <p class="mb-0"><strong>Crop:</strong> ${crop_type} | <strong>Soil:</strong> ${soil_type}</p>
       <hr>
     </div>
@@ -673,7 +686,7 @@ function logout() {
   localStorage.removeItem('user_id');
   localStorage.removeItem('username');
   updateAuthUI();
-  showSection('homeSection');
+  showSection('loginSection');
 }
 
 function updateAuthUI() {
@@ -2279,6 +2292,17 @@ function displayRecommendations(data) {
 
 // Event listeners
 document.addEventListener('DOMContentLoaded', function() {
+  // Initialize auth UI
+  updateAuthUI();
+  
+  // Show login section by default if user is not logged in, otherwise show dashboard
+  if (!isLoggedIn()) {
+    showSection('loginSection');
+  } else {
+    showSection('dashboardSection');
+    loadFields();
+  }
+  
   // Navigation links
   document.getElementById('homeNav').addEventListener('click', () => showSection('homeSection'));
   document.getElementById('dashboardNav').addEventListener('click', () => {
@@ -2302,7 +2326,10 @@ document.addEventListener('DOMContentLoaded', function() {
   // Auth links
   document.getElementById('loginNav').addEventListener('click', () => showSection('loginSection'));
   document.getElementById('registerNav').addEventListener('click', () => showSection('registerSection'));
-  document.getElementById('logoutBtn').addEventListener('click', logout);
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    logout();
+    showSection('loginSection');
+  });
   document.getElementById('switchToRegister').addEventListener('click', () => showSection('registerSection'));
   document.getElementById('switchToLogin').addEventListener('click', () => showSection('loginSection'));
   
