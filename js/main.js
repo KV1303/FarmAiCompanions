@@ -680,6 +680,7 @@ function login(userId, username) {
   localStorage.setItem('user_id', userId);
   localStorage.setItem('username', username);
   updateAuthUI();
+  showSection('homeSection');
 }
 
 function logout() {

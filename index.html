@@ -1396,5 +1396,19 @@
   <!-- Add JavaScript files -->
   <script src="js/direct-translate.js"></script>
   <script src="js/main.js"></script>
+  
+  <!-- Google Translate Integration -->
+  <div id="google_translate_element" style="position: fixed; bottom: 10px; right: 10px; z-index: 1000;"></div>
+  <script type="text/javascript">
+    function googleTranslateElementInit() {
+      new google.translate.TranslateElement({
+        pageLanguage: 'en',
+        includedLanguages: 'en,hi,ta,te,bn,pa',
+        layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+        autoDisplay: false
+      }, 'google_translate_element');
+    }
+  </script>
+  <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </body>
 </html>
