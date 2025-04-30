@@ -575,11 +575,15 @@ function displayQuickGuidance(data) {
 
 // Utility functions
 function showSection(sectionId) {
-  // Check if user is logged in - only allow access to login/register section and home section if not logged in
-  if (!isLoggedIn() && sectionId !== 'loginSection' && sectionId !== 'registerSection' && sectionId !== 'homeSection') {
-    // If trying to access protected section, show login instead
+  // Check if user is logged in - only allow access to login/register section if not logged in
+  if (!isLoggedIn() && sectionId !== 'loginSection' && sectionId !== 'registerSection') {
+    // If trying to access any other section, show login instead
     alert('Please login to access this feature');
     sectionId = 'loginSection';
+    
+    // Remember the section the user was trying to access
+    sessionStorage.setItem('redirectAfterLogin', sectionId);
+    return;
   }
   
   // Hide all sections
@@ -593,8 +597,8 @@ function showSection(sectionId) {
     section.classList.remove('hidden');
   }
   
-  // If we're in the home section, check for free trial or subscription status
-  if (sectionId === 'homeSection' && isLoggedIn()) {
+  // If we're in the dashboard section, check for free trial or subscription status
+  if (sectionId === 'dashboardSection' && isLoggedIn()) {
     checkSubscriptionStatus();
   }
 }
