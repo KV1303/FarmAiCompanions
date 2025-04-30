@@ -18,6 +18,10 @@ db = init_db(app)
 
 # Configure Google Gemini API if API key is available
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
+    gemini_model = genai.GenerativeModel('gemini-pro')
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 

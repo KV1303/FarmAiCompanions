@@ -2657,4 +2657,424 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Update auth UI
   updateAuthUI();
+  
+  // Set up chat functionality
+  setupChat();
+  
+  // Load saved guidances in dashboard
+  loadSavedGuidances();
 });
+
+// AI Kisan Chatbot functions
+function setupChat() {
+  const chatForm = document.getElementById('chatForm');
+  if (!chatForm) return;
+  
+  // Load previous chat messages
+  loadChatHistory();
+  
+  chatForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const chatInput = document.getElementById('chatInput');
+    const userMessage = chatInput.value.trim();
+    
+    if (!userMessage) return;
+    
+    // Add user message to chat
+    addChatMessage(userMessage, 'user');
+    
+    // Clear input
+    chatInput.value = '';
+    
+    // Generate AI response
+    generateAIResponse(userMessage);
+  });
+}
+
+function loadChatHistory() {
+  if (!isLoggedIn()) return;
+  
+  // Get chat history from localStorage
+  const userId = getCurrentUserId();
+  const chatHistory = JSON.parse(localStorage.getItem(`chat_history_${userId}`) || '[]');
+  
+  const chatMessages = document.getElementById('chatMessages');
+  if (!chatMessages || chatHistory.length === 0) return;
+  
+  // Add welcome message if there's no history
+  if (chatHistory.length === 0) {
+    return;
+  }
+  
+  // Clear existing messages (keeping the welcome message)
+  const welcomeMessage = chatMessages.firstElementChild;
+  chatMessages.innerHTML = '';
+  chatMessages.appendChild(welcomeMessage);
+  
+  // Add chat history
+  chatHistory.forEach(message => {
+    addChatMessage(message.text, message.sender, false);
+  });
+  
+  // Scroll to bottom
+  scrollChatToBottom();
+}
+
+function addChatMessage(text, sender, saveToHistory = true) {
+  const chatMessages = document.getElementById('chatMessages');
+  if (!chatMessages) return;
+  
+  // Create message element
+  const messageEl = document.createElement('div');
+  messageEl.className = `chat-message ${sender}`;
+  
+  // Create message content
+  const contentEl = document.createElement('div');
+  contentEl.className = 'message-content';
+  
+  // Format message text with paragraphs
+  const textHtml = text.split('\n')
+    .filter(line => line.trim() !== '')
+    .map(line => `<p>${line}</p>`)
+    .join('');
+  
+  contentEl.innerHTML = textHtml;
+  messageEl.appendChild(contentEl);
+  chatMessages.appendChild(messageEl);
+  
+  // Save to history if needed
+  if (saveToHistory && isLoggedIn()) {
+    saveChatMessage(text, sender);
+  }
+  
+  // Scroll to bottom
+  scrollChatToBottom();
+}
+
+function scrollChatToBottom() {
+  const chatMessages = document.getElementById('chatMessages');
+  if (chatMessages) {
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+}
+
+function saveChatMessage(text, sender) {
+  if (!isLoggedIn()) return;
+  
+  const userId = getCurrentUserId();
+  const chatHistory = JSON.parse(localStorage.getItem(`chat_history_${userId}`) || '[]');
+  
+  // Add new message
+  chatHistory.push({
+    id: Date.now(),
+    text: text,
+    sender: sender,
+    timestamp: new Date().toISOString()
+  });
+  
+  // Limit history to 50 messages
+  if (chatHistory.length > 50) {
+    chatHistory.shift();
+  }
+  
+  // Save back to localStorage
+  localStorage.setItem(`chat_history_${userId}`, JSON.stringify(chatHistory));
+}
+
+function clearChat() {
+  if (!confirm('Are you sure you want to clear the chat history?')) {
+    return;
+  }
+  
+  // Clear chat history from localStorage
+  if (isLoggedIn()) {
+    const userId = getCurrentUserId();
+    localStorage.removeItem(`chat_history_${userId}`);
+  }
+  
+  // Clear chat UI (keep welcome message)
+  const chatMessages = document.getElementById('chatMessages');
+  if (chatMessages) {
+    const welcomeMessage = chatMessages.firstElementChild;
+    chatMessages.innerHTML = '';
+    chatMessages.appendChild(welcomeMessage);
+  }
+}
+
+async function generateAIResponse(userMessage) {
+  // Show typing indicator
+  addTypingIndicator();
+  
+  try {
+    // Call the API with user's question - we'll use Gemini API on the backend
+    const response = await fetchAPI('chat', 'POST', {
+      message: userMessage,
+      user_id: getCurrentUserId() || 'anonymous'
+    });
+    
+    // Remove typing indicator
+    removeTypingIndicator();
+    
+    // Add AI response to chat
+    if (response && response.reply) {
+      addChatMessage(response.reply, 'bot');
+    } else {
+      throw new Error('Invalid response format');
+    }
+  } catch (error) {
+    console.error('Chat API error:', error);
+    
+    // Remove typing indicator
+    removeTypingIndicator();
+    
+    // Add fallback response
+    const fallbackResponse = "I'm sorry, I'm having trouble processing your request right now. Please try again later.";
+    addChatMessage(fallbackResponse, 'bot');
+  }
+}
+
+function addTypingIndicator() {
+  const chatMessages = document.getElementById('chatMessages');
+  if (!chatMessages) return;
+  
+  // Create typing indicator
+  const typingIndicator = document.createElement('div');
+  typingIndicator.id = 'typingIndicator';
+  typingIndicator.className = 'chat-message bot';
+  typingIndicator.innerHTML = `
+    <div class="message-content">
+      <div class="typing-indicator">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+  `;
+  chatMessages.appendChild(typingIndicator);
+  
+  // Scroll to bottom
+  scrollChatToBottom();
+}
+
+function removeTypingIndicator() {
+  const typingIndicator = document.getElementById('typingIndicator');
+  if (typingIndicator) {
+    typingIndicator.remove();
+  }
+}
+
+// Function to save guidance to dashboard
+function saveGuidanceToDashboard(cropType, soilType) {
+  // Check if user is logged in
+  if (!isLoggedIn()) {
+    alert('Please login to save this guidance to your dashboard');
+    showSection('loginSection');
+    return;
+  }
+  
+  // Get the guidance content
+  const guidanceContent = document.getElementById('guidanceResults')?.innerHTML || '';
+  
+  if (!guidanceContent || guidanceContent.includes('Select your crop and soil type')) {
+    alert('No guidance content to save');
+    return;
+  }
+  
+  // Create saved guidance object
+  const savedGuidance = {
+    id: 'guid_' + Date.now(),
+    crop_type: cropType,
+    soil_type: soilType,
+    date_saved: new Date().toISOString(),
+    content: guidanceContent
+  };
+  
+  // Get existing saved guidances or initialize empty array
+  let savedGuidances = JSON.parse(localStorage.getItem('saved_guidances') || '[]');
+  
+  // Add new guidance
+  savedGuidances.push(savedGuidance);
+  
+  // Save back to localStorage
+  localStorage.setItem('saved_guidances', JSON.stringify(savedGuidances));
+  
+  // Show success message
+  alert('Guidance saved to your dashboard successfully!');
+  
+  // Update the saved guidances list in dashboard if it exists
+  loadSavedGuidances();
+}
+
+// Function to load saved guidances in dashboard
+function loadSavedGuidances() {
+  if (!isLoggedIn()) return;
+  
+  const savedGuidancesContainer = document.getElementById('savedGuidancesContainer');
+  if (!savedGuidancesContainer) return;
+  
+  // Get saved guidances from localStorage
+  const savedGuidances = JSON.parse(localStorage.getItem('saved_guidances') || '[]');
+  
+  if (savedGuidances.length === 0) {
+    savedGuidancesContainer.innerHTML = `
+      <div class="alert alert-info">
+        <p>You haven't saved any guidance articles yet.</p>
+        <p>Generate farm guidance and click 'Save' to store articles here for future reference.</p>
+      </div>
+    `;
+    return;
+  }
+  
+  // Create HTML for saved guidances
+  let html = `<div class="row row-cols-1 row-cols-md-2 g-4">`;
+  
+  savedGuidances.forEach(guidance => {
+    const dateFormatted = new Date(guidance.date_saved).toLocaleDateString();
+    
+    html += `
+      <div class="col">
+        <div class="card h-100 saved-guidance-card">
+          <div class="card-header bg-success text-white">
+            <h5 class="card-title mb-0">
+              <i class="fas fa-leaf me-2"></i>${guidance.crop_type} in ${guidance.soil_type} Soil
+            </h5>
+          </div>
+          <div class="card-body">
+            <p class="card-text small text-muted">Saved on ${dateFormatted}</p>
+            <div class="d-grid gap-2">
+              <button class="btn btn-outline-primary btn-sm" onclick="viewSavedGuidance('${guidance.id}')">
+                <i class="fas fa-eye me-1"></i> View
+              </button>
+              <button class="btn btn-outline-danger btn-sm" onclick="deleteSavedGuidance('${guidance.id}')">
+                <i class="fas fa-trash me-1"></i> Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+  
+  html += `</div>`;
+  savedGuidancesContainer.innerHTML = html;
+}
+
+// Function to view a saved guidance
+function viewSavedGuidance(guidanceId) {
+  // Get saved guidances from localStorage
+  const savedGuidances = JSON.parse(localStorage.getItem('saved_guidances') || '[]');
+  const guidance = savedGuidances.find(g => g.id === guidanceId);
+  
+  if (!guidance) {
+    alert('Guidance not found!');
+    return;
+  }
+  
+  // Create a modal to display the guidance
+  let modal = document.createElement('div');
+  modal.id = 'savedGuidanceModal';
+  modal.className = 'modal fade';
+  modal.setAttribute('tabindex', '-1');
+  
+  modal.innerHTML = `
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title">Guidance for ${guidance.crop_type} in ${guidance.soil_type} Soil</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted small">Saved on ${new Date(guidance.date_saved).toLocaleDateString()}</p>
+          <hr>
+          <div class="saved-guidance-content">
+            ${guidance.content}
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-primary" onclick="printSavedGuidance('${guidance.id}')">
+            <i class="fas fa-print me-1"></i> Print
+          </button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  // Add modal to body and show it
+  document.body.appendChild(modal);
+  const bsModal = new bootstrap.Modal(modal);
+  bsModal.show();
+  
+  // Add event listener to remove modal from DOM after it's closed
+  modal.addEventListener('hidden.bs.modal', function() {
+    document.body.removeChild(modal);
+  });
+}
+
+// Function to delete a saved guidance
+function deleteSavedGuidance(guidanceId) {
+  if (!confirm('Are you sure you want to delete this saved guidance?')) {
+    return;
+  }
+  
+  // Get saved guidances from localStorage
+  let savedGuidances = JSON.parse(localStorage.getItem('saved_guidances') || '[]');
+  
+  // Filter out the guidance to delete
+  savedGuidances = savedGuidances.filter(g => g.id !== guidanceId);
+  
+  // Save back to localStorage
+  localStorage.setItem('saved_guidances', JSON.stringify(savedGuidances));
+  
+  // Reload the saved guidances list
+  loadSavedGuidances();
+  
+  alert('Guidance deleted successfully!');
+}
+
+// Function to print a saved guidance
+function printSavedGuidance(guidanceId) {
+  // Get saved guidances from localStorage
+  const savedGuidances = JSON.parse(localStorage.getItem('saved_guidances') || '[]');
+  const guidance = savedGuidances.find(g => g.id === guidanceId);
+  
+  if (!guidance) {
+    alert('Guidance not found!');
+    return;
+  }
+  
+  const title = `Growing Guide for ${guidance.crop_type} in ${guidance.soil_type} Soil`;
+  
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>${title}</title>
+      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+      <style>
+        body { padding: 20px; }
+        .article-header { margin-bottom: 20px; }
+        @media print {
+          .no-print { display: none; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="article-header">
+          <h1>${title}</h1>
+          <p class="text-muted">Generated by FarmAssist AI, saved on ${new Date(guidance.date_saved).toLocaleDateString()}</p>
+          <button class="btn btn-primary no-print" onclick="window.print()">Print</button>
+          <hr>
+        </div>
+        <div class="article-content">
+          ${guidance.content}
+        </div>
+      </div>
+    </body>
+    </html>
+  `);
+  printWindow.document.close();
+}
