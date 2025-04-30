@@ -437,7 +437,7 @@ function displayQuickGuidance(data) {
             <i class="fas fa-download me-1"></i> Download
           </button>
           <button class="btn btn-sm btn-outline-success ms-2" onclick="saveGuidanceToDashboard('${crop_type}', '${soil_type}')">
-            <i class="fas fa-save me-1"></i> Save
+            <i class="fas fa-save me-1"></i> Save to Dashboard
           </button>
         </div>
       </div>
@@ -2653,6 +2653,24 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     await getQuickFarmGuidance(cropType, soilType);
+  });
+  
+  // Feature buttons for AI Kisan Chatbot
+  document.getElementById('featureChatbotBtn')?.addEventListener('click', function() {
+    if (isLoggedIn()) {
+      showSection('dashboardSection');
+      // Scroll to chatbot section after a short delay to ensure section is visible
+      setTimeout(() => {
+        const chatbotSection = document.querySelector('.dashboard-widget .chat-container');
+        if (chatbotSection) {
+          chatbotSection.scrollIntoView({ behavior: 'smooth' });
+          document.getElementById('chatInput').focus();
+        }
+      }, 100);
+    } else {
+      showSection('loginSection');
+      showError('loginError', 'Please login to use the AI Kisan Chatbot');
+    }
   });
   
   // Update auth UI
