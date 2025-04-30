@@ -4,6 +4,9 @@ console.log("Direct translate script loaded");
 // Current language selected (default: English)
 let currentLanguage = "en";
 
+// Global flag to track if we're translating
+let isTranslating = false;
+
 document.addEventListener("DOMContentLoaded", function() {
   console.log("DOM content loaded - setting up language switcher");
   
@@ -14,6 +17,9 @@ document.addEventListener("DOMContentLoaded", function() {
     console.log("Loading saved language: " + currentLanguage);
     setTimeout(() => applyTranslations(currentLanguage), 500);
   }
+  
+  // Setup observer to translate new content as it's added to the DOM
+  setupMutationObserver();
   
   // Global translations for all UI elements
   const translations = {
