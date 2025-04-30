@@ -2689,8 +2689,32 @@ function setupChat() {
   const chatForm = document.getElementById('chatForm');
   if (!chatForm) return;
   
+  // Add initial welcome message if not already present
+  const chatMessages = document.getElementById('chatMessages');
+  if (chatMessages && chatMessages.children.length === 0) {
+    // Add a clear welcome message that indicates the user can start typing
+    const welcomeMessage = `
+      Hello! I'm AI Kisan, your personal farming assistant. I can help with:
+      
+      • Crop advice and best practices
+      • Disease identification and treatment
+      • Weather impact on farming
+      • Fertilizer and irrigation recommendations
+      • Sustainable farming methods
+      
+      Go ahead and ask me any farming-related question! Type your message below and press Enter.
+    `;
+    addChatMessage(welcomeMessage, 'bot', false);
+  }
+  
   // Load previous chat messages
   loadChatHistory();
+  
+  // Add event listener for the clear chat button
+  const clearChatBtn = document.getElementById('clearChatBtn');
+  if (clearChatBtn) {
+    clearChatBtn.addEventListener('click', clearChat);
+  }
   
   chatForm.addEventListener('submit', function(e) {
     e.preventDefault();
@@ -2719,17 +2743,20 @@ function loadChatHistory() {
   const chatHistory = JSON.parse(localStorage.getItem(`chat_history_${userId}`) || '[]');
   
   const chatMessages = document.getElementById('chatMessages');
-  if (!chatMessages || chatHistory.length === 0) return;
+  if (!chatMessages) return;
   
-  // Add welcome message if there's no history
-  if (chatHistory.length === 0) {
-    return;
+  if (chatHistory.length > 0) {
+    // If we have history, clear the welcome message
+    chatMessages.innerHTML = '';
+    
+    // Add chat history
+    chatHistory.forEach(message => {
+      addChatMessage(message.text, message.sender, false);
+    });
+    
+    // Scroll to bottom
+    scrollChatToBottom();
   }
-  
-  // Clear existing messages (keeping the welcome message)
-  const welcomeMessage = chatMessages.firstElementChild;
-  chatMessages.innerHTML = '';
-  chatMessages.appendChild(welcomeMessage);
   
   // Add chat history
   chatHistory.forEach(message => {
@@ -2825,12 +2852,16 @@ async function generateAIResponse(userMessage) {
   // Show typing indicator
   addTypingIndicator();
   
+  console.log('Sending chat message to API:', userMessage);
+  
   try {
     // Call the API with user's question - we'll use Gemini API on the backend
     const response = await fetchAPI('chat', 'POST', {
       message: userMessage,
       user_id: getCurrentUserId() || 'anonymous'
-    });
+    }, 2); // Reduced retries for faster feedback
+    
+    console.log('Chat API response:', response);
     
     // Remove typing indicator
     removeTypingIndicator();
@@ -2839,7 +2870,8 @@ async function generateAIResponse(userMessage) {
     if (response && response.reply) {
       addChatMessage(response.reply, 'bot');
     } else {
-      throw new Error('Invalid response format');
+      console.error('Invalid API response format:', response);
+      throw new Error('Invalid response format from AI service');
     }
   } catch (error) {
     console.error('Chat API error:', error);
@@ -2847,8 +2879,18 @@ async function generateAIResponse(userMessage) {
     // Remove typing indicator
     removeTypingIndicator();
     
-    // Add fallback response
-    const fallbackResponse = "I'm sorry, I'm having trouble processing your request right now. Please try again later.";
+    // Add more informative fallback response
+    let fallbackResponse = "I'm sorry, I'm having trouble connecting to our AI service right now. Please try again in a moment.";
+    
+    // Provide more context based on error message if available
+    if (error.message) {
+      if (error.message.includes('Failed to fetch') || error.message.includes('Network')) {
+        fallbackResponse = "It seems there's a network issue. Please check your internet connection and try again.";
+      } else if (error.message.includes('API key') || error.message.includes('unauthorized')) {
+        fallbackResponse = "Our AI service is temporarily unavailable. The team has been notified, please try again later.";
+      }
+    }
+    
     addChatMessage(fallbackResponse, 'bot');
   }
 }

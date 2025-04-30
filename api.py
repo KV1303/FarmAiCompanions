@@ -513,19 +513,48 @@ def chat():
                 for farming activities. Always suggest sustainable practices when appropriate.
                 """
                 
-                # Call the Gemini API with the user's message
-                chat = gemini_model.start_chat(history=[])
-                response = chat.send_message(f"{system_prompt}\n\nFarmer's question: {user_message}")
-                
-                if response and response.text:
-                    return jsonify({'reply': response.text})
-                else:
-                    return jsonify({'reply': default_response})
+                # Use a simpler direct generation approach instead of chat history
+                try:
+                    # Try to use the gemini-pro model directly
+                    full_prompt = f"{system_prompt}\n\nFarmer's question: {user_message}\n\nYour expert response:"
+                    response = genai.generate_text(
+                        model="gemini-pro",
+                        prompt=full_prompt,
+                        temperature=0.7,
+                        max_output_tokens=800
+                    )
+                    
+                    if response and response.result:
+                        return jsonify({'reply': response.result})
+                    else:
+                        print("No valid response from Gemini API")
+                        return jsonify({'reply': default_response})
+                        
+                except Exception as inner_e:
+                    print(f"Error with direct generation: {str(inner_e)}")
+                    # Fallback to the model defined at app startup
+                    generation_config = {
+                        "temperature": 0.7,
+                        "top_p": 0.95,
+                        "top_k": 40,
+                        "max_output_tokens": 800,
+                    }
+                    
+                    response = gemini_model.generate_content(
+                        f"{system_prompt}\n\nFarmer's question: {user_message}\n\nYour expert response:",
+                        generation_config=generation_config
+                    )
+                    
+                    if response and response.text:
+                        return jsonify({'reply': response.text})
+                    else:
+                        return jsonify({'reply': default_response})
                     
             except Exception as e:
                 print(f"Error calling Gemini API: {str(e)}")
                 return jsonify({'reply': default_response})
         else:
+            print("No Gemini API key available")
             return jsonify({'reply': default_response})
             
     except Exception as e:
