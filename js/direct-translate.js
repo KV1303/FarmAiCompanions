@@ -7,6 +7,209 @@ let currentLanguage = "en";
 // Global flag to track if we're translating
 let isTranslating = false;
 
+// Global translations for all UI elements
+const translations = {
+  hi: {
+    "home": "होम",
+    "dashboard": "डैशबोर्ड",
+    "disease_detection": "रोग पहचान",
+    "market_prices": "बाजार भाव",
+    "weather": "मौसम",
+    "login": "लॉगिन",
+    "register": "रजिस्टर",
+    "logout": "लॉगआउट",
+    "revolutionize_farming": "अपनी खेती में क्रांति लाएँ",
+    "ai_companion": "आधुनिक किसानों के लिए AI-संचालित सहायक",
+    "get_started": "शुरू करें",
+    "ai_farm_guidance": "AI कृषि मार्गदर्शन प्रणाली",
+    "personalized_recommendations": "अपनी फसल के अनुसार व्यक्तिगत सिफारिशें प्राप्त करें",
+    "guidance_description": "हमारी AI-संचालित कृषि मार्गदर्शन प्रणाली आपकी विशिष्ट फसलों, मिट्टी के प्रकार और स्थान के अनुसार व्यापक सिफारिशें प्रदान करती है।",
+    "crop_type": "फसल का प्रकार",
+    "soil_type": "मिट्टी का प्रकार",
+    "get_farm_guidance": "कृषि मार्गदर्शन प्राप्त करें",
+    "select_crop": "फसल चुनें",
+    "select_soil": "मिट्टी का प्रकार चुनें",
+    "what_farmassist_can_do": "फार्मअसिस्ट AI आपके लिए क्या कर सकता है",
+    "disease_detection_feature": "रोग पहचान",
+    "disease_detection_desc": "केवल एक फोटो लेकर फसल के रोगों का पता लगाएं। हमारा AI तुरंत निदान और उपचार की सिफारिशें प्रदान करता है।",
+    "try_now": "अभी आज़माएँ",
+    "market_prices_feature": "बाजार भाव",
+    "market_prices_desc": "अपनी फसलों के लिए रीयल-टाइम बाजार मूल्य प्राप्त करें और अपने मुनाफे को अधिकतम करने के लिए मूल्य परिवर्तनों के लिए अलर्ट सेट करें।",
+    "check_prices": "भाव देखें",
+    "weather_forecasts_feature": "मौसम पूर्वानुमान",
+    "weather_forecasts_desc": "अपनी कृषि गतिविधियों की प्रभावी योजना बनाने के लिए अपने विशिष्ट स्थान के लिए सटीक मौसम पूर्वानुमान प्राप्त करें।",
+    "view_weather": "मौसम देखें",
+    "fertilizer_feature": "उन्नत उर्वरक सिफारिशें",
+    "fertilizer_desc": "अपनी फसल के प्रकार, मिट्टी की स्थिति और विकास के चरण के आधार पर AI-संचालित उर्वरक सिफारिशें प्राप्त करें। सटीक पोषक तत्व प्रबंधन के साथ उपज को अधिकतम करें।",
+    "get_recommendations": "सिफारिशें प्राप्त करें",
+    "irrigation_feature": "सिंचाई प्रबंधन",
+    "irrigation_desc": "अपनी फसलों, मिट्टी के प्रकार और स्थानीय मौसम की स्थिति के अनुसार AI-जनित सिंचाई कार्यक्रम के साथ अपने पानी के उपयोग को अनुकूलित करें। पानी बचाएं और फसल स्वास्थ्य में सुधार करें।",
+    "plan_irrigation": "सिंचाई की योजना बनाएं",
+    
+    // Form elements
+    "username": "यूजरनेम",
+    "password": "पासवर्ड",
+    "email": "ईमेल",
+    "confirm_password": "पासवर्ड की पुष्टि करें",
+    "no_account": "खाता नहीं है?",
+    "register_now": "अभी रजिस्टर करें",
+    "have_account": "पहले से ही खाता है?",
+    
+    // Market Prices
+    "market_prices_title": "बाजार भाव",
+    "all_crops": "सभी फसलें",
+    "apply": "लागू करें",
+    "crop": "फसल",
+    "market": "बाजार",
+    "price": "मूल्य (₹/क्विंटल)",
+    "min_price": "न्यूनतम मूल्य",
+    "max_price": "अधिकतम मूल्य",
+    "date": "दिनांक",
+    "action": "कार्रवाई",
+    "price_alerts": "मूल्य अलर्ट",
+    "set_up_alerts": "मूल्य आपके लक्ष्य स्तर तक पहुंचने पर सूचित किए जाने के लिए अलर्ट सेट करें।",
+  },
+  ta: {
+    "home": "முகப்பு",
+    "dashboard": "டாஷ்போர்டு",
+    "disease_detection": "நோய் கண்டறிதல்",
+    "market_prices": "சந்தை விலைகள்",
+    "weather": "வானிலை",
+    "login": "உள்நுழைக",
+    "register": "பதிவு செய்க",
+    "logout": "வெளியேறு",
+    "market_prices_title": "சந்தை விலைகள்",
+    "all_crops": "அனைத்து பயிர்கள்",
+    "apply": "பயன்படுத்து",
+    "crop": "பயிர்",
+    "market": "சந்தை",
+    "price": "விலை (₹/குவிண்டால்)",
+    "min_price": "குறைந்தபட்ச விலை",
+    "max_price": "அதிகபட்ச விலை",
+    "date": "தேதி",
+    "action": "செயல்",
+    "price_alerts": "விலை எச்சரிக்கைகள்",
+    "set_up_alerts": "விலைகள் உங்கள் இலக்கு அளவை அடையும்போது அறிவிக்கப்பட எச்சரிக்கைகளை அமைக்கவும்.",
+  },
+  te: {
+    "home": "హోమ్",
+    "dashboard": "డాష్‌బోర్డ్",
+    "disease_detection": "రోగ నిర్ధారణ",
+    "market_prices": "మార్కెట్ ధరలు",
+    "weather": "వాతావరణం",
+    "login": "లాగిన్",
+    "register": "రిజిస్టర్",
+    "logout": "లాగౌట్",
+    "market_prices_title": "మార్కెట్ ధరలు",
+    "all_crops": "అన్ని పంటలు",
+    "apply": "వర్తించు",
+    "crop": "పంట",
+    "market": "మార్కెట్",
+    "price": "ధర (₹/క్వింటాల్)",
+    "min_price": "కనిష్ట ధర",
+    "max_price": "గరిష్ట ధర",
+    "date": "తేదీ",
+    "action": "చర్య",
+    "price_alerts": "ధర హెచ్చరికలు",
+    "set_up_alerts": "ధరలు మీ లక్ష్య స్థాయిలకు చేరుకున్నప్పుడు తెలియజేయడానికి హెచ్చరికలను సెట్ చేయండి.",
+  },
+  bn: {
+    "home": "হোম",
+    "dashboard": "ড্যাশবোর্ড",
+    "disease_detection": "রোগ সনাক্তকরণ",
+    "market_prices": "বাজার দর",
+    "weather": "আবহাওয়া",
+    "login": "লগইন",
+    "register": "নিবন্ধন",
+    "logout": "লগআউট",
+    "market_prices_title": "বাজার দর",
+    "all_crops": "সকল ফসল",
+    "apply": "প্রয়োগ করুন",
+    "crop": "ফসল",
+    "market": "বাজার",
+    "price": "দাম (₹/কুইন্টাল)",
+    "min_price": "সর্বনিম্ন দাম",
+    "max_price": "সর্বোচ্চ দাম",
+    "date": "তারিখ",
+    "action": "পদক্ষেপ",
+    "price_alerts": "মূল্য সতর্কতা",
+    "set_up_alerts": "মূল্য আপনার লক্ষ্য স্তরে পৌঁছালে জানানোর জন্য সতর্কতা সেট করুন।",
+  },
+  pa: {
+    "home": "ਹੋਮ",
+    "dashboard": "ਡੈਸ਼ਬੋਰਡ",
+    "disease_detection": "ਰੋਗ ਦੀ ਪਛਾਣ",
+    "market_prices": "ਮਾਰਕੀਟ ਦੀਆਂ ਕੀਮਤਾਂ",
+    "weather": "ਮੌਸਮ",
+    "login": "ਲੌਗਇਨ",
+    "register": "ਰਜਿਸਟਰ",
+    "logout": "ਲੌਗਆਊਟ",
+    "market_prices_title": "ਮਾਰਕੀਟ ਦੀਆਂ ਕੀਮਤਾਂ",
+    "all_crops": "ਸਾਰੀਆਂ ਫਸਲਾਂ",
+    "apply": "ਲਾਗੂ ਕਰੋ",
+    "crop": "ਫਸਲ",
+    "market": "ਮਾਰਕੀਟ",
+    "price": "ਕੀਮਤ (₹/ਕੁਇੰਟਲ)",
+    "min_price": "ਘੱਟੋ-ਘੱਟ ਕੀਮਤ",
+    "max_price": "ਵੱਧ ਤੋਂ ਵੱਧ ਕੀਮਤ",
+    "date": "ਤਾਰੀਖ",
+    "action": "ਕਾਰਵਾਈ",
+    "price_alerts": "ਕੀਮਤ ਅਲਰਟ",
+    "set_up_alerts": "ਕੀਮਤਾਂ ਤੁਹਾਡੇ ਟੀਚੇ ਦੇ ਪੱਧਰ 'ਤੇ ਪਹੁੰਚਣ 'ਤੇ ਸੂਚਿਤ ਕੀਤੇ ਜਾਣ ਲਈ ਅਲਰਟ ਸੈੱਟ ਕਰੋ।",
+  }
+};
+
+// Setup mutation observer to detect and translate new content
+function setupMutationObserver() {
+  // Create observer to detect and translate new DOM elements
+  const observer = new MutationObserver((mutations) => {
+    if (isTranslating) return; // Prevent recursive translations
+    
+    let shouldTranslate = false;
+    
+    mutations.forEach(mutation => {
+      if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+        mutation.addedNodes.forEach(node => {
+          if (node.nodeType === 1 && (
+              node.querySelector('[data-i18n]') || 
+              node.hasAttribute('data-i18n') ||
+              node.querySelector('option') ||
+              node.tagName === 'OPTION' ||
+              node.tagName === 'TD' ||
+              node.tagName === 'P' ||
+              node.tagName === 'H1' ||
+              node.tagName === 'H2' ||
+              node.tagName === 'H3' ||
+              node.tagName === 'H4' ||
+              node.tagName === 'H5' ||
+              node.tagName === 'SPAN' ||
+              node.tagName === 'DIV' ||
+              node.tagName === 'BUTTON' ||
+              node.tagName === 'A'
+          )) {
+            shouldTranslate = true;
+          }
+        });
+      }
+    });
+    
+    if (shouldTranslate && currentLanguage !== 'en') {
+      console.log("New content detected, translating...");
+      setTimeout(() => applyTranslations(currentLanguage), 100);
+    }
+  });
+  
+  // Observe entire document for changes
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+    attributes: false,
+    characterData: false
+  });
+  
+  console.log("Mutation Observer setup complete");
+}
+
 document.addEventListener("DOMContentLoaded", function() {
   console.log("DOM content loaded - setting up language switcher");
   
@@ -478,8 +681,12 @@ document.addEventListener("DOMContentLoaded", function() {
   
   // Main function to apply translations throughout the app
   function applyTranslations(language) {
+    // Set flag to prevent recursive translations
+    isTranslating = true;
+    
     if (!translations[language]) {
       console.log("No translations available for", language);
+      isTranslating = false;
       return;
     }
 
