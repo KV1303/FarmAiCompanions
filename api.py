@@ -22,8 +22,6 @@ GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
     gemini_model = genai.GenerativeModel('gemini-pro')
-if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
 
 # ------ Helper Functions ------
 
@@ -480,6 +478,59 @@ def get_soil_specific_guidance(soil_type, crop_type):
     return result
 
 # ------ API Routes ------
+
+@app.route('/api/chat', methods=['POST'])
+def chat():
+    """Process chat message and return AI response"""
+    try:
+        data = request.json
+        user_message = data.get('message', '')
+        user_id = data.get('user_id', 'anonymous')
+        
+        if not user_message:
+            return jsonify({'error': 'No message provided'}), 400
+        
+        # Default response in case AI is not available
+        default_response = "I'm AI Kisan, your farming assistant. I can help with crop advice, disease detection, weather interpretations, and more. Please provide specific details about your farming query for better assistance."
+        
+        # If Gemini API key is available, use AI for chat
+        if GEMINI_API_KEY:
+            try:
+                # Define the system prompt for farming assistant
+                system_prompt = """
+                You are AI Kisan, an expert agricultural assistant for farmers in India. 
+                You provide helpful, practical advice on farming practices, crop management, disease identification, 
+                weather interpretations, and market trends. Your responses should be:
+                
+                1. Practical and actionable for farmers
+                2. Based on scientific agricultural knowledge
+                3. Relevant to Indian farming conditions
+                4. Considerate of both traditional and modern farming approaches
+                5. Clear and easy to understand
+                
+                When responding to queries about crop problems, ask for specifics like symptoms, 
+                affected plant parts, and growth stage. For weather-related queries, explain implications 
+                for farming activities. Always suggest sustainable practices when appropriate.
+                """
+                
+                # Call the Gemini API with the user's message
+                chat = gemini_model.start_chat(history=[])
+                response = chat.send_message(f"{system_prompt}\n\nFarmer's question: {user_message}")
+                
+                if response and response.text:
+                    return jsonify({'reply': response.text})
+                else:
+                    return jsonify({'reply': default_response})
+                    
+            except Exception as e:
+                print(f"Error calling Gemini API: {str(e)}")
+                return jsonify({'reply': default_response})
+        else:
+            return jsonify({'reply': default_response})
+            
+    except Exception as e:
+        print(f"Error in chat endpoint: {str(e)}")
+        return jsonify({'error': 'Failed to process chat message'}), 500
 
 @app.route('/api/weather', methods=['GET'])
 def get_weather():
