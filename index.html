@@ -1523,6 +1523,7 @@
       </div>
     </div>
   </div>
+  </div> <!-- Close main-content -->
 
   <!-- Bootstrap and Font Awesome -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
@@ -1690,5 +1691,47 @@
   
   <!-- Load Google Translate API in the background -->
   <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+  
+  <!-- Sidebar Toggle Script -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Sidebar toggle functionality
+      const sidebar = document.querySelector('.sidebar');
+      const mainContent = document.querySelector('.main-content');
+      const sidebarToggle = document.getElementById('sidebarToggle');
+      
+      if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', function() {
+          sidebar.classList.toggle('sidebar-collapsed');
+          mainContent.classList.toggle('main-content-expanded');
+        });
+      }
+      
+      // Set active menu item
+      const navLinks = document.querySelectorAll('.sidebar-menu .nav-link');
+      
+      navLinks.forEach(link => {
+        link.addEventListener('click', function() {
+          // Remove active class from all links
+          navLinks.forEach(item => item.classList.remove('active'));
+          
+          // Add active class to clicked link
+          this.classList.add('active');
+          
+          // Update page title
+          const pageTitle = document.getElementById('pageTitle');
+          if (pageTitle) {
+            pageTitle.textContent = this.textContent.trim();
+          }
+        });
+      });
+      
+      // Set home as default active
+      const homeLink = document.getElementById('homeNav');
+      if (homeLink) {
+        homeLink.classList.add('active');
+      }
+    });
+  </script>
 </body>
 </html>
