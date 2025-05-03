@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>फार्म असिस्ट AI</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: #4CAF50;
+      --secondary-color: #388E3C;
+      --accent-color: #FFEB3B;
+      --light-bg: #f9f9f9;
+      --dark-text: #333;
+      --sidebar-width: 280px;
+      --top-navbar-height: 60px;
+    }
+    
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: var(--light-bg);
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      overflow-x: hidden;
+    }
+    
+    /* App Layout Styles - Mobile First */
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      width: 100%;
+      position: relative;
+    }
+    
+    /* Top Navigation */
+    .top-navbar {
+      background-color: var(--primary-color);
+      height: var(--top-navbar-height);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .top-navbar .menu-button {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+      margin-right: 15px;
+    }
+    
+    .top-navbar .logo {
+      color: white;
+      font-weight: 600;
+      font-size: 1.25rem;
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+    }
+    
+    .top-navbar .logo i {
+      margin-right: 10px;
+    }
+    
+    .top-navbar .user-menu {
+      margin-left: auto;
+    }
+    
+    /* Sidebar Menu */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: -280px;
+      width: var(--sidebar-width);
+      height: 100%;
+      background-color: white;
+      z-index: 200;
+      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease;
+      padding-top: var(--top-navbar-height);
+      overflow-y: auto;
+    }
+    
+    .sidebar.active {
+      transform: translateX(280px);
+    }
+    
+    .sidebar-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 199;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+    
+    .sidebar-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    .user-profile {
+      padding: 20px;
+      text-align: center;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .user-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      margin: 0 auto 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--primary-color);
+      color: white;
+      font-size: 2rem;
+    }
+    
+    .user-name {
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+    
+    .user-status {
+      font-size: 0.85rem;
+      color: #777;
+    }
+    
+    .sidebar-menu {
+      padding: 0;
+      list-style-type: none;
+    }
+    
+    .sidebar-menu li {
+      margin: 0;
+    }
+    
+    .sidebar-menu a {
+      display: flex;
+      align-items: center;
+      padding: 15px 20px;
+      color: var(--dark-text);
+      text-decoration: none;
+      transition: background-color 0.2s;
+      border-left: 4px solid transparent;
+    }
+    
+    .sidebar-menu a:hover, 
+    .sidebar-menu a.active {
+      background-color: #f0f8f0;
+      border-left-color: var(--primary-color);
+    }
+    
+    .sidebar-menu a i {
+      margin-right: 15px;
+      width: 24px;
+      text-align: center;
+      font-size: 1.2rem;
+      color: var(--primary-color);
+    }
+    
+    /* Main Content */
+    .main-content {
+      margin-top: var(--top-navbar-height);
+      padding: 20px;
+      flex: 1;
+      overflow-y: auto;
+    }
+    
+    /* Weather Card - App Style */
+    .weather-card {
+      background: linear-gradient(135deg, #FFB75E 0%, #ED8F03 100%);
+      color: white;
+      border-radius: 20px;
+      padding: 20px;
+      text-align: center;
+      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .location-name {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+    
+    .weather-temp {
+      font-size: 3rem;
+      font-weight: 700;
+      margin: 10px 0;
+      display: flex;
+      align-items: center;
+    }
+    
+    .weather-conditions {
+      margin-bottom: 10px;
+    }
+    
+    .weather-metrics {
+      display: flex;
+      justify-content: space-around;
+      width: 100%;
+      margin-top: 15px;
+    }
+    
+    .weather-metric {
+      text-align: center;
+    }
+    
+    .metric-label {
+      font-size: 0.8rem;
+      opacity: 0.9;
+    }
+    
+    .metric-value {
+      font-size: 1rem;
+      font-weight: 600;
+      background-color: rgba(255, 255, 255, 0.2);
+      padding: 5px 10px;
+      border-radius: 15px;
+      margin-top: 5px;
+    }
+    
+    /* Dashboard Cards - App Style */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    
+    .dashboard-card {
+      background-color: white;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    
+    .card-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 15px;
+      background-color: #f0f8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 15px;
+    }
+    
+    .card-icon i {
+      font-size: 1.5rem;
+      color: var(--primary-color);
+    }
+    
+    .card-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--dark-text);
+      margin-bottom: 5px;
+    }
+    
+    /* Feature Cards */
+    .feature-card {
+      padding: 20px;
+      text-align: center;
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+      background-color: white;
+      margin-bottom: 20px;
+      transition: transform 0.3s ease;
+    }
+    
+    .feature-card:hover {
+      transform: translateY(-5px);
+    }
+    
+    .feature-icon {
+      font-size: 2rem;
+      color: var(--primary-color);
+      margin-bottom: 15px;
+    }
+    
+    /* Buttons */
+    .btn-app {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 25px;
+      padding: 10px 20px;
+      font-weight: 600;
+      box-shadow: 0 4px 10px rgba(76, 175, 80, 0.3);
+      transition: all 0.3s ease;
+    }
+    
+    .btn-app:hover {
+      background-color: var(--secondary-color);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(76, 175, 80, 0.4);
+    }
+    
+    .btn-app-outline {
+      background-color: transparent;
+      color: var(--primary-color);
+      border: 2px solid var(--primary-color);
+      border-radius: 25px;
+      padding: 8px 18px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-app-outline:hover {
+      background-color: var(--primary-color);
+      color: white;
+    }
+    
+    /* Disease detection styles */
+    .disease-detection-container {
+      background-color: white;
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+      margin-bottom: 20px;
+    }
+    
+    .upload-area {
+      border: 2px dashed #ccc;
+      border-radius: 15px;
+      padding: 40px 20px;
+      text-align: center;
+      cursor: pointer;
+      background-color: #f9f9f9;
+      margin-bottom: 20px;
+    }
+    
+    .upload-area:hover {
+      border-color: var(--primary-color);
+      background-color: #f0f8f0;
+    }
+    
+    .preview-image {
+      max-width: 100%;
+      max-height: 300px;
+      margin: 20px auto;
+      display: block;
+      border-radius: 15px;
+    }
+    
+    /* Market prices styles */
+    .market-prices-container {
+      background-color: white;
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+      margin-bottom: 20px;
+    }
+    
+    .price-filter-card {
+      background-color: #f8f9fa;
+      border-radius: 15px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .price-table {
+      background-color: white;
+      border-radius: 15px;
+      overflow: hidden;
+    }
+    
+    /* Weather forecast styles */
+    .forecast-day {
+      background-color: white;
+      border-radius: 15px;
+      padding: 15px;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+      color: var(--dark-text);
+      margin-bottom: 15px;
+    }
+    
+    /* AI Chat Styles */
+    .chat-container {
+      background-color: white;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+      display: flex;
+      flex-direction: column;
+      height: 500px;
+      margin-bottom: 20px;
+    }
+    
+    .chat-header {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 15px;
+      border-radius: 15px 15px 0 0;
+      font-weight: 600;
+    }
+    
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 15px;
+    }
+    
+    .chat-message {
+      margin-bottom: 15px;
+      display: flex;
+    }
+    
+    .chat-message.user {
+      justify-content: flex-end;
+    }
+    
+    .message-content {
+      max-width: 80%;
+      padding: 10px 15px;
+      border-radius: 15px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    
+    .chat-message.bot .message-content {
+      background-color: #e9f5e9;
+      border-bottom-left-radius: 0;
+    }
+    
+    .chat-message.user .message-content {
+      background-color: #e3f2fd;
+      border-bottom-right-radius: 0;
+    }
+    
+    .chat-input-form {
+      padding: 10px;
+      background-color: #fff;
+      border-top: 1px solid #e5e5e5;
+      border-radius: 0 0 15px 15px;
+    }
+    
+    /* Saved guidance styles */
+    .saved-guidance-card {
+      background-color: white;
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+      margin-bottom: 20px;
+      transition: transform 0.2s;
+    }
+    
+    .saved-guidance-card:hover {
+      transform: translateY(-5px);
+    }
+    
+    /* Auth styles */
+    .auth-container {
+      max-width: 500px;
+      margin: 20px auto;
+      padding: 30px;
+      background-color: white;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    }
+    
+    /* Bottom Navigation Bar for mobile */
+    .bottom-navbar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: white;
+      display: flex;
+      justify-content: space-around;
+      padding: 10px 0;
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+      z-index: 100;
+    }
+    
+    .bottom-navbar a {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: #777;
+      text-decoration: none;
+      font-size: 0.75rem;
+    }
+    
+    .bottom-navbar a.active {
+      color: var(--primary-color);
+    }
+    
+    .bottom-navbar a i {
+      font-size: 1.5rem;
+      margin-bottom: 5px;
+    }
+    
+    /* Responsive Media Queries */
+    @media (min-width: 992px) {
+      .app-container {
+        flex-direction: row;
+      }
+      
+      .sidebar {
+        left: 0;
+        transform: translateX(0);
+        z-index: 100;
+      }
+      
+      .main-content {
+        margin-left: var(--sidebar-width);
+        width: calc(100% - var(--sidebar-width));
+      }
+      
+      .top-navbar .menu-button {
+        display: none;
+      }
+      
+      .sidebar-overlay {
+        display: none;
+      }
+      
+      .bottom-navbar {
+        display: none;
+      }
+      
+      .dashboard-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+    
+    /* Utility Classes */
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Top Navbar -->
+    <div class="top-navbar">
+      <button class="menu-button" id="menuToggle">
+        <i class="fas fa-bars"></i>
+      </button>
+      <a href="#" class="logo">
+        <i class="fas fa-leaf"></i>
+        <span>फार्म असिस्ट AI</span>
+      </a>
+      <div class="user-menu">
+        <button class="btn btn-sm btn-outline-light" id="authButton">
+          <i class="fas fa-user"></i>
+          <span id="authButtonText">लॉगिन</span>
+        </button>
+      </div>
+    </div>
+    
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+      <div class="user-profile">
+        <div class="user-avatar" id="userAvatar">
+          <i class="fas fa-user"></i>
+        </div>
+        <div class="user-name" id="userName">अतिथि उपयोगकर्ता</div>
+        <div class="user-status" id="userStatus">7 दिन का मुफ्त ट्रायल</div>
+      </div>
+      
+      <ul class="sidebar-menu">
+        <li>
+          <a href="#" class="active" id="homeNav">
+            <i class="fas fa-home"></i>
+            <span>होम</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" id="dashboardNav">
+            <i class="fas fa-tachometer-alt"></i>
+            <span>डैशबोर्ड</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" id="fieldsNav">
+            <i class="fas fa-map-marker-alt"></i>
+            <span>मेरे खेत</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" id="diseaseDetectNav">
+            <i class="fas fa-bug"></i>
+            <span>रोग पहचान</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" id="marketPricesNav">
+            <i class="fas fa-rupee-sign"></i>
+            <span>बाजार भाव</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" id="weatherNav">
+            <i class="fas fa-cloud-sun"></i>
+            <span>मौसम</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" id="aiChatNav">
+            <i class="fas fa-robot"></i>
+            <span>AI किसान सहायक</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" id="myGuidanceNav">
+            <i class="fas fa-book"></i>
+            <span>सहेजे गए मार्गदर्शन</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" id="marketplaceNav">
+            <i class="fas fa-store"></i>
+            <span>मार्केटप्लेस</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" id="settingsNav">
+            <i class="fas fa-cog"></i>
+            <span>सेटिंग्स</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Home Section -->
+      <section id="homeSection" class="active-section">
+        <!-- Weather Summary Card (like mockup) -->
+        <div class="weather-card">
+          <div class="location-name">नई दिल्ली</div>
+          <div class="weather-temp">28°C</div>
+          <div class="weather-conditions">आंशिक बादल</div>
+          <div class="weather-metrics">
+            <div class="weather-metric">
+              <div class="metric-label">आर्द्रता</div>
+              <div class="metric-value">68%</div>
+            </div>
+            <div class="weather-metric">
+              <div class="metric-label">मिट्टी नमी</div>
+              <div class="metric-value">अच्छा</div>
+            </div>
+            <div class="weather-metric">
+              <div class="metric-label">वर्षा संभावना</div>
+              <div class="metric-value">कम</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Field Management Cards (like mockup) -->
+        <h5 class="mb-3">अपने खेतों का प्रबंधन करें</h5>
+        <div class="dashboard-grid">
+          <div class="dashboard-card">
+            <div class="card-icon">
+              <i class="fas fa-map-marker-alt"></i>
+            </div>
+            <div class="card-title">मेरे खेत</div>
+          </div>
+          <div class="dashboard-card">
+            <div class="card-icon">
+              <i class="fas fa-seedling"></i>
+            </div>
+            <div class="card-title">फसलें</div>
+          </div>
+          <div class="dashboard-card">
+            <div class="card-icon">
+              <i class="fas fa-clipboard-list"></i>
+            </div>
+            <div class="card-title">इन्वेंटरी</div>
+          </div>
+          <div class="dashboard-card">
+            <div class="card-icon">
+              <i class="fas fa-rupee-sign"></i>
+            </div>
+            <div class="card-title">आय/व्यय</div>
+          </div>
+        </div>
+        
+        <!-- AI Guidance Features -->
+        <h5 class="mb-3 mt-4">AI कृषि मार्गदर्शन</h5>
+        
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fas fa-robot"></i>
+          </div>
+          <h5>AI किसान सहायक</h5>
+          <p>अपने कृषि प्रश्नों के विशेषज्ञ उत्तर पाएं। हमारा AI रोबोट आपकी सहायता के लिए 24x7 उपलब्ध है।</p>
+          <button class="btn btn-app mt-2" id="quickChatButton">
+            <i class="fas fa-comment-dots me-2"></i>चैट करें
+          </button>
+        </div>
+        
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fas fa-bug"></i>
+          </div>
+          <h5>रोग पहचान</h5>
+          <p>अपनी फसल की एक तस्वीर अपलोड करें और तुरंत रोग की पहचान करें और उपचार के सुझाव प्राप्त करें।</p>
+          <button class="btn btn-app mt-2" id="quickDiseaseButton">
+            <i class="fas fa-camera me-2"></i>अभी पहचानें
+          </button>
+        </div>
+        
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fas fa-tint"></i>
+          </div>
+          <h5>सिंचाई सिफारिशें</h5>
+          <p>अपनी फसल और मौसम के आधार पर स्मार्ट सिंचाई की योजना बनाएं। पानी बचाएं और उपज बढ़ाएं।</p>
+          <button class="btn btn-app mt-2" id="quickIrrigationButton">
+            <i class="fas fa-tint me-2"></i>सिफारिशें पाएं
+          </button>
+        </div>
+        
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fas fa-rupee-sign"></i>
+          </div>
+          <h5>बाजार भाव</h5>
+          <p>अपनी फसलों के वर्तमान बाजार भाव देखें और सर्वोत्तम मूल्य के लिए अलर्ट सेट करें।</p>
+          <button class="btn btn-app mt-2" id="quickMarketButton">
+            <i class="fas fa-chart-line me-2"></i>भाव देखें
+          </button>
+        </div>
+      </section>
+      
+      <!-- Dashboard Section - Hidden by default -->
+      <section id="dashboardSection" class="hidden">
+        <h3 class="mb-4">किसान डैशबोर्ड</h3>
+        <!-- Dashboard content will be loaded here -->
+      </section>
+      
+      <!-- Other sections will be added as needed -->
+      
+      <!-- Disease Detection Section - Hidden by default -->
+      <section id="diseaseDetectSection" class="hidden">
+        <h3 class="mb-4">फसल रोग पहचान</h3>
+        <!-- Disease detection content will be loaded here -->
+      </section>
+      
+      <!-- Market Prices Section - Hidden by default -->
+      <section id="marketPricesSection" class="hidden">
+        <h3 class="mb-4">बाजार भाव</h3>
+        <!-- Market prices content will be loaded here -->
+      </section>
+      
+      <!-- Weather Section - Hidden by default -->
+      <section id="weatherSection" class="hidden">
+        <h3 class="mb-4">मौसम पूर्वानुमान</h3>
+        <!-- Weather forecast content will be loaded here -->
+      </section>
+      
+      <!-- Login/Register Section - Hidden by default -->
+      <section id="authSection" class="hidden">
+        <div class="auth-container">
+          <h3 class="text-center mb-4" id="authTitle">लॉगिन</h3>
+          <div id="loginForm">
+            <div class="mb-3">
+              <label for="username" class="form-label">यूजरनेम</label>
+              <input type="text" class="form-control" id="username" placeholder="अपना यूजरनेम दर्ज करें">
+            </div>
+            <div class="mb-3">
+              <label for="password" class="form-label">पासवर्ड</label>
+              <input type="password" class="form-control" id="password" placeholder="अपना पासवर्ड दर्ज करें">
+            </div>
+            <button class="btn btn-app w-100 mb-3" id="loginButton">लॉगिन</button>
+            <p class="text-center">खाता नहीं है? <a href="#" id="showRegisterForm">अभी रजिस्टर करें</a></p>
+          </div>
+          
+          <div id="registerForm" class="hidden">
+            <div class="mb-3">
+              <label for="regUsername" class="form-label">यूजरनेम</label>
+              <input type="text" class="form-control" id="regUsername" placeholder="यूजरनेम चुनें">
+            </div>
+            <div class="mb-3">
+              <label for="regEmail" class="form-label">ईमेल</label>
+              <input type="email" class="form-control" id="regEmail" placeholder="अपना ईमेल दर्ज करें">
+            </div>
+            <div class="mb-3">
+              <label for="regPassword" class="form-label">पासवर्ड</label>
+              <input type="password" class="form-control" id="regPassword" placeholder="पासवर्ड चुनें">
+            </div>
+            <div class="mb-3">
+              <label for="regConfirmPassword" class="form-label">पासवर्ड की पुष्टि करें</label>
+              <input type="password" class="form-control" id="regConfirmPassword" placeholder="पासवर्ड दोबारा दर्ज करें">
+            </div>
+            <button class="btn btn-app w-100 mb-3" id="registerButton">रजिस्टर</button>
+            <p class="text-center">पहले से खाता है? <a href="#" id="showLoginForm">लॉगिन करें</a></p>
+          </div>
+        </div>
+      </section>
+    </div>
+    
+    <!-- Bottom Navigation Bar (mobile only) -->
+    <div class="bottom-navbar">
+      <a href="#" class="active" id="homeNavMobile">
+        <i class="fas fa-home"></i>
+        <span>होम</span>
+      </a>
+      <a href="#" id="fieldsNavMobile">
+        <i class="fas fa-map-marker-alt"></i>
+        <span>खेत</span>
+      </a>
+      <a href="#" id="marketPricesNavMobile">
+        <i class="fas fa-rupee-sign"></i>
+        <span>बाजार</span>
+      </a>
+      <a href="#" id="aiChatNavMobile">
+        <i class="fas fa-robot"></i>
+        <span>AI सहायक</span>
+      </a>
+      <a href="#" id="profileNavMobile">
+        <i class="fas fa-user"></i>
+        <span>प्रोफाइल</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- JavaScript -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    // App Sidebar Toggle
+    document.addEventListener('DOMContentLoaded', function() {
+      const menuToggle = document.getElementById('menuToggle');
+      const sidebar = document.getElementById('sidebar');
+      const sidebarOverlay = document.getElementById('sidebarOverlay');
+      const allNavLinks = document.querySelectorAll('.sidebar-menu a, .bottom-navbar a');
+      
+      // Toggle sidebar
+      function toggleSidebar() {
+        sidebar.classList.toggle('active');
+        sidebarOverlay.classList.toggle('active');
+      }
+      
+      menuToggle.addEventListener('click', toggleSidebar);
+      sidebarOverlay.addEventListener('click', toggleSidebar);
+      
+      // Navigation handling
+      function showSection(sectionId) {
+        // Hide all sections
+        document.querySelectorAll('.main-content > section').forEach(section => {
+          section.classList.add('hidden');
+        });
+        
+        // Show the selected section
+        const targetSection = document.getElementById(sectionId);
+        if (targetSection) {
+          targetSection.classList.remove('hidden');
+        }
+        
+        // Update active navigation links
+        allNavLinks.forEach(link => {
+          link.classList.remove('active');
+        });
+        
+        // Set active class
+        const desktopNavId = sectionId.replace('Section', 'Nav');
+        const mobileNavId = desktopNavId + 'Mobile';
+        
+        const desktopNav = document.getElementById(desktopNavId);
+        const mobileNav = document.getElementById(mobileNavId);
+        
+        if (desktopNav) desktopNav.classList.add('active');
+        if (mobileNav) mobileNav.classList.add('active');
+        
+        // Close sidebar on mobile after navigation
+        if (window.innerWidth < 992) {
+          sidebar.classList.remove('active');
+          sidebarOverlay.classList.remove('active');
+        }
+      }
+      
+      // Set up navigation click events
+      allNavLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          
+          const linkId = this.id;
+          let sectionId;
+          
+          if (linkId.includes('Mobile')) {
+            sectionId = linkId.replace('NavMobile', 'Section');
+          } else {
+            sectionId = linkId.replace('Nav', 'Section');
+          }
+          
+          showSection(sectionId);
+        });
+      });
+      
+      // Auth button click handler
+      document.getElementById('authButton').addEventListener('click', function() {
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        
+        if (isLoggedIn) {
+          // Log out
+          localStorage.removeItem('isLoggedIn');
+          localStorage.removeItem('username');
+          updateAuthUI();
+        } else {
+          // Show login/register form
+          showSection('authSection');
+        }
+      });
+      
+      // Toggle between login and register forms
+      document.getElementById('showRegisterForm').addEventListener('click', function(e) {
+        e.preventDefault();
+        document.getElementById('loginForm').classList.add('hidden');
+        document.getElementById('registerForm').classList.remove('hidden');
+        document.getElementById('authTitle').textContent = 'रजिस्टर';
+      });
+      
+      document.getElementById('showLoginForm').addEventListener('click', function(e) {
+        e.preventDefault();
+        document.getElementById('registerForm').classList.add('hidden');
+        document.getElementById('loginForm').classList.remove('hidden');
+        document.getElementById('authTitle').textContent = 'लॉगिन';
+      });
+      
+      // Login form submit handler
+      document.getElementById('loginButton').addEventListener('click', function() {
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        
+        if (username && password) {
+          // Simulate login (replace with actual API call)
+          localStorage.setItem('isLoggedIn', 'true');
+          localStorage.setItem('username', username);
+          updateAuthUI();
+          showSection('homeSection');
+        }
+      });
+      
+      // Register form submit handler
+      document.getElementById('registerButton').addEventListener('click', function() {
+        const username = document.getElementById('regUsername').value;
+        const email = document.getElementById('regEmail').value;
+        const password = document.getElementById('regPassword').value;
+        const confirmPassword = document.getElementById('regConfirmPassword').value;
+        
+        if (username && email && password && password === confirmPassword) {
+          // Simulate registration (replace with actual API call)
+          localStorage.setItem('isLoggedIn', 'true');
+          localStorage.setItem('username', username);
+          updateAuthUI();
+          showSection('homeSection');
+        }
+      });
+      
+      // Update UI based on auth state
+      function updateAuthUI() {
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        const username = localStorage.getItem('username');
+        
+        if (isLoggedIn && username) {
+          document.getElementById('authButtonText').textContent = 'लॉगआउट';
+          document.getElementById('userName').textContent = username;
+          document.getElementById('userStatus').textContent = '7 दिन का मुफ्त ट्रायल';
+        } else {
+          document.getElementById('authButtonText').textContent = 'लॉगिन';
+          document.getElementById('userName').textContent = 'अतिथि उपयोगकर्ता';
+          document.getElementById('userStatus').textContent = 'लॉगिन करें';
+        }
+      }
+      
+      // Quick access buttons
+      document.getElementById('quickChatButton').addEventListener('click', function() {
+        showSection('aiChatSection');
+      });
+      
+      document.getElementById('quickDiseaseButton').addEventListener('click', function() {
+        showSection('diseaseDetectSection');
+      });
+      
+      document.getElementById('quickIrrigationButton').addEventListener('click', function() {
+        showSection('dashboardSection');
+      });
+      
+      document.getElementById('quickMarketButton').addEventListener('click', function() {
+        showSection('marketPricesSection');
+      });
+      
+      // Initialize app
+      updateAuthUI();
+    });
+  </script>
+</body>
+</html>
