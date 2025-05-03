@@ -18,23 +18,125 @@
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background-color: var(--light-bg);
       color: #333;
+      display: flex;
+      min-height: 100vh;
     }
     
-    .navbar {
+    /* Sidebar Styles */
+    .sidebar {
+      width: 250px;
       background-color: var(--primary-color);
+      color: white;
+      position: fixed;
+      height: 100vh;
+      left: 0;
+      top: 0;
+      overflow-y: auto;
+      transition: all 0.3s;
+      z-index: 1000;
     }
     
-    .navbar-brand {
+    .sidebar-collapsed {
+      width: 60px;
+    }
+    
+    .sidebar-header {
+      padding: 20px;
+      background-color: rgba(0, 0, 0, 0.1);
+    }
+    
+    .sidebar .navbar-brand {
       color: white;
       font-weight: bold;
+      font-size: 1.3rem;
+      display: flex;
+      align-items: center;
+      padding-left: 0;
     }
     
-    .nav-link {
+    .sidebar-menu {
+      padding: 0;
+      list-style: none;
+      margin-top: 20px;
+    }
+    
+    .sidebar-menu li {
+      margin-bottom: 5px;
+    }
+    
+    .sidebar-menu .nav-link {
       color: rgba(255, 255, 255, 0.85) !important;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      transition: all 0.3s;
+      font-size: 1rem;
     }
     
-    .nav-link:hover {
+    .sidebar-menu .nav-link i {
+      margin-right: 10px;
+      font-size: 1.2rem;
+      min-width: 20px;
+      text-align: center;
+    }
+    
+    .sidebar-menu .nav-link:hover {
+      background-color: rgba(255, 255, 255, 0.1);
       color: white !important;
+    }
+    
+    .sidebar-menu .nav-link.active {
+      background-color: rgba(255, 255, 255, 0.2);
+      color: white !important;
+      font-weight: 500;
+    }
+    
+    /* Main Content Area */
+    .main-content {
+      flex: 1;
+      margin-left: 250px;
+      transition: all 0.3s;
+      width: calc(100% - 250px);
+    }
+    
+    .main-content-expanded {
+      margin-left: 60px;
+      width: calc(100% - 60px);
+    }
+    
+    /* Top Bar */
+    .top-bar {
+      background-color: white;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    /* Toggle Button */
+    #sidebarToggle {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--primary-color);
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .sidebar {
+        margin-left: -250px;
+      }
+      
+      .sidebar-active {
+        margin-left: 0;
+      }
+      
+      .main-content {
+        margin-left: 0;
+        width: 100%;
+      }
     }
     
     .hero-section {
@@ -338,60 +440,93 @@
   </style>
 </head>
 <body>
-  <!-- Navigation -->
-  <nav class="navbar navbar-expand-lg navbar-dark">
-    <div class="container">
+  <!-- Sidebar Navigation -->
+  <div class="sidebar">
+    <div class="sidebar-header">
       <a class="navbar-brand" href="#">
         <i class="fas fa-leaf me-2"></i>FarmAssist AI
       </a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-        <span class="navbar-toggler-icon"></span>
+    </div>
+    <ul class="sidebar-menu">
+      <li>
+        <a class="nav-link" href="#" id="homeNav" data-i18n="home">
+          <i class="fas fa-home"></i> Home
+        </a>
+      </li>
+      <li>
+        <a class="nav-link" href="#" id="dashboardNav" data-i18n="dashboard">
+          <i class="fas fa-tachometer-alt"></i> Dashboard
+        </a>
+      </li>
+      <li>
+        <a class="nav-link" href="#" id="diseaseDetectNav" data-i18n="disease_detection">
+          <i class="fas fa-bug"></i> Disease Detection
+        </a>
+      </li>
+      <li>
+        <a class="nav-link" href="#" id="marketPricesNav" data-i18n="market_prices">
+          <i class="fas fa-rupee-sign"></i> Market Prices
+        </a>
+      </li>
+      <li>
+        <a class="nav-link" href="#" id="weatherNav" data-i18n="weather">
+          <i class="fas fa-cloud-sun"></i> Weather
+        </a>
+      </li>
+      <li class="mt-4">
+        <a class="nav-link" href="#" id="chatNav">
+          <i class="fas fa-comments"></i> AI Kisan Chatbot
+        </a>
+      </li>
+    </ul>
+    
+    <!-- Auth Buttons in Sidebar -->
+    <div class="px-3 mt-5">
+      <button class="btn btn-outline-light w-100 mb-2" id="loginNav" data-i18n="login">
+        <i class="fas fa-sign-in-alt me-2"></i>Login
       </button>
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav me-auto">
-          <li class="nav-item">
-            <a class="nav-link" href="#" id="homeNav" data-i18n="home">Home</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#" id="dashboardNav" data-i18n="dashboard">Dashboard</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#" id="diseaseDetectNav" data-i18n="disease_detection">Disease Detection</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#" id="marketPricesNav" data-i18n="market_prices">Market Prices</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#" id="weatherNav" data-i18n="weather">Weather</a>
-          </li>
+      <button class="btn btn-outline-light w-100" id="registerNav" data-i18n="register">
+        <i class="fas fa-user-plus me-2"></i>Register
+      </button>
+      <button class="btn btn-outline-light w-100 hidden" id="logoutBtn" data-i18n="logout">
+        <i class="fas fa-sign-out-alt me-2"></i>Logout
+      </button>
+    </div>
+    
+    <!-- Language Selector in Sidebar -->
+    <div class="px-3 mt-4">
+      <div class="dropdown w-100">
+        <button class="btn btn-outline-light w-100 dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="fas fa-globe me-1"></i> <span class="language-text">English</span>
+        </button>
+        <ul class="dropdown-menu w-100" aria-labelledby="languageDropdown">
+          <li><a class="dropdown-item language-option" href="#" data-lang="en">English</a></li>
+          <li><a class="dropdown-item language-option" href="#" data-lang="hi">हिन्दी (Hindi)</a></li>
+          <li><a class="dropdown-item language-option" href="#" data-lang="ta">தமிழ் (Tamil)</a></li>
+          <li><a class="dropdown-item language-option" href="#" data-lang="te">తెలుగు (Telugu)</a></li>
+          <li><a class="dropdown-item language-option" href="#" data-lang="bn">বাংলা (Bengali)</a></li>
+          <li><a class="dropdown-item language-option" href="#" data-lang="pa">ਪੰਜਾਬੀ (Punjabi)</a></li>
         </ul>
-        <div class="d-flex align-items-center">
-          <!-- Language Selector Dropdown -->
-          <div class="dropdown me-3">
-            <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-              <i class="fas fa-globe me-1"></i> <span class="language-text">English</span>
-            </button>
-            <ul class="dropdown-menu" aria-labelledby="languageDropdown">
-              <li><a class="dropdown-item language-option" href="#" data-lang="en">English</a></li>
-              <li><a class="dropdown-item language-option" href="#" data-lang="hi">हिन्दी (Hindi)</a></li>
-              <li><a class="dropdown-item language-option" href="#" data-lang="ta">தமிழ் (Tamil)</a></li>
-              <li><a class="dropdown-item language-option" href="#" data-lang="te">తెలుగు (Telugu)</a></li>
-              <li><a class="dropdown-item language-option" href="#" data-lang="bn">বাংলা (Bengali)</a></li>
-              <li><a class="dropdown-item language-option" href="#" data-lang="pa">ਪੰਜਾਬੀ (Punjabi)</a></li>
-            </ul>
-          </div>
-          
-          <!-- Auth Buttons -->
-          <button class="btn btn-outline-light me-2" id="loginNav" data-i18n="login">Login</button>
-          <button class="btn btn-outline-light" id="registerNav" data-i18n="register">Register</button>
-          <button class="btn btn-outline-light hidden" id="logoutBtn" data-i18n="logout">Logout</button>
-        </div>
       </div>
     </div>
-  </nav>
+  </div>
 
   <!-- Main Content -->
-  <main>
+  <div class="main-content">
+    <!-- Top Bar -->
+    <div class="top-bar">
+      <button id="sidebarToggle">
+        <i class="fas fa-bars"></i>
+      </button>
+      <div id="pageTitle" class="h5 mb-0">Home</div>
+      <div>
+        <span id="userWelcome" class="me-2 hidden">Welcome, <span id="usernameDisplay"></span></span>
+        <span class="badge bg-success" id="subscriptionBadge">Premium</span>
+      </div>
+    </div>
+    
+    <!-- Page Content -->
+    <main class="p-3">
     <!-- Home Section -->
     <section id="homeSection">
       <!-- Hero Section -->
