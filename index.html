@@ -564,13 +564,18 @@
     }
     
     .chat-message.bot .message-content {
-      background-color: #e9f5e9;
+      background-color: #f0f0f0;
       border-bottom-left-radius: 0;
+      padding: 15px;
+      font-size: 14px;
     }
     
     .chat-message.user .message-content {
-      background-color: #e3f2fd;
+      background-color: #2e7d32;
+      color: white;
       border-bottom-right-radius: 0;
+      padding: 15px;
+      font-size: 14px;
     }
     
     .chat-input-form {
@@ -928,65 +933,96 @@
     <!-- Dashboard Section -->
     <section id="dashboardSection" class="hidden">
       <div class="container">
-        <h2 class="mb-4">Farmer Dashboard</h2>
+        <!-- User Welcome Card -->
+        <div class="app-card mb-4">
+          <div class="d-flex align-items-center mb-3">
+            <div class="rounded-circle bg-light d-flex align-items-center justify-content-center me-3" style="width: 44px; height: 44px;">
+              <i class="fas fa-user text-primary"></i>
+            </div>
+            <div>
+              <h4 class="mb-0" id="farmNameDisplay">Your Farm</h4>
+              <small class="text-muted" id="locationDisplay">Your Location</small>
+            </div>
+            <div class="ms-auto">
+              <i class="fas fa-ellipsis-h"></i>
+            </div>
+          </div>
+        </div>
         
         <!-- Alerts container for success/error messages -->
         <div id="alertsContainer"></div>
         
-        <div class="row">
-          <!-- Quick Stats -->
-          <div class="col-md-12 mb-4">
-            <div class="dashboard-widget">
-              <div class="row">
-                <div class="col-md-3">
-                  <div class="text-center">
-                    <h5>Fields</h5>
-                    <h3 id="fieldCount">0</h3>
-                  </div>
-                </div>
-                <div class="col-md-3">
-                  <div class="text-center">
-                    <h5>Crops</h5>
-                    <h3 id="cropCount">0</h3>
-                  </div>
-                </div>
-                <div class="col-md-3">
-                  <div class="text-center">
-                    <h5>Alerts</h5>
-                    <h3 id="alertCount">0</h3>
-                  </div>
-                </div>
-                <div class="col-md-3">
-                  <div class="text-center">
-                    <h5>Health Index</h5>
-                    <h3 id="healthIndex">--</h3>
-                  </div>
-                </div>
-              </div>
+        <!-- Weather Card -->
+        <div class="weather-card mb-4">
+          <div class="weather-illustration">
+            <i class="fas fa-sun"></i>
+          </div>
+          <h2 class="mb-1"><span id="dashboardTemp">24°C</span></h2>
+          <p class="mb-3"><span id="dashboardWeatherDesc">Cloudy</span></p>
+          
+          <div class="row mt-4">
+            <div class="col-4">
+              <h6 class="mb-2">Humidity</h6>
+              <div class="status-pill">Good</div>
             </div>
+            <div class="col-4">
+              <h6 class="mb-2">Soil Moisture</h6>
+              <div class="status-pill">Good</div>
+            </div>
+            <div class="col-4">
+              <h6 class="mb-2">Precipitation</h6>
+              <div class="status-pill">Low</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Manage Your Fields Section -->
+        <h5 class="mb-3">Manage your fields</h5>
+        <div class="feature-grid">
+          <div class="feature-item">
+            <div class="feature-icon">
+              <i class="fas fa-map-marker-alt"></i>
+            </div>
+            <h5>My Farm</h5>
           </div>
           
-          <!-- Fields and Weather -->
-          <div class="col-md-4">
-            <div class="dashboard-widget">
-              <h4 class="widget-title">Your Fields</h4>
-              <ul class="field-list" id="fieldsList">
-                <li class="text-center py-4">No fields added yet</li>
-              </ul>
-              <button class="btn btn-primary w-100 mt-3" id="addFieldBtn">Add New Field</button>
+          <div class="feature-item">
+            <div class="feature-icon">
+              <i class="fas fa-seedling"></i>
             </div>
-            
-            <div class="dashboard-widget">
-              <h4 class="widget-title">Weather</h4>
-              <div id="dashboardWeather">
-                <div class="text-center py-3">
-                  <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <h5>Crops</h5>
           </div>
+          
+          <div class="feature-item">
+            <div class="feature-icon">
+              <i class="fas fa-clipboard-list"></i>
+            </div>
+            <h5>Inventory</h5>
+          </div>
+          
+          <div class="feature-item">
+            <div class="feature-icon">
+              <i class="fas fa-rupee-sign"></i>
+            </div>
+            <h5>Balance</h5>
+          </div>
+        </div>
+        
+        <!-- Field List Card -->
+        <div class="app-card mt-4">
+          <h5 class="widget-title">Your Fields</h5>
+          <ul class="field-list" id="fieldsList">
+            <li class="text-center py-4">No fields added yet</li>
+          </ul>
+          <button class="btn btn-app mt-3" id="addFieldBtn">
+            <i class="fas fa-plus-circle me-2"></i>Add New Field
+          </button>
+        </div>
+        
+        <!-- Weather Section moved to its own card -->
+        <div id="dashboardWeather" class="hidden">
+          <!-- Weather content will be dynamically populated -->
+        </div>
           
           <!-- Field Details -->
           <div class="col-md-8">
@@ -1002,56 +1038,71 @@
         </div>
         
         <!-- Saved Guidance Articles -->
-        <div class="row mt-4">
-          <div class="col-12">
-            <div class="dashboard-widget">
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <h4 class="widget-title m-0">Saved Guidance Articles</h4>
-                <button class="btn btn-sm btn-outline-success" onclick="showSection('farmGuidanceSection')">
-                  <i class="fas fa-plus-circle me-1"></i> Generate New Guidance
-                </button>
-              </div>
-              <div id="savedGuidancesContainer" class="p-3">
-                <div class="text-center py-4">
-                  <p class="text-muted">You haven't saved any guidance articles yet.</p>
-                  <p>Generate farm guidance and click 'Save' to store articles here for future reference.</p>
-                </div>
-              </div>
+        <div class="app-card mt-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="widget-title m-0">Saved Guidance</h5>
+            <button class="btn btn-sm btn-app" onclick="showSection('farmGuidanceSection')">
+              <i class="fas fa-plus-circle me-1"></i> New
+            </button>
+          </div>
+          <div id="savedGuidancesContainer">
+            <div class="text-center py-4">
+              <p class="text-muted mb-1">No saved guidance</p>
+              <p class="small">Generate farm guidance and save articles for future reference</p>
             </div>
           </div>
         </div>
         
         <!-- AI Kisan Chatbot -->
-        <div class="row mt-4">
-          <div class="col-12">
-            <div class="dashboard-widget">
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <h4 class="widget-title m-0">
-                  <i class="fas fa-robot text-success me-2"></i> AI Kisan Chatbot
-                </h4>
-                <button class="btn btn-sm btn-outline-danger" id="clearChatBtn" onclick="clearChat()">
-                  <i class="fas fa-trash me-1"></i> Clear Chat
-                </button>
+        <div class="app-card mt-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex align-items-center">
+              <div class="rounded-circle bg-success d-flex align-items-center justify-content-center me-2" style="width: 36px; height: 36px;">
+                <i class="fas fa-robot text-white"></i>
               </div>
-              <div class="chat-container">
-                <div id="chatMessages" class="chat-messages mb-3">
-                  <div class="chat-message bot">
-                    <div class="message-content">
-                      <p>नमस्ते! मैं आपका AI किसान सहायक हूँ। आप मुझसे खेती-बाड़ी के बारे में कोई भी सवाल पूछ सकते हैं।</p>
-                      <p>Hello! I am your AI Kisan Assistant. You can ask me any farming related questions.</p>
-                    </div>
-                  </div>
+              <h5 class="widget-title m-0">AI Kisan Chatbot</h5>
+            </div>
+            <button class="btn btn-sm btn-outline-danger" id="clearChatBtn" onclick="clearChat()">
+              <i class="fas fa-trash me-1"></i> Clear
+            </button>
+          </div>
+          <div class="chat-container">
+            <div id="chatMessages" class="chat-messages mb-3">
+              <div class="chat-message bot">
+                <div class="message-content">
+                  <p>नमस्ते! मैं आपका AI किसान सहायक हूँ। आप मुझसे खेती-बाड़ी के बारे में कोई भी सवाल पूछ सकते हैं।</p>
+                  <p>Hello! I am your AI Kisan Assistant. You can ask me any farming related questions.</p>
                 </div>
-                <form id="chatForm" class="chat-input-form">
-                  <div class="input-group">
-                    <input type="text" id="chatInput" class="form-control" placeholder="Ask any farming question..." required>
-                    <button type="submit" class="btn btn-success">
-                      <i class="fas fa-paper-plane"></i>
-                    </button>
-                  </div>
-                </form>
               </div>
             </div>
+            <form id="chatForm" class="chat-input-form">
+              <div class="input-group">
+                <input type="text" id="chatInput" class="form-control" placeholder="Ask any farming question..." style="border-radius: 20px 0 0 20px;" required>
+                <button type="submit" class="btn btn-app" style="border-radius: 0 20px 20px 0;">
+                  <i class="fas fa-paper-plane"></i>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+        
+        <!-- Mobile App Bottom Navigation -->
+        <div class="fixed-bottom bg-white d-flex justify-content-around align-items-center py-3 d-md-none" style="border-top: 1px solid #eee;">
+          <div class="text-center">
+            <i class="fas fa-home"></i>
+            <div style="font-size: 12px;">Home</div>
+          </div>
+          <div class="text-center">
+            <i class="fas fa-chart-line"></i>
+            <div style="font-size: 12px;">Stats</div>
+          </div>
+          <div class="text-center">
+            <i class="fas fa-bell"></i>
+            <div style="font-size: 12px;">Alerts</div>
+          </div>
+          <div class="text-center">
+            <i class="fas fa-user"></i>
+            <div style="font-size: 12px;">Profile</div>
           </div>
         </div>
       </div>
