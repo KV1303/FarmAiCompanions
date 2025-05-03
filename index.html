@@ -759,24 +759,257 @@
         <!-- Dashboard content will be loaded here -->
       </section>
       
-      <!-- Other sections will be added as needed -->
+      <!-- AI Chat Section - Hidden by default -->
+      <section id="aiChatSection" class="hidden">
+        <h3 class="mb-4">AI किसान सहायक</h3>
+        <div class="chat-container">
+          <div class="chat-header">
+            <i class="fas fa-robot me-2"></i> AI किसान सहायक
+          </div>
+          <div class="chat-messages" id="chatMessages">
+            <div class="chat-message bot">
+              <div class="message-content">
+                नमस्ते! मैं AI किसान सहायक हूँ। आप कृषि से जुड़े किसी भी प्रश्न के बारे में मुझसे पूछ सकते हैं।
+              </div>
+            </div>
+          </div>
+          <div class="chat-input-form">
+            <div class="input-group">
+              <input type="text" class="form-control" id="chatInput" placeholder="यहाँ टाइप करें...">
+              <button class="btn btn-primary" id="sendChatBtn">
+                <i class="fas fa-paper-plane"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="d-flex justify-content-between mt-3">
+          <button class="btn btn-app-outline" id="clearChatBtn">
+            <i class="fas fa-trash me-2"></i>चैट साफ़ करें
+          </button>
+          <button class="btn btn-app-outline" id="saveChatBtn">
+            <i class="fas fa-save me-2"></i>सहेजें
+          </button>
+        </div>
+      </section>
+      
+      <!-- My Guidance Section - Hidden by default -->
+      <section id="myGuidanceSection" class="hidden">
+        <h3 class="mb-4">सहेजे गए मार्गदर्शन</h3>
+        <div class="row" id="savedGuidanceList">
+          <!-- Saved guidance cards will be loaded here -->
+          <div class="col-md-12 text-center py-5 text-muted">
+            <i class="fas fa-book fa-3x mb-3"></i>
+            <p>कोई सहेजा गया मार्गदर्शन नहीं है</p>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Fields Section - Hidden by default -->
+      <section id="fieldsSection" class="hidden">
+        <h3 class="mb-4">मेरे खेत</h3>
+        <div class="row mb-4">
+          <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center">
+              <h5>आपके खेत</h5>
+              <button class="btn btn-app" id="addFieldBtn">
+                <i class="fas fa-plus me-2"></i>नया खेत
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="row" id="fieldsList">
+          <!-- Field cards will be loaded here -->
+        </div>
+      </section>
       
       <!-- Disease Detection Section - Hidden by default -->
       <section id="diseaseDetectSection" class="hidden">
         <h3 class="mb-4">फसल रोग पहचान</h3>
-        <!-- Disease detection content will be loaded here -->
+        <div class="disease-detection-container">
+          <div class="row">
+            <div class="col-md-12 mb-4">
+              <h5>अपनी फसल की फोटो अपलोड करें</h5>
+              <p>प्रभावित पौधे के हिस्से (पत्ती, तना, फल) की एक स्पष्ट फोटो लें और नीचे अपलोड करें।</p>
+              <div class="upload-area" id="uploadArea">
+                <i class="fas fa-cloud-upload-alt fa-3x mb-3"></i>
+                <p>खींचें और छोड़ें या अपलोड करने के लिए क्लिक करें</p>
+                <p class="text-muted small">समर्थित प्रारूप: JPG, PNG</p>
+                <input type="file" id="diseaseImageUpload" class="d-none" accept="image/jpeg, image/png">
+              </div>
+              <div id="previewContainer" class="text-center hidden">
+                <img id="previewImage" class="preview-image" src="#" alt="Preview">
+                <div class="mt-3">
+                  <button class="btn btn-app-outline me-2" id="resetDetection">
+                    <i class="fas fa-redo me-2"></i>रीसेट
+                  </button>
+                  <button class="btn btn-app" id="analyzeImage">
+                    <i class="fas fa-search-plus me-2"></i>छवि का विश्लेषण करें
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="detectionResults" class="hidden">
+            <div class="text-center mb-4" id="analysisSpinner">
+              <div class="spinner-border text-success" role="status"></div>
+              <p class="mt-2">छवि का विश्लेषण किया जा रहा है... इसमें कुछ समय लग सकता है।</p>
+            </div>
+            <div id="resultsContent" class="hidden">
+              <div class="alert alert-success">
+                <h5 class="mb-3"><i class="fas fa-bug me-2"></i><span id="diseaseName">रोग का नाम</span></h5>
+                <p><strong>विश्वास:</strong> <span id="confidenceScore">95%</span></p>
+              </div>
+              <div class="card mb-4">
+                <div class="card-header bg-light">
+                  <h6 class="mb-0">लक्षण:</h6>
+                </div>
+                <div class="card-body" id="diseaseSymptoms">
+                  <!-- Symptoms will be displayed here -->
+                </div>
+              </div>
+              <div class="card mb-4">
+                <div class="card-header bg-light">
+                  <h6 class="mb-0">अनुशंसित उपचार:</h6>
+                </div>
+                <div class="card-body" id="treatmentRecommendations">
+                  <!-- Treatment recommendations will be displayed here -->
+                </div>
+              </div>
+              <button class="btn btn-app" id="saveReport">
+                <i class="fas fa-save me-2"></i>रिपोर्ट सहेजें
+              </button>
+            </div>
+          </div>
+        </div>
       </section>
       
       <!-- Market Prices Section - Hidden by default -->
       <section id="marketPricesSection" class="hidden">
         <h3 class="mb-4">बाजार भाव</h3>
-        <!-- Market prices content will be loaded here -->
+        <div class="market-prices-container">
+          <div class="price-filter-card">
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label for="marketCropFilter" class="form-label">फसल</label>
+                <select class="form-select" id="marketCropFilter">
+                  <option value="" selected>सभी फसलें</option>
+                  <option value="Rice">चावल (धान)</option>
+                  <option value="Wheat">गेहूं</option>
+                  <option value="Maize">मक्का</option>
+                  <option value="Jowar">ज्वार</option>
+                  <option value="Bajra">बाजरा</option>
+                  <option value="Sugarcane">गन्ना</option>
+                  <option value="Cotton">कपास</option>
+                  <option value="Soybean">सोयाबीन</option>
+                </select>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label for="marketDateFilter" class="form-label">दिनांक</label>
+                <input type="date" class="form-control" id="marketDateFilter">
+              </div>
+              <div class="col-md-4 mb-3 d-flex align-items-end">
+                <button class="btn btn-app w-100" id="applyMarketFilter">
+                  <i class="fas fa-filter me-2"></i>लागू करें
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <div class="table-responsive price-table">
+            <table class="table table-hover">
+              <thead class="table-light">
+                <tr>
+                  <th>फसल</th>
+                  <th>बाजार</th>
+                  <th>मूल्य (₹/क्विंटल)</th>
+                  <th>न्यूनतम मूल्य</th>
+                  <th>अधिकतम मूल्य</th>
+                  <th>दिनांक</th>
+                  <th>कार्रवाई</th>
+                </tr>
+              </thead>
+              <tbody id="marketPricesTableBody">
+                <!-- Market prices data will be loaded here -->
+              </tbody>
+            </table>
+          </div>
+          
+          <div class="alert alert-info mt-4" role="alert">
+            <div class="d-flex">
+              <div class="me-3">
+                <i class="fas fa-bell fa-2x"></i>
+              </div>
+              <div>
+                <h5 class="alert-heading">मूल्य अलर्ट</h5>
+                <p class="mb-0">मूल्य आपके लक्ष्य स्तर तक पहुंचने पर सूचित किए जाने के लिए अलर्ट सेट करें।</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
       
       <!-- Weather Section - Hidden by default -->
       <section id="weatherSection" class="hidden">
         <h3 class="mb-4">मौसम पूर्वानुमान</h3>
-        <!-- Weather forecast content will be loaded here -->
+        <div class="weather-container">
+          <div class="row mb-4">
+            <div class="col-md-6 mb-3">
+              <label for="weatherLocation" class="form-label">स्थान</label>
+              <div class="input-group">
+                <input type="text" class="form-control" id="weatherLocation" placeholder="शहर या गांव का नाम">
+                <button class="btn btn-primary" id="getWeatherBtn">
+                  <i class="fas fa-search"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <div id="currentWeather">
+            <div class="row">
+              <div class="col-md-6 mb-4">
+                <div class="weather-card">
+                  <div class="location-name" id="weatherLocationDisplay">नई दिल्ली</div>
+                  <div class="weather-temp" id="weatherTemp">28°C</div>
+                  <div class="weather-conditions" id="weatherDesc">आंशिक बादल</div>
+                  <div class="weather-metrics">
+                    <div class="weather-metric">
+                      <div class="metric-label">आर्द्रता</div>
+                      <div class="metric-value" id="weatherHumidity">68%</div>
+                    </div>
+                    <div class="weather-metric">
+                      <div class="metric-label">हवा</div>
+                      <div class="metric-value" id="weatherWind">10 km/h</div>
+                    </div>
+                    <div class="weather-metric">
+                      <div class="metric-label">वर्षा</div>
+                      <div class="metric-value" id="weatherPrecip">0 mm</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                  <div class="card-header bg-light">
+                    <h5 class="mb-0">खेती के सुझाव</h5>
+                  </div>
+                  <div class="card-body" id="weatherFarmingTips">
+                    <p>आज के मौसम के अनुसार, आप निम्नलिखित कार्य कर सकते हैं:</p>
+                    <ul>
+                      <li>हल्के तापमान के कारण दोपहर में सिंचाई करें</li>
+                      <li>कम हवा होने से स्प्रेइंग के लिए अच्छा मौसम है</li>
+                      <li>रात के समय तापमान कम होने की संभावना है, संवेदनशील फसलों को कवर करें</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <h5 class="mb-3">5-दिन का पूर्वानुमान</h5>
+            <div class="row" id="forecastContainer">
+              <!-- Forecast data will be loaded here -->
+            </div>
+          </div>
+        </div>
       </section>
       
       <!-- Login/Register Section - Hidden by default -->
