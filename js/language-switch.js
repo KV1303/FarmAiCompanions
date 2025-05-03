@@ -1,7 +1,10 @@
 // Simple language switcher for FarmAssist AI
 
+// This file is now only used for static translations using data-i18n attributes
+// Google Translate is used for dynamic content translation
+
 document.addEventListener('DOMContentLoaded', function() {
-  // Language data - each language with its display name and translations
+  // Language data for static UI elements with data-i18n attributes
   const languages = {
     en: {
       name: "English",
@@ -143,40 +146,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   };
 
-  // Get language selector elements
-  const languageOptions = document.querySelectorAll('.language-option');
-  const languageText = document.querySelector('.language-text');
+  // This functionality has been moved to the index.html script
+  // We're keeping this file with the translations dictionary
+  // for potential future use with static elements
   
-  // Initialize with saved language or default to English
-  let currentLanguage = localStorage.getItem('preferred_language') || 'en';
-  applyLanguage(currentLanguage);
-  
-  // Add click event listeners to language options
-  languageOptions.forEach(option => {
-    option.addEventListener('click', function(e) {
-      e.preventDefault();
-      const lang = this.getAttribute('data-lang');
-      
-      // Set the language and save preference
-      currentLanguage = lang;
-      localStorage.setItem('preferred_language', lang);
-      
-      // Apply translations
-      applyLanguage(lang);
-      
-      console.log(`Language changed to: ${lang} (${languages[lang].name})`);
-    });
-  });
-  
-  // Function to apply language translations
+  // Function to apply language translations to static elements (if needed)
   function applyLanguage(langCode) {
     if (!languages[langCode]) {
       console.error(`Language ${langCode} not found`);
       langCode = 'en'; // Fallback to English
     }
     
-    // Update the language display in the dropdown
-    languageText.textContent = languages[langCode].name;
+    console.log(`Applying static translations for ${langCode}`);
     
     // Find all elements with data-i18n attribute
     const elementsToTranslate = document.querySelectorAll('[data-i18n]');
@@ -195,4 +176,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   }
+  
+  // Make the function globally available
+  window.applyStaticTranslations = applyLanguage;
 });
