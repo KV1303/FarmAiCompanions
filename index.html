@@ -1,296 +1,58 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>फार्म असिस्ट AI</title>
+  <title>FarmAssist AI</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
     :root {
-      --primary-color: #4CAF50;
-      --secondary-color: #388E3C;
-      --accent-color: #FFEB3B;
-      --light-bg: #f9f9f9;
-      --dark-text: #333;
-      --sidebar-width: 280px;
-      --top-navbar-height: 60px;
+      --primary-color: #2e7d32;
+      --secondary-color: #558b2f;
+      --accent-color: #f9a825;
+      --light-bg: #f1f8e9;
+      --dark-text: #33691e;
     }
     
     body {
-      font-family: 'Poppins', sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background-color: var(--light-bg);
-      margin: 0;
-      padding: 0;
-      height: 100vh;
-      overflow-x: hidden;
+      color: #333;
     }
     
-    /* App Layout Styles - Mobile First */
-    .app-container {
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      width: 100%;
-      position: relative;
-    }
-    
-    /* Top Navigation */
-    .top-navbar {
+    .navbar {
       background-color: var(--primary-color);
-      height: var(--top-navbar-height);
-      display: flex;
-      align-items: center;
-      padding: 0 20px;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 100;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     }
     
-    .top-navbar .menu-button {
-      background: none;
-      border: none;
+    .navbar-brand {
       color: white;
-      font-size: 1.5rem;
-      cursor: pointer;
-      margin-right: 15px;
+      font-weight: bold;
     }
     
-    .top-navbar .logo {
+    .nav-link {
+      color: rgba(255, 255, 255, 0.85) !important;
+    }
+    
+    .nav-link:hover {
+      color: white !important;
+    }
+    
+    .hero-section {
+      background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://images.unsplash.com/photo-1500382017468-9049fed747ef');
+      background-size: cover;
+      background-position: center;
       color: white;
-      font-weight: 600;
-      font-size: 1.25rem;
-      display: flex;
-      align-items: center;
-      text-decoration: none;
+      padding: 100px 0;
+      margin-bottom: 30px;
     }
     
-    .top-navbar .logo i {
-      margin-right: 10px;
-    }
-    
-    .top-navbar .user-menu {
-      margin-left: auto;
-    }
-    
-    /* Sidebar Menu */
-    .sidebar {
-      position: fixed;
-      top: 0;
-      left: -280px;
-      width: var(--sidebar-width);
-      height: 100%;
-      background-color: white;
-      z-index: 200;
-      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-      transition: transform 0.3s ease;
-      padding-top: var(--top-navbar-height);
-      overflow-y: auto;
-    }
-    
-    .sidebar.active {
-      transform: translateX(280px);
-    }
-    
-    .sidebar-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.5);
-      z-index: 199;
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity 0.3s ease, visibility 0.3s ease;
-    }
-    
-    .sidebar-overlay.active {
-      opacity: 1;
-      visibility: visible;
-    }
-    
-    .user-profile {
-      padding: 20px;
-      text-align: center;
-      border-bottom: 1px solid #eee;
-    }
-    
-    .user-avatar {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      margin: 0 auto 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background-color: var(--primary-color);
-      color: white;
-      font-size: 2rem;
-    }
-    
-    .user-name {
-      font-weight: 600;
-      margin-bottom: 5px;
-    }
-    
-    .user-status {
-      font-size: 0.85rem;
-      color: #777;
-    }
-    
-    .sidebar-menu {
-      padding: 0;
-      list-style-type: none;
-    }
-    
-    .sidebar-menu li {
-      margin: 0;
-    }
-    
-    .sidebar-menu a {
-      display: flex;
-      align-items: center;
-      padding: 15px 20px;
-      color: var(--dark-text);
-      text-decoration: none;
-      transition: background-color 0.2s;
-      border-left: 4px solid transparent;
-    }
-    
-    .sidebar-menu a:hover, 
-    .sidebar-menu a.active {
-      background-color: #f0f8f0;
-      border-left-color: var(--primary-color);
-    }
-    
-    .sidebar-menu a i {
-      margin-right: 15px;
-      width: 24px;
-      text-align: center;
-      font-size: 1.2rem;
-      color: var(--primary-color);
-    }
-    
-    /* Main Content */
-    .main-content {
-      margin-top: var(--top-navbar-height);
-      padding: 20px;
-      flex: 1;
-      overflow-y: auto;
-    }
-    
-    /* Weather Card - App Style */
-    .weather-card {
-      background: linear-gradient(135deg, #FFB75E 0%, #ED8F03 100%);
-      color: white;
-      border-radius: 20px;
-      padding: 20px;
-      text-align: center;
-      margin-bottom: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    
-    .location-name {
-      font-size: 1.2rem;
-      font-weight: 600;
-      margin-bottom: 5px;
-    }
-    
-    .weather-temp {
-      font-size: 3rem;
-      font-weight: 700;
-      margin: 10px 0;
-      display: flex;
-      align-items: center;
-    }
-    
-    .weather-conditions {
-      margin-bottom: 10px;
-    }
-    
-    .weather-metrics {
-      display: flex;
-      justify-content: space-around;
-      width: 100%;
-      margin-top: 15px;
-    }
-    
-    .weather-metric {
-      text-align: center;
-    }
-    
-    .metric-label {
-      font-size: 0.8rem;
-      opacity: 0.9;
-    }
-    
-    .metric-value {
-      font-size: 1rem;
-      font-weight: 600;
-      background-color: rgba(255, 255, 255, 0.2);
-      padding: 5px 10px;
-      border-radius: 15px;
-      margin-top: 5px;
-    }
-    
-    /* Dashboard Cards - App Style */
-    .dashboard-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 15px;
-      margin-bottom: 20px;
-    }
-    
-    .dashboard-card {
-      background-color: white;
-      border-radius: 15px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-    }
-    
-    .card-icon {
-      width: 60px;
-      height: 60px;
-      border-radius: 15px;
-      background-color: #f0f8f0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 15px;
-    }
-    
-    .card-icon i {
-      font-size: 1.5rem;
-      color: var(--primary-color);
-    }
-    
-    .card-title {
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: var(--dark-text);
-      margin-bottom: 5px;
-    }
-    
-    /* Feature Cards */
     .feature-card {
-      padding: 20px;
-      text-align: center;
-      border-radius: 15px;
+      border-radius: 10px;
       overflow: hidden;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-      background-color: white;
-      margin-bottom: 20px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
       transition: transform 0.3s ease;
+      height: 100%;
+      background-color: white;
     }
     
     .feature-card:hover {
@@ -298,57 +60,77 @@
     }
     
     .feature-icon {
-      font-size: 2rem;
+      font-size: 40px;
       color: var(--primary-color);
       margin-bottom: 15px;
     }
     
-    /* Buttons */
-    .btn-app {
+    .btn-primary {
       background-color: var(--primary-color);
-      color: white;
-      border: none;
-      border-radius: 25px;
-      padding: 10px 20px;
-      font-weight: 600;
-      box-shadow: 0 4px 10px rgba(76, 175, 80, 0.3);
-      transition: all 0.3s ease;
+      border-color: var(--primary-color);
     }
     
-    .btn-app:hover {
+    .btn-primary:hover {
       background-color: var(--secondary-color);
-      transform: translateY(-2px);
-      box-shadow: 0 6px 15px rgba(76, 175, 80, 0.4);
+      border-color: var(--secondary-color);
     }
     
-    .btn-app-outline {
-      background-color: transparent;
-      color: var(--primary-color);
-      border: 2px solid var(--primary-color);
-      border-radius: 25px;
-      padding: 8px 18px;
-      font-weight: 600;
-      transition: all 0.3s ease;
+    .btn-outline-light:hover {
+      background-color: var(--accent-color);
+      color: #333;
+      border-color: var(--accent-color);
     }
     
-    .btn-app-outline:hover {
+    footer {
       background-color: var(--primary-color);
       color: white;
+      padding: 30px 0;
+    }
+    
+    .tab-content {
+      padding: 20px;
+      background-color: white;
+      border-radius: 0 0 10px 10px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .nav-tabs .nav-link {
+      color: var(--dark-text);
+    }
+    
+    .nav-tabs .nav-link.active {
+      color: var(--primary-color);
+      font-weight: bold;
+    }
+    
+    .dashboard-card {
+      height: 100%;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .auth-container {
+      max-width: 500px;
+      margin: 50px auto;
+      padding: 30px;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     }
     
     /* Disease detection styles */
     .disease-detection-container {
       background-color: white;
-      border-radius: 15px;
+      border-radius: 10px;
       padding: 20px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-      margin-bottom: 20px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     }
     
     .upload-area {
       border: 2px dashed #ccc;
-      border-radius: 15px;
-      padding: 40px 20px;
+      border-radius: 10px;
+      padding: 50px 20px;
       text-align: center;
       cursor: pointer;
       background-color: #f9f9f9;
@@ -357,7 +139,7 @@
     
     .upload-area:hover {
       border-color: var(--primary-color);
-      background-color: #f0f8f0;
+      background-color: #f0f0f0;
     }
     
     .preview-image {
@@ -365,65 +147,152 @@
       max-height: 300px;
       margin: 20px auto;
       display: block;
-      border-radius: 15px;
+      border-radius: 10px;
     }
     
-    /* Market prices styles */
-    .market-prices-container {
-      background-color: white;
-      border-radius: 15px;
+    .result-container {
+      margin-top: 20px;
       padding: 20px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-      margin-bottom: 20px;
+      border-radius: 10px;
+      background-color: #f1f8e9;
     }
     
-    .price-filter-card {
-      background-color: #f8f9fa;
-      border-radius: 15px;
-      padding: 20px;
-      margin-bottom: 20px;
-    }
-    
-    .price-table {
-      background-color: white;
-      border-radius: 15px;
+    .confidence-bar {
+      height: 20px;
+      background-color: #e0e0e0;
+      border-radius: 10px;
+      margin: 10px 0;
       overflow: hidden;
     }
     
-    /* Weather forecast styles */
-    .forecast-day {
+    .confidence-level {
+      height: 100%;
+      background-color: var(--primary-color);
+      border-radius: 10px;
+    }
+    
+    /* Market prices styles */
+    .price-card {
+      border-left: 5px solid var(--primary-color);
+    }
+    
+    .price-up {
+      color: green;
+    }
+    
+    .price-down {
+      color: red;
+    }
+    
+    /* Weather widget */
+    .weather-widget {
       background-color: white;
-      border-radius: 15px;
-      padding: 15px;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .weather-icon {
+      font-size: 40px;
+      margin-bottom: 10px;
+    }
+    
+    .forecast-day {
       text-align: center;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-      color: var(--dark-text);
+      padding: 10px;
+      background-color: #f5f5f5;
+      border-radius: 5px;
+      margin: 5px;
+    }
+    
+    /* Article content styles */
+    .article-content {
+      font-family: 'Georgia', serif;
+      line-height: 1.8;
+    }
+    
+    .article-content h1, 
+    .article-content h2, 
+    .article-content h3 {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--primary-color);
+      margin-top: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .article-content p {
+      margin-bottom: 1.2rem;
+    }
+    
+    .article-content ul {
+      margin-bottom: 1.5rem;
+    }
+    
+    .article-content li {
+      margin-bottom: 0.5rem;
+    }
+    
+    /* Add this for the login form */
+    .hidden {
+      display: none;
+    }
+    
+    #loginSection, #registerSection {
+      max-width: 400px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Dashboard styles */
+    #dashboardSection {
+      padding: 20px;
+    }
+    
+    .dashboard-widget {
+      background-color: white;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .widget-title {
+      color: var(--primary-color);
+      border-bottom: 2px solid var(--light-bg);
+      padding-bottom: 10px;
       margin-bottom: 15px;
     }
     
-    /* AI Chat Styles */
-    .chat-container {
-      background-color: white;
-      border-radius: 15px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-      display: flex;
-      flex-direction: column;
-      height: 500px;
-      margin-bottom: 20px;
+    .field-list {
+      list-style-type: none;
+      padding: 0;
     }
     
-    .chat-header {
-      background-color: var(--primary-color);
-      color: white;
-      padding: 15px;
-      border-radius: 15px 15px 0 0;
-      font-weight: 600;
+    .field-item {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+    }
+    
+    .field-item:hover {
+      background-color: var(--light-bg);
+    }
+    
+    /* Chatbot styles */
+    .chat-container {
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+      overflow: hidden;
     }
     
     .chat-messages {
-      flex: 1;
+      height: 400px;
       overflow-y: auto;
-      padding: 15px;
+      padding: 1rem;
+      background-color: #f9f9f9;
     }
     
     .chat-message {
@@ -456,564 +325,1235 @@
       padding: 10px;
       background-color: #fff;
       border-top: 1px solid #e5e5e5;
-      border-radius: 0 0 15px 15px;
     }
     
     /* Saved guidance styles */
     .saved-guidance-card {
-      background-color: white;
-      border-radius: 15px;
-      padding: 20px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-      margin-bottom: 20px;
       transition: transform 0.2s;
     }
     
     .saved-guidance-card:hover {
       transform: translateY(-5px);
     }
-    
-    /* Auth styles */
-    .auth-container {
-      max-width: 500px;
-      margin: 20px auto;
-      padding: 30px;
-      background-color: white;
-      border-radius: 15px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-    }
-    
-    /* Bottom Navigation Bar for mobile */
-    .bottom-navbar {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background-color: white;
-      display: flex;
-      justify-content: space-around;
-      padding: 10px 0;
-      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-      z-index: 100;
-    }
-    
-    .bottom-navbar a {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      color: #777;
-      text-decoration: none;
-      font-size: 0.75rem;
-    }
-    
-    .bottom-navbar a.active {
-      color: var(--primary-color);
-    }
-    
-    .bottom-navbar a i {
-      font-size: 1.5rem;
-      margin-bottom: 5px;
-    }
-    
-    /* Responsive Media Queries */
-    @media (min-width: 992px) {
-      .app-container {
-        flex-direction: row;
-      }
-      
-      .sidebar {
-        left: 0;
-        transform: translateX(0);
-        z-index: 100;
-      }
-      
-      .main-content {
-        margin-left: var(--sidebar-width);
-        width: calc(100% - var(--sidebar-width));
-      }
-      
-      .top-navbar .menu-button {
-        display: none;
-      }
-      
-      .sidebar-overlay {
-        display: none;
-      }
-      
-      .bottom-navbar {
-        display: none;
-      }
-      
-      .dashboard-grid {
-        grid-template-columns: repeat(4, 1fr);
-      }
-    }
-    
-    /* Utility Classes */
-    .hidden {
-      display: none !important;
-    }
   </style>
 </head>
 <body>
-  <div class="app-container">
-    <!-- Top Navbar -->
-    <div class="top-navbar">
-      <button class="menu-button" id="menuToggle">
-        <i class="fas fa-bars"></i>
-      </button>
-      <a href="#" class="logo">
-        <i class="fas fa-leaf"></i>
-        <span>फार्म असिस्ट AI</span>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container">
+      <a class="navbar-brand" href="#">
+        <i class="fas fa-leaf me-2"></i>FarmAssist AI
       </a>
-      <div class="user-menu">
-        <button class="btn btn-sm btn-outline-light" id="authButton">
-          <i class="fas fa-user"></i>
-          <span id="authButtonText">लॉगिन</span>
-        </button>
-      </div>
-    </div>
-    
-    <!-- Sidebar Overlay -->
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
-    
-    <!-- Sidebar -->
-    <div class="sidebar" id="sidebar">
-      <div class="user-profile">
-        <div class="user-avatar" id="userAvatar">
-          <i class="fas fa-user"></i>
-        </div>
-        <div class="user-name" id="userName">अतिथि उपयोगकर्ता</div>
-        <div class="user-status" id="userStatus">7 दिन का मुफ्त ट्रायल</div>
-      </div>
-      
-      <ul class="sidebar-menu">
-        <li>
-          <a href="#" class="active" id="homeNav">
-            <i class="fas fa-home"></i>
-            <span>होम</span>
-          </a>
-        </li>
-        <li>
-          <a href="#" id="dashboardNav">
-            <i class="fas fa-tachometer-alt"></i>
-            <span>डैशबोर्ड</span>
-          </a>
-        </li>
-        <li>
-          <a href="#" id="fieldsNav">
-            <i class="fas fa-map-marker-alt"></i>
-            <span>मेरे खेत</span>
-          </a>
-        </li>
-        <li>
-          <a href="#" id="diseaseDetectNav">
-            <i class="fas fa-bug"></i>
-            <span>रोग पहचान</span>
-          </a>
-        </li>
-        <li>
-          <a href="#" id="marketPricesNav">
-            <i class="fas fa-rupee-sign"></i>
-            <span>बाजार भाव</span>
-          </a>
-        </li>
-        <li>
-          <a href="#" id="weatherNav">
-            <i class="fas fa-cloud-sun"></i>
-            <span>मौसम</span>
-          </a>
-        </li>
-        <li>
-          <a href="#" id="aiChatNav">
-            <i class="fas fa-robot"></i>
-            <span>AI किसान सहायक</span>
-          </a>
-        </li>
-        <li>
-          <a href="#" id="myGuidanceNav">
-            <i class="fas fa-book"></i>
-            <span>सहेजे गए मार्गदर्शन</span>
-          </a>
-        </li>
-        <li>
-          <a href="#" id="marketplaceNav">
-            <i class="fas fa-store"></i>
-            <span>मार्केटप्लेस</span>
-          </a>
-        </li>
-        <li>
-          <a href="#" id="settingsNav">
-            <i class="fas fa-cog"></i>
-            <span>सेटिंग्स</span>
-          </a>
-        </li>
-      </ul>
-    </div>
-    
-    <!-- Main Content -->
-    <div class="main-content">
-      <!-- Home Section -->
-      <section id="homeSection" class="active-section">
-        <!-- Weather Summary Card (like mockup) -->
-        <div class="weather-card">
-          <div class="location-name">नई दिल्ली</div>
-          <div class="weather-temp">28°C</div>
-          <div class="weather-conditions">आंशिक बादल</div>
-          <div class="weather-metrics">
-            <div class="weather-metric">
-              <div class="metric-label">आर्द्रता</div>
-              <div class="metric-value">68%</div>
-            </div>
-            <div class="weather-metric">
-              <div class="metric-label">मिट्टी नमी</div>
-              <div class="metric-value">अच्छा</div>
-            </div>
-            <div class="weather-metric">
-              <div class="metric-label">वर्षा संभावना</div>
-              <div class="metric-value">कम</div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Field Management Cards (like mockup) -->
-        <h5 class="mb-3">अपने खेतों का प्रबंधन करें</h5>
-        <div class="dashboard-grid">
-          <div class="dashboard-card">
-            <div class="card-icon">
-              <i class="fas fa-map-marker-alt"></i>
-            </div>
-            <div class="card-title">मेरे खेत</div>
-          </div>
-          <div class="dashboard-card">
-            <div class="card-icon">
-              <i class="fas fa-seedling"></i>
-            </div>
-            <div class="card-title">फसलें</div>
-          </div>
-          <div class="dashboard-card">
-            <div class="card-icon">
-              <i class="fas fa-clipboard-list"></i>
-            </div>
-            <div class="card-title">इन्वेंटरी</div>
-          </div>
-          <div class="dashboard-card">
-            <div class="card-icon">
-              <i class="fas fa-rupee-sign"></i>
-            </div>
-            <div class="card-title">आय/व्यय</div>
-          </div>
-        </div>
-        
-        <!-- AI Guidance Features -->
-        <h5 class="mb-3 mt-4">AI कृषि मार्गदर्शन</h5>
-        
-        <div class="feature-card">
-          <div class="feature-icon">
-            <i class="fas fa-robot"></i>
-          </div>
-          <h5>AI किसान सहायक</h5>
-          <p>अपने कृषि प्रश्नों के विशेषज्ञ उत्तर पाएं। हमारा AI रोबोट आपकी सहायता के लिए 24x7 उपलब्ध है।</p>
-          <button class="btn btn-app mt-2" id="quickChatButton">
-            <i class="fas fa-comment-dots me-2"></i>चैट करें
-          </button>
-        </div>
-        
-        <div class="feature-card">
-          <div class="feature-icon">
-            <i class="fas fa-bug"></i>
-          </div>
-          <h5>रोग पहचान</h5>
-          <p>अपनी फसल की एक तस्वीर अपलोड करें और तुरंत रोग की पहचान करें और उपचार के सुझाव प्राप्त करें।</p>
-          <button class="btn btn-app mt-2" id="quickDiseaseButton">
-            <i class="fas fa-camera me-2"></i>अभी पहचानें
-          </button>
-        </div>
-        
-        <div class="feature-card">
-          <div class="feature-icon">
-            <i class="fas fa-tint"></i>
-          </div>
-          <h5>सिंचाई सिफारिशें</h5>
-          <p>अपनी फसल और मौसम के आधार पर स्मार्ट सिंचाई की योजना बनाएं। पानी बचाएं और उपज बढ़ाएं।</p>
-          <button class="btn btn-app mt-2" id="quickIrrigationButton">
-            <i class="fas fa-tint me-2"></i>सिफारिशें पाएं
-          </button>
-        </div>
-        
-        <div class="feature-card">
-          <div class="feature-icon">
-            <i class="fas fa-rupee-sign"></i>
-          </div>
-          <h5>बाजार भाव</h5>
-          <p>अपनी फसलों के वर्तमान बाजार भाव देखें और सर्वोत्तम मूल्य के लिए अलर्ट सेट करें।</p>
-          <button class="btn btn-app mt-2" id="quickMarketButton">
-            <i class="fas fa-chart-line me-2"></i>भाव देखें
-          </button>
-        </div>
-      </section>
-      
-      <!-- Dashboard Section - Hidden by default -->
-      <section id="dashboardSection" class="hidden">
-        <h3 class="mb-4">किसान डैशबोर्ड</h3>
-        <!-- Dashboard content will be loaded here -->
-      </section>
-      
-      <!-- Other sections will be added as needed -->
-      
-      <!-- Disease Detection Section - Hidden by default -->
-      <section id="diseaseDetectSection" class="hidden">
-        <h3 class="mb-4">फसल रोग पहचान</h3>
-        <!-- Disease detection content will be loaded here -->
-      </section>
-      
-      <!-- Market Prices Section - Hidden by default -->
-      <section id="marketPricesSection" class="hidden">
-        <h3 class="mb-4">बाजार भाव</h3>
-        <!-- Market prices content will be loaded here -->
-      </section>
-      
-      <!-- Weather Section - Hidden by default -->
-      <section id="weatherSection" class="hidden">
-        <h3 class="mb-4">मौसम पूर्वानुमान</h3>
-        <!-- Weather forecast content will be loaded here -->
-      </section>
-      
-      <!-- Login/Register Section - Hidden by default -->
-      <section id="authSection" class="hidden">
-        <div class="auth-container">
-          <h3 class="text-center mb-4" id="authTitle">लॉगिन</h3>
-          <div id="loginForm">
-            <div class="mb-3">
-              <label for="username" class="form-label">यूजरनेम</label>
-              <input type="text" class="form-control" id="username" placeholder="अपना यूजरनेम दर्ज करें">
-            </div>
-            <div class="mb-3">
-              <label for="password" class="form-label">पासवर्ड</label>
-              <input type="password" class="form-control" id="password" placeholder="अपना पासवर्ड दर्ज करें">
-            </div>
-            <button class="btn btn-app w-100 mb-3" id="loginButton">लॉगिन</button>
-            <p class="text-center">खाता नहीं है? <a href="#" id="showRegisterForm">अभी रजिस्टर करें</a></p>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="#" id="homeNav" data-i18n="home">Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" id="dashboardNav" data-i18n="dashboard">Dashboard</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" id="diseaseDetectNav" data-i18n="disease_detection">Disease Detection</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" id="marketPricesNav" data-i18n="market_prices">Market Prices</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" id="weatherNav" data-i18n="weather">Weather</a>
+          </li>
+        </ul>
+        <div class="d-flex align-items-center">
+          <!-- Language Selector Dropdown -->
+          <div class="dropdown me-3">
+            <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="fas fa-globe me-1"></i> <span class="language-text">English</span>
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="languageDropdown">
+              <li><a class="dropdown-item language-option" href="#" data-lang="en">English</a></li>
+              <li><a class="dropdown-item language-option" href="#" data-lang="hi">हिन्दी (Hindi)</a></li>
+              <li><a class="dropdown-item language-option" href="#" data-lang="ta">தமிழ் (Tamil)</a></li>
+              <li><a class="dropdown-item language-option" href="#" data-lang="te">తెలుగు (Telugu)</a></li>
+              <li><a class="dropdown-item language-option" href="#" data-lang="bn">বাংলা (Bengali)</a></li>
+              <li><a class="dropdown-item language-option" href="#" data-lang="pa">ਪੰਜਾਬੀ (Punjabi)</a></li>
+            </ul>
           </div>
           
-          <div id="registerForm" class="hidden">
-            <div class="mb-3">
-              <label for="regUsername" class="form-label">यूजरनेम</label>
-              <input type="text" class="form-control" id="regUsername" placeholder="यूजरनेम चुनें">
+          <!-- Auth Buttons -->
+          <button class="btn btn-outline-light me-2" id="loginNav" data-i18n="login">Login</button>
+          <button class="btn btn-outline-light" id="registerNav" data-i18n="register">Register</button>
+          <button class="btn btn-outline-light hidden" id="logoutBtn" data-i18n="logout">Logout</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main>
+    <!-- Home Section -->
+    <section id="homeSection">
+      <!-- Hero Section -->
+      <div class="hero-section text-center">
+        <div class="container">
+          <h1 class="display-4" data-i18n="revolutionize_farming">Revolutionize Your Farming</h1>
+          <p class="lead" data-i18n="ai_companion">AI-powered companion for modern farmers</p>
+          <button class="btn btn-outline-light btn-lg mt-3" id="getStartedBtn" data-i18n="get_started">Get Started</button>
+        </div>
+      </div>
+
+      <!-- AI Farm Guidance Section -->
+      <div class="container mt-5">
+        <div class="row">
+          <div class="col-md-12">
+            <div class="card border-success">
+              <div class="card-header bg-success text-white">
+                <h3 class="mb-0"><i class="fas fa-robot me-2"></i> <span data-i18n="ai_farm_guidance">AI Farm Guidance System</span></h3>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-6">
+                    <h4 data-i18n="personalized_recommendations">Get personalized farming recommendations</h4>
+                    <p data-i18n="guidance_description">Our AI-powered farm guidance system provides comprehensive recommendations tailored to your specific crops, soil type, and location.</p>
+                    
+                    <form id="quickGuidanceForm" class="mt-4">
+                      <div class="mb-3">
+                        <label for="quickCropType" class="form-label" data-i18n="crop_type">Crop Type</label>
+                        <select class="form-select" id="quickCropType" required>
+                          <option value="" data-i18n="select_crop">Select a crop</option>
+                          <option value="Rice">Rice</option>
+                          <option value="Wheat">Wheat</option>
+                          <option value="Cotton">Cotton</option>
+                          <option value="Sugarcane">Sugarcane</option>
+                          <option value="Maize">Maize</option>
+                          <option value="Potato">Potato</option>
+                          <option value="Tomato">Tomato</option>
+                          <option value="Chickpea">Chickpea</option>
+                          <option value="Soybean">Soybean</option>
+                          <option value="Mustard">Mustard</option>
+                          <option value="Groundnut">Groundnut</option>
+                          <option value="Turmeric">Turmeric</option>
+                          <option value="Onion">Onion</option>
+                          <option value="Garlic">Garlic</option>
+                          <option value="Chilli">Chilli</option>
+                          <option value="Okra">Okra (Bhindi)</option>
+                          <option value="Millet">Millet (Bajra)</option>
+                          <option value="Barley">Barley</option>
+                          <option value="Sunflower">Sunflower</option>
+                        </select>
+                      </div>
+                      <div class="mb-3">
+                        <label for="quickSoilType" class="form-label" data-i18n="soil_type">Soil Type</label>
+                        <select class="form-select" id="quickSoilType" required>
+                          <option value="" data-i18n="select_soil">Select soil type</option>
+                          <option value="Sandy">Sandy</option>
+                          <option value="Clay">Clay</option>
+                          <option value="Loamy">Loamy</option>
+                          <option value="Silt">Silt</option>
+                          <option value="Black">Black</option>
+                          <option value="Red">Red</option>
+                          <option value="Alluvial">Alluvial</option>
+                          <option value="Laterite">Laterite</option>
+                          <option value="Peaty">Peaty</option>
+                          <option value="Calcareous">Calcareous</option>
+                          <option value="Saline">Saline</option>
+                          <option value="Acidic">Acidic</option>
+                        </select>
+                      </div>
+                      <button type="submit" class="btn btn-success" id="getGuidanceBtn">
+                        <i class="fas fa-lightbulb me-2"></i><span data-i18n="get_farm_guidance">Get Farm Guidance</span>
+                      </button>
+                    </form>
+                  </div>
+                  <div class="col-md-6">
+                    <div id="guidanceResults" class="p-3 border rounded">
+                      <div class="text-center py-5">
+                        <i class="fas fa-seedling fa-3x text-success mb-3"></i>
+                        <h5 data-i18n="ai_farm_guidance">AI Farm Guidance</h5>
+                        <p class="text-muted" data-i18n="guidance_description">Select your crop and soil type to get personalized farming recommendations.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="mb-3">
-              <label for="regEmail" class="form-label">ईमेल</label>
-              <input type="email" class="form-control" id="regEmail" placeholder="अपना ईमेल दर्ज करें">
-            </div>
-            <div class="mb-3">
-              <label for="regPassword" class="form-label">पासवर्ड</label>
-              <input type="password" class="form-control" id="regPassword" placeholder="पासवर्ड चुनें">
-            </div>
-            <div class="mb-3">
-              <label for="regConfirmPassword" class="form-label">पासवर्ड की पुष्टि करें</label>
-              <input type="password" class="form-control" id="regConfirmPassword" placeholder="पासवर्ड दोबारा दर्ज करें">
-            </div>
-            <button class="btn btn-app w-100 mb-3" id="registerButton">रजिस्टर</button>
-            <p class="text-center">पहले से खाता है? <a href="#" id="showLoginForm">लॉगिन करें</a></p>
           </div>
         </div>
-      </section>
+      </div>
+
+      <!-- Features -->
+      <div class="container my-5">
+        <h2 class="text-center mb-5" data-i18n="what_farmassist_can_do">What FarmAssist AI Can Do For You</h2>
+        <div class="row g-4">
+          <!-- Feature 1 -->
+          <div class="col-md-4 mb-4">
+            <div class="feature-card p-4 text-center">
+              <div class="feature-icon">
+                <i class="fas fa-bug"></i>
+              </div>
+              <h4 data-i18n="disease_detection_feature">Disease Detection</h4>
+              <p data-i18n="disease_detection_desc">Detect crop diseases by simply taking a photo. Our AI provides instant diagnosis and treatment recommendations.</p>
+              <button class="btn btn-primary" id="featureDiseaseBtn" data-i18n="try_now">Try Now</button>
+            </div>
+          </div>
+          
+          <!-- Feature 2 -->
+          <div class="col-md-4 mb-4">
+            <div class="feature-card p-4 text-center">
+              <div class="feature-icon">
+                <i class="fas fa-chart-line"></i>
+              </div>
+              <h4 data-i18n="market_prices_feature">Market Prices</h4>
+              <p data-i18n="market_prices_desc">Get real-time market prices for your crops and set alerts for price changes to maximize your profits.</p>
+              <button class="btn btn-primary" id="featureMarketBtn" data-i18n="check_prices">Check Prices</button>
+            </div>
+          </div>
+          
+          <!-- Feature 3 -->
+          <div class="col-md-4 mb-4">
+            <div class="feature-card p-4 text-center">
+              <div class="feature-icon">
+                <i class="fas fa-cloud-sun-rain"></i>
+              </div>
+              <h4 data-i18n="weather_forecasts_feature">Weather Forecasts</h4>
+              <p data-i18n="weather_forecasts_desc">Get accurate weather forecasts for your specific location to plan your farming activities effectively.</p>
+              <button class="btn btn-primary" id="featureWeatherBtn" data-i18n="view_weather">View Weather</button>
+            </div>
+          </div>
+          
+          <!-- Feature 4: Advanced Fertilizer Recommendations -->
+          <div class="col-md-6 mb-4">
+            <div class="feature-card p-4 text-center">
+              <div class="feature-icon">
+                <i class="fas fa-flask"></i>
+              </div>
+              <h4 data-i18n="fertilizer_feature">Advanced Fertilizer Recommendations</h4>
+              <p data-i18n="fertilizer_desc">Get AI-powered fertilizer recommendations based on your crop type, soil conditions, and growth stage. Maximize yield with precise nutrient management.</p>
+              <button class="btn btn-primary" id="featureFertilizerBtn" data-bs-toggle="modal" data-bs-target="#fertilizerModal" data-i18n="get_recommendations">Get Recommendations</button>
+            </div>
+          </div>
+          
+          <!-- Feature 5: Irrigation Management -->
+          <div class="col-md-6 mb-4">
+            <div class="feature-card p-4 text-center">
+              <div class="feature-icon">
+                <i class="fas fa-tint"></i>
+              </div>
+              <h4 data-i18n="irrigation_feature">Irrigation Management</h4>
+              <p data-i18n="irrigation_desc">Optimize your water usage with AI-generated irrigation schedules tailored to your crops, soil type, and local weather conditions. Save water and improve crop health.</p>
+              <button class="btn btn-primary" id="featureIrrigationBtn" data-bs-toggle="modal" data-bs-target="#irrigationModal" data-i18n="plan_irrigation">Plan Irrigation</button>
+            </div>
+          </div>
+          
+          <!-- Feature 6: AI Kisan Chatbot -->
+          <div class="col-md-12 mb-4">
+            <div class="feature-card p-4 text-center">
+              <div class="feature-icon">
+                <i class="fas fa-robot"></i>
+              </div>
+              <h4 data-i18n="chatbot_feature">AI Kisan Chatbot</h4>
+              <p data-i18n="chatbot_desc">Get instant expert farming advice by chatting with our AI agricultural assistant. Ask any farming questions and get personalized guidance.</p>
+              <button class="btn btn-primary" id="featureChatbotBtn" data-i18n="start_chat">Start Chat</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Testimonials -->
+      <div class="container my-5 py-5 bg-light">
+        <h2 class="text-center mb-5" data-i18n="what_farmers_say">What Farmers Say</h2>
+        <div class="row">
+          <div class="col-md-4">
+            <div class="card mb-4">
+              <div class="card-body">
+                <p class="card-text" data-i18n="testimonial_1">"FarmAssist AI helped me identify a fungal infection early, saving my entire tomato crop. The recommendations were spot on!"</p>
+                <p class="card-text"><small class="text-muted" data-i18n="farmer_1">- Rajesh Kumar, Tomato Farmer</small></p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card mb-4">
+              <div class="card-body">
+                <p class="card-text" data-i18n="testimonial_2">"I've increased my profits by 20% by using the market price alerts to time my crop sales. This app is a game-changer!"</p>
+                <p class="card-text"><small class="text-muted" data-i18n="farmer_2">- Ananya Singh, Rice Farmer</small></p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card mb-4">
+              <div class="card-body">
+                <p class="card-text" data-i18n="testimonial_3">"The weather forecasts are incredibly accurate. I can plan irrigation and harvesting with confidence, even during uncertain seasons."</p>
+                <p class="card-text"><small class="text-muted" data-i18n="farmer_3">- Vikram Patel, Wheat Farmer</small></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Login Section -->
+    <section id="loginSection" class="hidden">
+      <div class="container">
+        <h2 class="text-center mb-4" data-i18n="login">Login</h2>
+        <form id="loginForm">
+          <div class="mb-3">
+            <label for="loginUsername" class="form-label" data-i18n="username">Username</label>
+            <input type="text" class="form-control" id="loginUsername" required>
+          </div>
+          <div class="mb-3">
+            <label for="loginPassword" class="form-label" data-i18n="password">Password</label>
+            <input type="password" class="form-control" id="loginPassword" required>
+          </div>
+          <div id="loginError" class="alert alert-danger hidden"></div>
+          <button type="submit" class="btn btn-primary w-100" data-i18n="login">Login</button>
+          <p class="mt-3 text-center"><span data-i18n="no_account">Don't have an account?</span> <a href="#" id="switchToRegister" data-i18n="register_now">Register now</a></p>
+        </form>
+      </div>
+    </section>
+
+    <!-- Register Section -->
+    <section id="registerSection" class="hidden">
+      <div class="container">
+        <h2 class="text-center mb-4" data-i18n="register">Register</h2>
+        <form id="registerForm">
+          <div class="mb-3">
+            <label for="registerUsername" class="form-label" data-i18n="username">Username</label>
+            <input type="text" class="form-control" id="registerUsername" required>
+          </div>
+          <div class="mb-3">
+            <label for="registerEmail" class="form-label" data-i18n="email">Email</label>
+            <input type="email" class="form-control" id="registerEmail" required>
+          </div>
+          <div class="mb-3">
+            <label for="registerPassword" class="form-label" data-i18n="password">Password</label>
+            <input type="password" class="form-control" id="registerPassword" required>
+          </div>
+          <div class="mb-3">
+            <label for="registerConfirmPassword" class="form-label" data-i18n="confirm_password">Confirm Password</label>
+            <input type="password" class="form-control" id="registerConfirmPassword" required>
+          </div>
+          <div id="registerError" class="alert alert-danger hidden"></div>
+          <button type="submit" class="btn btn-primary w-100" data-i18n="register">Register</button>
+          <p class="mt-3 text-center"><span data-i18n="have_account">Already have an account?</span> <a href="#" id="switchToLogin" data-i18n="login">Login</a></p>
+        </form>
+      </div>
+    </section>
+
+    <!-- Dashboard Section -->
+    <section id="dashboardSection" class="hidden">
+      <div class="container">
+        <h2 class="mb-4">Farmer Dashboard</h2>
+        
+        <!-- Alerts container for success/error messages -->
+        <div id="alertsContainer"></div>
+        
+        <div class="row">
+          <!-- Quick Stats -->
+          <div class="col-md-12 mb-4">
+            <div class="dashboard-widget">
+              <div class="row">
+                <div class="col-md-3">
+                  <div class="text-center">
+                    <h5>Fields</h5>
+                    <h3 id="fieldCount">0</h3>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="text-center">
+                    <h5>Crops</h5>
+                    <h3 id="cropCount">0</h3>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="text-center">
+                    <h5>Alerts</h5>
+                    <h3 id="alertCount">0</h3>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="text-center">
+                    <h5>Health Index</h5>
+                    <h3 id="healthIndex">--</h3>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Fields and Weather -->
+          <div class="col-md-4">
+            <div class="dashboard-widget">
+              <h4 class="widget-title">Your Fields</h4>
+              <ul class="field-list" id="fieldsList">
+                <li class="text-center py-4">No fields added yet</li>
+              </ul>
+              <button class="btn btn-primary w-100 mt-3" id="addFieldBtn">Add New Field</button>
+            </div>
+            
+            <div class="dashboard-widget">
+              <h4 class="widget-title">Weather</h4>
+              <div id="dashboardWeather">
+                <div class="text-center py-3">
+                  <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Field Details -->
+          <div class="col-md-8">
+            <div class="dashboard-widget">
+              <h4 class="widget-title">Field Details</h4>
+              <div id="fieldDetails">
+                <div class="text-center py-5">
+                  <p>Select a field to view details</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Saved Guidance Articles -->
+        <div class="row mt-4">
+          <div class="col-12">
+            <div class="dashboard-widget">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="widget-title m-0">Saved Guidance Articles</h4>
+                <button class="btn btn-sm btn-outline-success" onclick="showSection('farmGuidanceSection')">
+                  <i class="fas fa-plus-circle me-1"></i> Generate New Guidance
+                </button>
+              </div>
+              <div id="savedGuidancesContainer" class="p-3">
+                <div class="text-center py-4">
+                  <p class="text-muted">You haven't saved any guidance articles yet.</p>
+                  <p>Generate farm guidance and click 'Save' to store articles here for future reference.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- AI Kisan Chatbot -->
+        <div class="row mt-4">
+          <div class="col-12">
+            <div class="dashboard-widget">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="widget-title m-0">
+                  <i class="fas fa-robot text-success me-2"></i> AI Kisan Chatbot
+                </h4>
+                <button class="btn btn-sm btn-outline-danger" id="clearChatBtn" onclick="clearChat()">
+                  <i class="fas fa-trash me-1"></i> Clear Chat
+                </button>
+              </div>
+              <div class="chat-container">
+                <div id="chatMessages" class="chat-messages mb-3">
+                  <div class="chat-message bot">
+                    <div class="message-content">
+                      <p>नमस्ते! मैं आपका AI किसान सहायक हूँ। आप मुझसे खेती-बाड़ी के बारे में कोई भी सवाल पूछ सकते हैं।</p>
+                      <p>Hello! I am your AI Kisan Assistant. You can ask me any farming related questions.</p>
+                    </div>
+                  </div>
+                </div>
+                <form id="chatForm" class="chat-input-form">
+                  <div class="input-group">
+                    <input type="text" id="chatInput" class="form-control" placeholder="Ask any farming question..." required>
+                    <button type="submit" class="btn btn-success">
+                      <i class="fas fa-paper-plane"></i>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Disease Detection Section -->
+    <section id="diseaseDetectionSection" class="hidden">
+      <div class="container py-5">
+        <h2 class="mb-4" data-i18n="crop_disease_detection">Crop Disease Detection</h2>
+        <div class="row">
+          <div class="col-lg-6">
+            <div class="disease-detection-container">
+              <h4 data-i18n="upload_photo">Upload a Photo of Your Crop</h4>
+              <p data-i18n="take_clear_photo">Take a clear photo of the affected plant part (leaf, stem, fruit) and upload it below.</p>
+              
+              <div class="upload-area" id="uploadArea">
+                <i class="fas fa-cloud-upload-alt fa-3x mb-3"></i>
+                <h5 data-i18n="drag_drop">Drag & Drop or Click to Upload</h5>
+                <p data-i18n="supported_formats">Supported formats: JPG, PNG</p>
+                <input type="file" id="diseaseImageInput" class="hidden" accept="image/*">
+              </div>
+              
+              <div id="imagePreviewContainer" class="hidden">
+                <img id="imagePreview" class="preview-image">
+                <div class="text-center mt-3">
+                  <button class="btn btn-danger me-2" id="resetImageBtn" data-i18n="reset">Reset</button>
+                  <button class="btn btn-primary" id="analyzeImageBtn" data-i18n="analyze_image">Analyze Image</button>
+                </div>
+              </div>
+              
+              <div id="loadingIndicator" class="text-center my-4 hidden">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2" data-i18n="analyzing_image">Analyzing image... This may take a moment.</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-lg-6">
+            <div id="resultContainer" class="result-container hidden">
+              <h4 id="diseaseResult">Disease Name</h4>
+              
+              <div>
+                <p><strong data-i18n="confidence">Confidence:</strong></p>
+                <div class="confidence-bar">
+                  <div class="confidence-level" id="confidenceLevel"></div>
+                </div>
+                <p id="confidenceText" class="text-end">75%</p>
+              </div>
+              
+              <div class="mt-4">
+                <h5 data-i18n="symptoms">Symptoms:</h5>
+                <p id="symptomsText">-</p>
+              </div>
+              
+              <div class="mt-4">
+                <h5 data-i18n="recommended_treatment">Recommended Treatment:</h5>
+                <p id="treatmentText">-</p>
+              </div>
+              
+              <button class="btn btn-primary mt-3" id="saveReportBtn" data-i18n="save_report">Save Report</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Market Prices Section -->
+    <section id="marketPricesSection" class="hidden">
+      <div class="container py-5">
+        <h2 class="mb-4" data-i18n="market_prices_title">Market Prices</h2>
+        
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <div class="input-group">
+              <select class="form-select" id="cropFilter">
+                <option value="" data-i18n="all_crops">All Crops</option>
+                <option value="Rice">Rice</option>
+                <option value="Wheat">Wheat</option>
+                <option value="Cotton">Cotton</option>
+                <option value="Sugarcane">Sugarcane</option>
+                <option value="Maize">Maize</option>
+                <option value="Soybean">Soybean</option>
+                <option value="Potato">Potato</option>
+                <option value="Tomato">Tomato</option>
+                <option value="Chickpea">Chickpea</option>
+                <option value="Mustard">Mustard</option>
+                <option value="Groundnut">Groundnut</option>
+                <option value="Chilli">Chilli</option>
+                <option value="Onion">Onion</option>
+                <option value="Turmeric">Turmeric</option>
+                <option value="Ginger">Ginger</option>
+                <option value="Millet">Millet</option>
+                <option value="Barley">Barley</option>
+                <option value="Jute">Jute</option>
+                <option value="Sunflower">Sunflower</option>
+              </select>
+              <button class="btn btn-primary" id="applyFilterBtn" data-i18n="apply">Apply</button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="table-responsive">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th data-i18n="crop">Crop</th>
+                <th data-i18n="market">Market</th>
+                <th data-i18n="price">Price (₹/quintal)</th>
+                <th data-i18n="min_price">Min Price</th>
+                <th data-i18n="max_price">Max Price</th>
+                <th data-i18n="date">Date</th>
+                <th data-i18n="action">Action</th>
+              </tr>
+            </thead>
+            <tbody id="marketPricesTable">
+              <tr>
+                <td colspan="7" class="text-center py-4">
+                  <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <div class="mt-4">
+          <h4 data-i18n="price_alerts">Price Alerts</h4>
+          <p data-i18n="set_up_alerts">Set up alerts to be notified when prices reach your target levels.</p>
+          
+          <div class="card">
+            <div class="card-body">
+              <form id="priceAlertForm">
+                <div class="row g-3">
+                  <div class="col-md-3">
+                    <label class="form-label">Crop Type</label>
+                    <select class="form-select" id="alertCropType" required>
+                      <option value="">Select Crop</option>
+                      <option value="Rice">Rice</option>
+                      <option value="Wheat">Wheat</option>
+                      <option value="Cotton">Cotton</option>
+                      <option value="Sugarcane">Sugarcane</option>
+                      <option value="Maize">Maize</option>
+                      <option value="Soybean">Soybean</option>
+                      <option value="Potato">Potato</option>
+                      <option value="Tomato">Tomato</option>
+                      <option value="Chickpea">Chickpea</option>
+                      <option value="Mustard">Mustard</option>
+                      <option value="Groundnut">Groundnut</option>
+                      <option value="Chilli">Chilli</option>
+                      <option value="Onion">Onion</option>
+                      <option value="Turmeric">Turmeric</option>
+                      <option value="Ginger">Ginger</option>
+                      <option value="Millet">Millet</option>
+                      <option value="Barley">Barley</option>
+                      <option value="Jute">Jute</option>
+                      <option value="Sunflower">Sunflower</option>
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Market</label>
+                    <select class="form-select" id="alertMarket">
+                      <option value="">Any Market</option>
+                      <option value="Delhi">Delhi</option>
+                      <option value="Mumbai">Mumbai</option>
+                      <option value="Kolkata">Kolkata</option>
+                      <option value="Chennai">Chennai</option>
+                      <option value="Lucknow">Lucknow</option>
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Min Price (₹)</label>
+                    <input type="number" class="form-control" id="alertMinPrice" placeholder="Optional">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Max Price (₹)</label>
+                    <input type="number" class="form-control" id="alertMaxPrice" placeholder="Optional">
+                  </div>
+                </div>
+                <button type="submit" class="btn btn-primary mt-3">Set Alert</button>
+              </form>
+            </div>
+          </div>
+          
+          <div class="mt-4">
+            <h5>Your Alerts</h5>
+            <ul class="list-group" id="alertsList">
+              <li class="list-group-item text-center">No alerts set</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Weather Section -->
+    <section id="weatherSection" class="hidden">
+      <div class="container py-5">
+        <h2 class="mb-4">Weather Forecast</h2>
+        
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <div class="input-group">
+              <input type="text" class="form-control" id="locationInput" placeholder="Enter location">
+              <button class="btn btn-primary" id="getWeatherBtn">Get Weather</button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="weather-widget">
+          <div id="currentWeather">
+            <div class="text-center py-4">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="mt-4" id="forecastContainer">
+            <h4>7-Day Forecast</h4>
+            <div class="row" id="forecast">
+              <!-- Forecast days will be populated here -->
+            </div>
+          </div>
+          
+          <div class="mt-4">
+            <h4>Farm Planning Recommendations</h4>
+            <div class="card">
+              <div class="card-body" id="weatherRecommendations">
+                <p>Weather-based recommendations will appear here.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="mt-5">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4">
+          <h5>FarmAssist AI</h5>
+          <p>Your AI-powered farming companion</p>
+        </div>
+        <div class="col-md-4">
+          <h5>Quick Links</h5>
+          <ul class="list-unstyled">
+            <li><a href="#" class="text-white">Home</a></li>
+            <li><a href="#" class="text-white">Disease Detection</a></li>
+            <li><a href="#" class="text-white">Market Prices</a></li>
+            <li><a href="#" class="text-white">Weather</a></li>
+          </ul>
+        </div>
+        <div class="col-md-4">
+          <h5>Contact</h5>
+          <p>
+            <i class="fas fa-envelope me-2"></i> info@farmassist.ai<br>
+            <i class="fas fa-phone me-2"></i> +91 98765 43210
+          </p>
+        </div>
+      </div>
+      <div class="text-center mt-4">
+        <p>&copy; 2025 FarmAssist AI. All rights reserved.</p>
+      </div>
     </div>
-    
-    <!-- Bottom Navigation Bar (mobile only) -->
-    <div class="bottom-navbar">
-      <a href="#" class="active" id="homeNavMobile">
-        <i class="fas fa-home"></i>
-        <span>होम</span>
-      </a>
-      <a href="#" id="fieldsNavMobile">
-        <i class="fas fa-map-marker-alt"></i>
-        <span>खेत</span>
-      </a>
-      <a href="#" id="marketPricesNavMobile">
-        <i class="fas fa-rupee-sign"></i>
-        <span>बाजार</span>
-      </a>
-      <a href="#" id="aiChatNavMobile">
-        <i class="fas fa-robot"></i>
-        <span>AI सहायक</span>
-      </a>
-      <a href="#" id="profileNavMobile">
-        <i class="fas fa-user"></i>
-        <span>प्रोफाइल</span>
-      </a>
+  </footer>
+
+  <!-- Add Field Modal -->
+  <div class="modal fade" id="addFieldModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Add New Field</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="addFieldForm">
+            <div class="mb-3">
+              <label for="fieldName" class="form-label">Field Name</label>
+              <input type="text" class="form-control" id="fieldName" required>
+            </div>
+            <div class="mb-3">
+              <label for="fieldLocation" class="form-label">Location</label>
+              <input type="text" class="form-control" id="fieldLocation">
+            </div>
+            <div class="mb-3">
+              <label for="fieldArea" class="form-label">Area (hectares)</label>
+              <input type="number" class="form-control" id="fieldArea" step="0.01">
+            </div>
+            <div class="mb-3">
+              <label for="cropType" class="form-label">Crop Type</label>
+              <select class="form-select" id="cropType">
+                <option value="">Select crop</option>
+                <option value="Rice">Rice</option>
+                <option value="Wheat">Wheat</option>
+                <option value="Cotton">Cotton</option>
+                <option value="Sugarcane">Sugarcane</option>
+                <option value="Maize">Maize</option>
+                <option value="Soybean">Soybean</option>
+                <option value="Potato">Potato</option>
+                <option value="Tomato">Tomato</option>
+                <option value="Chickpea">Chickpea</option>
+                <option value="Mustard">Mustard</option>
+                <option value="Groundnut">Groundnut</option>
+                <option value="Chilli">Chilli</option>
+                <option value="Onion">Onion</option>
+                <option value="Turmeric">Turmeric</option>
+                <option value="Ginger">Ginger</option>
+                <option value="Millet">Millet</option>
+                <option value="Barley">Barley</option>
+                <option value="Jute">Jute</option>
+                <option value="Sunflower">Sunflower</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="plantingDate" class="form-label">Planting Date</label>
+              <input type="date" class="form-control" id="plantingDate">
+            </div>
+            <div class="mb-3">
+              <label for="soilType" class="form-label">Soil Type</label>
+              <select class="form-select" id="soilType">
+                <option value="">Select soil type</option>
+                <option value="Loamy">Loamy</option>
+                <option value="Clay">Clay</option>
+                <option value="Sandy">Sandy</option>
+                <option value="Silt">Silt</option>
+                <option value="Peaty">Peaty</option>
+                <option value="Chalky">Chalky</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="fieldNotes" class="form-label">Notes</label>
+              <textarea class="form-control" id="fieldNotes" rows="3"></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="saveFieldBtn">Save Field</button>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- JavaScript -->
+  <!-- Advanced Fertilizer Recommendations Modal -->
+  <div class="modal fade" id="fertilizerModal" tabindex="-1" aria-labelledby="fertilizerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title" id="fertilizerModalLabel">Advanced Fertilizer Recommendations</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="fertilizerForm">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="fertCropType" class="form-label">Crop Type</label>
+                  <select class="form-select" id="fertCropType" required>
+                    <option value="">Select a crop</option>
+                    <option value="Rice">Rice</option>
+                    <option value="Wheat">Wheat</option>
+                    <option value="Cotton">Cotton</option>
+                    <option value="Sugarcane">Sugarcane</option>
+                    <option value="Maize">Maize</option>
+                    <option value="Potato">Potato</option>
+                    <option value="Tomato">Tomato</option>
+                    <option value="Chickpea">Chickpea</option>
+                    <option value="Soybean">Soybean</option>
+                    <option value="Mustard">Mustard</option>
+                    <option value="Groundnut">Groundnut</option>
+                    <option value="Turmeric">Turmeric</option>
+                    <option value="Onion">Onion</option>
+                    <option value="Garlic">Garlic</option>
+                    <option value="Chilli">Chilli</option>
+                    <option value="Okra">Okra (Bhindi)</option>
+                    <option value="Millet">Millet (Bajra)</option>
+                    <option value="Barley">Barley</option>
+                    <option value="Sunflower">Sunflower</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="fertSoilType" class="form-label">Soil Type</label>
+                  <select class="form-select" id="fertSoilType" required>
+                    <option value="">Select soil type</option>
+                    <option value="Sandy">Sandy</option>
+                    <option value="Clay">Clay</option>
+                    <option value="Loamy">Loamy</option>
+                    <option value="Silt">Silt</option>
+                    <option value="Black">Black</option>
+                    <option value="Red">Red</option>
+                    <option value="Alluvial">Alluvial</option>
+                    <option value="Laterite">Laterite</option>
+                    <option value="Peaty">Peaty</option>
+                    <option value="Calcareous">Calcareous</option>
+                    <option value="Saline">Saline</option>
+                    <option value="Acidic">Acidic</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="fertGrowthStage" class="form-label">Growth Stage</label>
+                  <select class="form-select" id="fertGrowthStage" required>
+                    <option value="seedling">Seedling</option>
+                    <option value="vegetative">Vegetative</option>
+                    <option value="flowering">Flowering</option>
+                    <option value="fruiting">Fruiting</option>
+                    <option value="maturity">Maturity</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="fertFieldSize" class="form-label">Field Size (hectares)</label>
+                  <input type="number" class="form-control" id="fertFieldSize" value="1.0" min="0.1" step="0.1" required>
+                </div>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <h5>Soil Test Results (Optional)</h5>
+              <div class="row">
+                <div class="col-md-4">
+                  <label for="fertNitrogen" class="form-label">Nitrogen Level</label>
+                  <select class="form-select" id="fertNitrogen">
+                    <option value="low">Low</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="high">High</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label for="fertPhosphorus" class="form-label">Phosphorus Level</label>
+                  <select class="form-select" id="fertPhosphorus">
+                    <option value="low">Low</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="high">High</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label for="fertPotassium" class="form-label">Potassium Level</label>
+                  <select class="form-select" id="fertPotassium">
+                    <option value="low">Low</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="high">High</option>
+                  </select>
+                </div>
+              </div>
+              <div class="row mt-3">
+                <div class="col-md-6">
+                  <label for="fertPH" class="form-label">pH Level</label>
+                  <input type="number" class="form-control" id="fertPH" value="7.0" min="0" max="14" step="0.1">
+                </div>
+                <div class="col-md-6">
+                  <label for="fertOrganicMatter" class="form-label">Organic Matter</label>
+                  <select class="form-select" id="fertOrganicMatter">
+                    <option value="low">Low</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="high">High</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </form>
+          
+          <div id="fertilizerResults" class="hidden mt-4">
+            <div class="text-center mb-4">
+              <div class="spinner-border text-success" role="status" id="fertilizerSpinner">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+            </div>
+            <div id="fertilizerRecommendationsContent" class="border rounded p-3 bg-light">
+              <!-- Results will be inserted here -->
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-success" id="generateFertilizerBtn">Generate Recommendations</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Irrigation Management Modal -->
+  <div class="modal fade" id="irrigationModal" tabindex="-1" aria-labelledby="irrigationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title" id="irrigationModalLabel">Irrigation Management</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="irrigationForm">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="irrCropType" class="form-label">Crop Type</label>
+                  <select class="form-select" id="irrCropType" required>
+                    <option value="">Select a crop</option>
+                    <option value="Rice">Rice</option>
+                    <option value="Wheat">Wheat</option>
+                    <option value="Cotton">Cotton</option>
+                    <option value="Sugarcane">Sugarcane</option>
+                    <option value="Maize">Maize</option>
+                    <option value="Potato">Potato</option>
+                    <option value="Tomato">Tomato</option>
+                    <option value="Chickpea">Chickpea</option>
+                    <option value="Soybean">Soybean</option>
+                    <option value="Mustard">Mustard</option>
+                    <option value="Groundnut">Groundnut</option>
+                    <option value="Turmeric">Turmeric</option>
+                    <option value="Onion">Onion</option>
+                    <option value="Garlic">Garlic</option>
+                    <option value="Chilli">Chilli</option>
+                    <option value="Okra">Okra (Bhindi)</option>
+                    <option value="Millet">Millet (Bajra)</option>
+                    <option value="Barley">Barley</option>
+                    <option value="Sunflower">Sunflower</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="irrSoilType" class="form-label">Soil Type</label>
+                  <select class="form-select" id="irrSoilType" required>
+                    <option value="">Select soil type</option>
+                    <option value="Sandy">Sandy</option>
+                    <option value="Clay">Clay</option>
+                    <option value="Loamy">Loamy</option>
+                    <option value="Silt">Silt</option>
+                    <option value="Black">Black</option>
+                    <option value="Red">Red</option>
+                    <option value="Alluvial">Alluvial</option>
+                    <option value="Laterite">Laterite</option>
+                    <option value="Peaty">Peaty</option>
+                    <option value="Calcareous">Calcareous</option>
+                    <option value="Saline">Saline</option>
+                    <option value="Acidic">Acidic</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="irrGrowthStage" class="form-label">Growth Stage</label>
+                  <select class="form-select" id="irrGrowthStage" required>
+                    <option value="seedling">Seedling</option>
+                    <option value="vegetative" selected>Vegetative</option>
+                    <option value="flowering">Flowering</option>
+                    <option value="fruiting">Fruiting</option>
+                    <option value="maturity">Maturity</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="irrSoilMoisture" class="form-label">Current Soil Moisture</label>
+                  <select class="form-select" id="irrSoilMoisture" required>
+                    <option value="dry">Dry</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="wet">Wet</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="irrSystem" class="form-label">Irrigation System</label>
+                  <select class="form-select" id="irrSystem" required>
+                    <option value="drip" selected>Drip</option>
+                    <option value="sprinkler">Sprinkler</option>
+                    <option value="flood">Flood</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <h5>Weather Information (Optional)</h5>
+              <div class="row">
+                <div class="col-md-6">
+                  <label for="irrTemperature" class="form-label">Temperature (°C)</label>
+                  <input type="number" class="form-control" id="irrTemperature" value="25" min="0" max="50">
+                </div>
+                <div class="col-md-6">
+                  <label for="irrHumidity" class="form-label">Humidity (%)</label>
+                  <input type="number" class="form-control" id="irrHumidity" value="50" min="0" max="100">
+                </div>
+              </div>
+            </div>
+          </form>
+          
+          <div id="irrigationResults" class="hidden mt-4">
+            <div class="text-center mb-4">
+              <div class="spinner-border text-primary" role="status" id="irrigationSpinner">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+            </div>
+            <div id="irrigationRecommendationsContent" class="border rounded p-3 bg-light">
+              <!-- Results will be inserted here -->
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" id="generateIrrigationBtn">Generate Recommendations</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap and Font Awesome -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://kit.fontawesome.com/08a4d17c86.js" crossorigin="anonymous"></script>
+  
+  <!-- Add JavaScript files -->
+  <script src="js/direct-translate.js"></script>
   <script src="js/main.js"></script>
-  <script>
-    // App Sidebar Toggle
+  
+  <!-- Seamless Translation Integration (No visible Google elements) -->
+  <div id="translation-api-wrapper" style="display: none; height: 0; overflow: hidden;"></div>
+  
+  <!-- Custom Translation Script -->
+  <script type="text/javascript">
+    // Connect top bar language buttons to translation function
     document.addEventListener('DOMContentLoaded', function() {
-      const menuToggle = document.getElementById('menuToggle');
-      const sidebar = document.getElementById('sidebar');
-      const sidebarOverlay = document.getElementById('sidebarOverlay');
-      const allNavLinks = document.querySelectorAll('.sidebar-menu a, .bottom-navbar a');
+      // Get all language option buttons
+      const languageOptions = document.querySelectorAll('.language-option');
       
-      // Toggle sidebar
-      function toggleSidebar() {
-        sidebar.classList.toggle('active');
-        sidebarOverlay.classList.toggle('active');
-      }
-      
-      menuToggle.addEventListener('click', toggleSidebar);
-      sidebarOverlay.addEventListener('click', toggleSidebar);
-      
-      // Navigation handling
-      function showSection(sectionId) {
-        // Hide all sections
-        document.querySelectorAll('.main-content > section').forEach(section => {
-          section.classList.add('hidden');
-        });
-        
-        // Show the selected section
-        const targetSection = document.getElementById(sectionId);
-        if (targetSection) {
-          targetSection.classList.remove('hidden');
-        }
-        
-        // Update active navigation links
-        allNavLinks.forEach(link => {
-          link.classList.remove('active');
-        });
-        
-        // Set active class
-        const desktopNavId = sectionId.replace('Section', 'Nav');
-        const mobileNavId = desktopNavId + 'Mobile';
-        
-        const desktopNav = document.getElementById(desktopNavId);
-        const mobileNav = document.getElementById(mobileNavId);
-        
-        if (desktopNav) desktopNav.classList.add('active');
-        if (mobileNav) mobileNav.classList.add('active');
-        
-        // Close sidebar on mobile after navigation
-        if (window.innerWidth < 992) {
-          sidebar.classList.remove('active');
-          sidebarOverlay.classList.remove('active');
-        }
-      }
-      
-      // Set up navigation click events
-      allNavLinks.forEach(link => {
-        link.addEventListener('click', function(e) {
+      // Add click handler to each language option
+      languageOptions.forEach(option => {
+        option.addEventListener('click', function(e) {
           e.preventDefault();
-          
-          const linkId = this.id;
-          let sectionId;
-          
-          if (linkId.includes('Mobile')) {
-            sectionId = linkId.replace('NavMobile', 'Section');
-          } else {
-            sectionId = linkId.replace('Nav', 'Section');
-          }
-          
-          showSection(sectionId);
+          const lang = this.getAttribute('data-lang');
+          changeLanguage(lang);
         });
       });
       
-      // Auth button click handler
-      document.getElementById('authButton').addEventListener('click', function() {
-        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-        
-        if (isLoggedIn) {
-          // Log out
-          localStorage.removeItem('isLoggedIn');
-          localStorage.removeItem('username');
-          updateAuthUI();
-        } else {
-          // Show login/register form
-          showSection('authSection');
-        }
-      });
+      // Load saved language if any
+      const savedLang = localStorage.getItem('preferred_language');
+      if (savedLang && savedLang !== 'en') {
+        setTimeout(() => changeLanguage(savedLang), 1000);
+      }
+    });
+    
+    // Function to change language
+    function changeLanguage(lang) {
+      // Save the selected language
+      localStorage.setItem('preferred_language', lang);
       
-      // Toggle between login and register forms
-      document.getElementById('showRegisterForm').addEventListener('click', function(e) {
-        e.preventDefault();
-        document.getElementById('loginForm').classList.add('hidden');
-        document.getElementById('registerForm').classList.remove('hidden');
-        document.getElementById('authTitle').textContent = 'रजिस्टर';
-      });
-      
-      document.getElementById('showLoginForm').addEventListener('click', function(e) {
-        e.preventDefault();
-        document.getElementById('registerForm').classList.add('hidden');
-        document.getElementById('loginForm').classList.remove('hidden');
-        document.getElementById('authTitle').textContent = 'लॉगिन';
-      });
-      
-      // Login form submit handler
-      document.getElementById('loginButton').addEventListener('click', function() {
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-        
-        if (username && password) {
-          // Simulate login (replace with actual API call)
-          localStorage.setItem('isLoggedIn', 'true');
-          localStorage.setItem('username', username);
-          updateAuthUI();
-          showSection('homeSection');
-        }
-      });
-      
-      // Register form submit handler
-      document.getElementById('registerButton').addEventListener('click', function() {
-        const username = document.getElementById('regUsername').value;
-        const email = document.getElementById('regEmail').value;
-        const password = document.getElementById('regPassword').value;
-        const confirmPassword = document.getElementById('regConfirmPassword').value;
-        
-        if (username && email && password && password === confirmPassword) {
-          // Simulate registration (replace with actual API call)
-          localStorage.setItem('isLoggedIn', 'true');
-          localStorage.setItem('username', username);
-          updateAuthUI();
-          showSection('homeSection');
-        }
-      });
-      
-      // Update UI based on auth state
-      function updateAuthUI() {
-        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-        const username = localStorage.getItem('username');
-        
-        if (isLoggedIn && username) {
-          document.getElementById('authButtonText').textContent = 'लॉगआउट';
-          document.getElementById('userName').textContent = username;
-          document.getElementById('userStatus').textContent = '7 दिन का मुफ्त ट्रायल';
-        } else {
-          document.getElementById('authButtonText').textContent = 'लॉगिन';
-          document.getElementById('userName').textContent = 'अतिथि उपयोगकर्ता';
-          document.getElementById('userStatus').textContent = 'लॉगिन करें';
-        }
+      // Update the language display in dropdown
+      const languageText = document.querySelector('.language-text');
+      if (languageText) {
+        const langNames = {
+          'en': 'English',
+          'hi': 'हिन्दी',
+          'ta': 'தமிழ்',
+          'te': 'తెలుగు',
+          'bn': 'বাংলা',
+          'pa': 'ਪੰਜਾਬੀ'
+        };
+        languageText.textContent = langNames[lang] || 'English';
       }
       
-      // Quick access buttons
-      document.getElementById('quickChatButton').addEventListener('click', function() {
-        showSection('aiChatSection');
+      // If English, reset to original content
+      if (lang === 'en') {
+        // Remove Google Translate modifications
+        const iframe = document.querySelector('.goog-te-menu-frame');
+        if (iframe) {
+          const doc = iframe.contentDocument || iframe.contentWindow.document;
+          const select = doc.querySelector('.goog-te-menu2-item span.text:contains("English")');
+          if (select) select.click();
+        }
+        
+        // Reset cookies
+        document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/;';
+        document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:01 GMT; domain=.' + location.hostname + '; path=/;';
+        
+        // Reload page
+        location.reload();
+        return;
+      }
+      
+      // For non-English languages, use the Google Translate API in the background
+      // but don't show their UI elements
+      if (window.googleTranslateIsReady) {
+        // Use the hidden translator element with our selected language
+        const selectBox = document.querySelector('.goog-te-combo');
+        if (selectBox) {
+          selectBox.value = lang;
+          selectBox.dispatchEvent(new Event('change'));
+        }
+      } else {
+        // If translation API isn't ready yet, set cookies directly
+        const domain = window.location.hostname;
+        document.cookie = `googtrans=/en/${lang}; domain=${domain}; path=/`;
+        document.cookie = `googtrans=/en/${lang}; domain=.${domain}; path=/`;
+        
+        // Reload the page to apply translations
+        location.reload();
+      }
+    }
+    
+    // Initialize Google Translate behind the scenes
+    function googleTranslateElementInit() {
+      new google.translate.TranslateElement({
+        pageLanguage: 'en',
+        includedLanguages: 'en,hi,ta,te,bn,pa',
+        layout: google.translate.TranslateElement.InlineLayout.NO_FRAME,
+        autoDisplay: false
+      }, 'translation-api-wrapper');
+      
+      // Mark translation API as ready
+      window.googleTranslateIsReady = true;
+      
+      // Hide Google elements
+      hideGoogleElements();
+    }
+    
+    // Function to hide all Google UI elements
+    function hideGoogleElements() {
+      // List of all Google Translate elements to hide
+      const elementsToHide = [
+        '.goog-te-banner-frame',
+        '.goog-te-menu-frame',
+        '.goog-te-balloon-frame',
+        '#goog-gt-tt',
+        '.goog-te-balloon-frame',
+        '.goog-tooltip',
+        '.goog-logo-link'
+      ];
+      
+      // Hide all elements in the list
+      elementsToHide.forEach(selector => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach(el => {
+          el.style.display = 'none';
+          el.style.visibility = 'hidden';
+        });
       });
       
-      document.getElementById('quickDiseaseButton').addEventListener('click', function() {
-        showSection('diseaseDetectSection');
-      });
-      
-      document.getElementById('quickIrrigationButton').addEventListener('click', function() {
-        showSection('dashboardSection');
-      });
-      
-      document.getElementById('quickMarketButton').addEventListener('click', function() {
-        showSection('marketPricesSection');
-      });
-      
-      // Initialize app
-      updateAuthUI();
-    });
+      // Set interval to keep hiding elements as they might be re-added
+      setTimeout(hideGoogleElements, 1000);
+    }
   </script>
+  
+  <!-- Style to hide Google elements -->
+  <style>
+    /* Hide all Google Translate elements */
+    .goog-te-banner-frame, 
+    .goog-te-menu-frame,
+    .goog-te-balloon-frame,
+    #goog-gt-tt, 
+    .goog-te-balloon-frame,
+    div#goog-gt-,
+    .goog-tooltip,
+    .goog-logo-link {
+      display: none !important;
+      visibility: hidden !important;
+    }
+    .goog-te-gadget {
+      height: 0 !important;
+      overflow: hidden !important;
+      position: absolute !important;
+      opacity: 0 !important;
+    }
+    .goog-text-highlight {
+      background-color: transparent !important;
+      box-shadow: none !important;
+    }
+    body {
+      top: 0 !important;
+    }
+  </style>
+  
+  <!-- Load Google Translate API in the background -->
+  <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </body>
 </html>
