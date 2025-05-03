@@ -11,8 +11,15 @@
       --primary-color: #2e7d32;
       --secondary-color: #558b2f;
       --accent-color: #f9a825;
-      --light-bg: #f1f8e9;
-      --dark-text: #33691e;
+      --light-bg: #f9f7f2;
+      --dark-text: #2e2e2e;
+      --card-bg: #ffffff;
+      --card-radius: 16px;
+      --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+      --btn-radius: 30px;
+      --weather-bg: #FFD687;
+      --header-font: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      --body-font: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
     
     body {
@@ -103,6 +110,10 @@
       margin-left: 250px;
       transition: all 0.3s;
       width: calc(100% - 250px);
+      padding: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+      margin-left: 250px;
     }
     
     .main-content-expanded {
@@ -112,12 +123,111 @@
     
     /* Top Bar */
     .top-bar {
-      background-color: white;
-      padding: 10px 20px;
+      background-color: var(--card-bg);
+      padding: 15px 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      box-shadow: var(--card-shadow);
+      border-radius: var(--card-radius);
+      margin-bottom: 20px;
+    }
+    
+    /* Mobile app styled cards */
+    .app-card {
+      background-color: var(--card-bg);
+      border-radius: var(--card-radius);
+      padding: 20px;
+      box-shadow: var(--card-shadow);
+      margin-bottom: 24px;
+      border: none;
+      transition: transform 0.2s ease;
+    }
+    
+    .app-card:hover {
+      transform: translateY(-5px);
+    }
+    
+    /* Weather card with illustration style */
+    .weather-card {
+      background-color: var(--weather-bg);
+      border-radius: var(--card-radius);
+      padding: 20px;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+      color: var(--dark-text);
+    }
+    
+    .weather-card:after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 180px;
+      height: 40px;
+      background-color: #8BC34A;
+      border-top-left-radius: 100%;
+      z-index: 1;
+    }
+    
+    .weather-illustration {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      font-size: 24px;
+      z-index: 2;
+    }
+    
+    /* Weather status pills */
+    .status-pill {
+      display: inline-block;
+      padding: 5px 15px;
+      border-radius: 30px;
+      background-color: rgba(255, 255, 255, 0.85);
+      margin-right: 10px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    
+    /* Feature grid */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin-top: 24px;
+    }
+    
+    @media (max-width: 768px) {
+      .feature-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .feature-item {
+      background-color: var(--card-bg);
+      border-radius: var(--card-radius);
+      padding: 20px;
+      text-align: center;
+      box-shadow: var(--card-shadow);
+      transition: transform 0.2s ease;
+    }
+    
+    .feature-item:hover {
+      transform: translateY(-5px);
+    }
+    
+    .feature-icon {
+      width: 60px;
+      height: 60px;
+      background-color: #f5f5f5;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 15px;
+      color: var(--primary-color);
+      font-size: 24px;
     }
     
     /* Toggle Button */
@@ -176,17 +286,51 @@
     .btn-primary {
       background-color: var(--primary-color);
       border-color: var(--primary-color);
+      border-radius: var(--btn-radius);
+      padding: 10px 24px;
+      font-weight: 500;
     }
     
     .btn-primary:hover {
       background-color: var(--secondary-color);
       border-color: var(--secondary-color);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn-outline-light {
+      border-radius: var(--btn-radius);
+      padding: 10px 24px;
+      font-weight: 500;
     }
     
     .btn-outline-light:hover {
       background-color: var(--accent-color);
       color: #333;
       border-color: var(--accent-color);
+    }
+    
+    .btn-app {
+      background-color: #251605;
+      color: white;
+      border-radius: var(--btn-radius);
+      padding: 12px 24px;
+      font-weight: 500;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      transition: all 0.2s ease;
+    }
+    
+    .btn-app:hover {
+      background-color: #3a2105;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      color: white;
+    }
+    
+    .btn-app i {
+      margin-right: 8px;
     }
     
     footer {
