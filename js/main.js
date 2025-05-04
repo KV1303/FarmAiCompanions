@@ -12,12 +12,38 @@ async function getAdvancedFertilizerRecommendations() {
     return;
   }
   
-  // Show loading spinner
-  document.getElementById('fertilizerResults').classList.remove('hidden');
-  document.getElementById('fertilizerSpinner').style.display = 'block';
-  document.getElementById('fertilizerRecommendationsContent').innerHTML = '';
-  
   try {
+    // First, close the modal to prevent freezing
+    const modal = document.getElementById('fertilizerModal');
+    if (modal) {
+      console.log('Closing modal:', modal.id);
+      // Try to use the global hideModal function if available
+      if (typeof window.hideModal === 'function') {
+        window.hideModal(modal);
+      } else {
+        // Manual fallback
+        try {
+          const bsModal = bootstrap.Modal.getInstance(modal);
+          if (bsModal) bsModal.hide();
+        } catch (e) {
+          console.warn('Modal close error:', e);
+          modal.style.display = 'none';
+          modal.classList.remove('show');
+          document.body.classList.remove('modal-open');
+          const backdrop = document.querySelector('.modal-backdrop');
+          if (backdrop) backdrop.remove();
+        }
+      }
+    }
+    
+    // SHORT DELAY to ensure modal is fully closed before showing spinner
+    await new Promise(resolve => setTimeout(resolve, 100));
+  
+    // Show loading spinner
+    document.getElementById('fertilizerResults').classList.remove('hidden');
+    document.getElementById('fertilizerSpinner').style.display = 'block';
+    document.getElementById('fertilizerRecommendationsContent').innerHTML = '';
+    
     // Get soil test values
     const nitrogenLevel = document.getElementById('fertNitrogen').value;
     const phosphorusLevel = document.getElementById('fertPhosphorus').value;
@@ -216,12 +242,38 @@ async function getIrrigationRecommendations() {
     return;
   }
   
-  // Show loading spinner
-  document.getElementById('irrigationResults').classList.remove('hidden');
-  document.getElementById('irrigationSpinner').style.display = 'block';
-  document.getElementById('irrigationRecommendationsContent').innerHTML = '';
-  
   try {
+    // First, close the modal to prevent freezing
+    const modal = document.getElementById('irrigationModal');
+    if (modal) {
+      console.log('Closing modal:', modal.id);
+      // Try to use the global hideModal function if available
+      if (typeof window.hideModal === 'function') {
+        window.hideModal(modal);
+      } else {
+        // Manual fallback
+        try {
+          const bsModal = bootstrap.Modal.getInstance(modal);
+          if (bsModal) bsModal.hide();
+        } catch (e) {
+          console.warn('Modal close error:', e);
+          modal.style.display = 'none';
+          modal.classList.remove('show');
+          document.body.classList.remove('modal-open');
+          const backdrop = document.querySelector('.modal-backdrop');
+          if (backdrop) backdrop.remove();
+        }
+      }
+    }
+    
+    // SHORT DELAY to ensure modal is fully closed before showing spinner
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Show loading spinner
+    document.getElementById('irrigationResults').classList.remove('hidden');
+    document.getElementById('irrigationSpinner').style.display = 'block';
+    document.getElementById('irrigationRecommendationsContent').innerHTML = '';
+  
     // Get weather data values
     const temperature = document.getElementById('irrTemperature').value;
     const humidity = document.getElementById('irrHumidity').value;

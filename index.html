@@ -62,14 +62,27 @@
       z-index: 1050 !important;
     }
     
+    /* Fix for modal backdrop to ensure proper layering and cleanup */
     .modal-backdrop {
       z-index: 1040 !important;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.5);
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      background-color: rgba(0, 0, 0, 0.5) !important;
+    }
+    
+    /* Ensure body is interactive even after modal closure issues */
+    body {
+      min-height: 100vh;
+      position: relative;
+    }
+    
+    /* This ensures body remains clickable */
+    body.modal-open {
+      overflow: hidden;
+      padding-right: 0 !important; /* Prevent layout shift */
     }
     
     /* Fix for modal close button */
@@ -2110,6 +2123,8 @@
     
     // Global helper function for hiding modals (to be used in event listeners above and in main.js)
     window.hideModal = function(modal) {
+      console.log("Hiding modal and cleaning up all related elements");
+      
       // First try using Bootstrap API
       try {
         const bsModalInstance = bootstrap.Modal.getInstance(modal);
@@ -2120,19 +2135,44 @@
         console.warn('Bootstrap modal hide API error:', error);
       }
       
-      // Manual fallback approach
+      // Ensure the modal is hidden
       modal.style.display = 'none';
       modal.classList.remove('show');
+      modal.setAttribute('aria-hidden', 'true');
+      modal.removeAttribute('aria-modal');
+      modal.removeAttribute('role');
       
-      // Remove backdrop and modal-open class if no other modals are open
-      const otherOpenModals = document.querySelectorAll('.modal.show');
-      if (otherOpenModals.length === 0) {
-        document.body.classList.remove('modal-open');
-        const backdrop = document.querySelector('.modal-backdrop');
-        if (backdrop) {
-          backdrop.remove();
+      // Force body to be interactive again
+      document.body.classList.remove('modal-open');
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+      
+      // Clean up ALL modal backgrounds to be safe
+      document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+        backdrop.remove();
+      });
+      
+      // Ensure no other modals are marked as showing
+      document.querySelectorAll('.modal.show').forEach(otherModal => {
+        if (otherModal !== modal) {
+          otherModal.classList.remove('show');
+          otherModal.style.display = 'none';
+          otherModal.setAttribute('aria-hidden', 'true');
+          otherModal.removeAttribute('aria-modal');
+          otherModal.removeAttribute('role');
         }
-      }
+      });
+      
+      // Safety timeout to ensure all modal-related elements are properly cleaned up
+      setTimeout(() => {
+        // Double-check for any lingering modal backdrops or open modals
+        document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+          backdrop.remove();
+        });
+        
+        // Ensure body can receive clicks
+        document.body.style.pointerEvents = 'auto';
+      }, 100);
     }
   </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
