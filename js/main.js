@@ -3179,7 +3179,7 @@ async function generateAIResponse(userMessage) {
     const response = await fetchAPI('chat', 'POST', {
       message: userMessage,
       user_id: getCurrentUserId() || 'anonymous'
-    }, 2); // Reduced retries for faster feedback
+    }, 3); // Increased retries for better chance of success
     
     console.log('Chat API response:', response);
     
@@ -3199,15 +3199,15 @@ async function generateAIResponse(userMessage) {
     // Remove typing indicator
     removeTypingIndicator();
     
-    // Add more informative fallback response
-    let fallbackResponse = "I'm sorry, I'm having trouble connecting to our AI service right now. Please try again in a moment.";
+    // Add more informative fallback response in Hindi
+    let fallbackResponse = "क्षमा करें, मैं अभी AI सेवा से जुड़ने में असमर्थ हूं। कृपया कुछ समय बाद पुनः प्रयास करें।";
     
     // Provide more context based on error message if available
     if (error.message) {
       if (error.message.includes('Failed to fetch') || error.message.includes('Network')) {
-        fallbackResponse = "It seems there's a network issue. Please check your internet connection and try again.";
+        fallbackResponse = "कृपया अपने इंटरनेट कनेक्शन की जांच करें और पुनः प्रयास करें। नेटवर्क में समस्या प्रतीत होती है।";
       } else if (error.message.includes('API key') || error.message.includes('unauthorized')) {
-        fallbackResponse = "Our AI service is temporarily unavailable. The team has been notified, please try again later.";
+        fallbackResponse = "हमारी AI सेवा अस्थायी रूप से अनुपलब्ध है। हमारी टीम को सूचित कर दिया गया है, कृपया बाद में पुनः प्रयास करें।";
       }
     }
     
@@ -3422,7 +3422,19 @@ function deleteSavedGuidance(guidanceId) {
   // Reload the saved guidances list
   loadSavedGuidances();
   
-  alert('Guidance deleted successfully!');
+  // Show success message with a proper toast notification instead of alert
+  const alertsContainer = document.getElementById('alertsContainer');
+  if (alertsContainer) {
+    alertsContainer.innerHTML = `
+      <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <strong>हटा दिया!</strong> मार्गदर्शन सफलतापूर्वक हटा दिया गया है।
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    `;
+  } else {
+    // Fallback to alert if container not found
+    alert('Guidance deleted successfully!');
+  }
 }
 
 // Function to print a saved guidance

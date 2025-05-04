@@ -1821,6 +1821,42 @@ def get_advanced_fertilizer_recommendations():
         return jsonify({'error': f'Failed to generate fertilizer recommendations: {str(e)}'}), 500
 
 # Advanced AI-powered irrigation recommendations
+@app.route('/api/disease_reports', methods=['GET'])
+def get_disease_reports():
+    """Get disease reports for a user"""
+    try:
+        user_id = request.args.get('user_id')
+        
+        if not user_id:
+            return jsonify({'error': 'User ID is required'}), 400
+            
+        # Query the database for disease reports for this user
+        reports = DiseaseReport.query.filter_by(user_id=user_id).all()
+        
+        # Convert reports to a list of dictionaries
+        reports_list = []
+        for report in reports:
+            reports_list.append({
+                'id': report.id,
+                'user_id': report.user_id,
+                'field_id': report.field_id,
+                'disease_name': report.disease_name,
+                'detection_date': report.detection_date.isoformat() if report.detection_date else None,
+                'confidence_score': report.confidence_score,
+                'image_path': report.image_path,
+                'symptoms': report.symptoms,
+                'treatment_recommendations': report.treatment_recommendations,
+                'status': report.status,
+                'notes': report.notes
+            })
+            
+        return jsonify({'reports': reports_list}), 200
+        
+    except Exception as e:
+        print(f"Error in get_disease_reports endpoint: {str(e)}")
+        # Return empty array instead of error to prevent UI issues
+        return jsonify({'reports': []}), 200
+
 @app.route('/api/irrigation_recommendations', methods=['POST'])
 def get_irrigation_recommendations():
     """Get AI-powered irrigation recommendations based on crop, soil, and weather conditions"""
