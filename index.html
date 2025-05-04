@@ -979,12 +979,18 @@
           <div class="col-md-4">
             <div class="card shadow-sm mb-4">
               <div class="card-body text-center">
-                <div class="profile-image-container mb-3">
-                  <img src="https://via.placeholder.com/120" alt="प्रोफाइल फोटो" class="rounded-circle profile-image">
+                <div class="profile-image-container mb-3 position-relative">
+                  <img src="https://via.placeholder.com/120" id="profileImageDisplay" alt="प्रोफाइल फोटो" class="rounded-circle profile-image">
+                  <div class="profile-image-upload">
+                    <label for="profileImageUpload" class="btn btn-sm btn-light rounded-circle position-absolute bottom-0 end-0">
+                      <i class="fas fa-camera"></i>
+                    </label>
+                    <input type="file" id="profileImageUpload" class="d-none" accept="image/*">
+                  </div>
                 </div>
                 <h3 id="profileUsername">उपयोगकर्ता</h3>
                 <p class="text-muted" id="profileEmail">user@example.com</p>
-                <button class="btn btn-outline-primary btn-sm mt-2">
+                <button class="btn btn-outline-primary btn-sm mt-2" id="updateProfileBtn">
                   <i class="fas fa-edit me-2"></i>प्रोफ़ाइल अपडेट करें
                 </button>
               </div>
@@ -1452,29 +1458,7 @@
   <!-- Footer -->
   <footer class="mt-5">
     <div class="container">
-      <div class="row">
-        <div class="col-md-4">
-          <h5>FarmAssist AI</h5>
-          <p>Your AI-powered farming companion</p>
-        </div>
-        <div class="col-md-4">
-          <h5>Quick Links</h5>
-          <ul class="list-unstyled">
-            <li><a href="#" class="text-white">Home</a></li>
-            <li><a href="#" class="text-white">Disease Detection</a></li>
-            <li><a href="#" class="text-white">Market Prices</a></li>
-            <li><a href="#" class="text-white">Weather</a></li>
-          </ul>
-        </div>
-        <div class="col-md-4">
-          <h5>Contact</h5>
-          <p>
-            <i class="fas fa-envelope me-2"></i> info@farmassist.ai<br>
-            <i class="fas fa-phone me-2"></i> +91 98765 43210
-          </p>
-        </div>
-      </div>
-      <div class="text-center mt-4">
+      <div class="text-center">
         <p>&copy; 2025 FarmAssist AI. All rights reserved.</p>
       </div>
     </div>
