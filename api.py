@@ -528,7 +528,7 @@ def chat():
         default_response = "मैं AI किसान, आपका कृषि सहायक हूँ। मैं फसल की सलाह, रोग पहचान, मौसम की व्याख्या, और अधिक में आपकी मदद कर सकता हूँ। बेहतर सहायता के लिए कृपया अपने कृषि प्रश्न के बारे में विशिष्ट विवरण प्रदान करें।"
         
         # Detect topic/intent (simple keyword-based for now)
-        metadata = detect_chat_intent(user_message)
+        context_data = detect_chat_intent(user_message)
         
         # Save user message to chat history database
         user_chat_entry = ChatHistory(
@@ -536,7 +536,7 @@ def chat():
             session_id=session_id,
             message=user_message,
             sender='user',
-            metadata=metadata
+            context_data=context_data
         )
         db.session.add(user_chat_entry)
         db.session.commit()
@@ -642,7 +642,7 @@ def chat():
                             session_id=session_id,
                             message=ai_response,
                             sender='assistant',
-                            metadata=metadata
+                            context_data=context_data
                         )
                         db.session.add(ai_chat_entry)
                         db.session.commit()
@@ -672,7 +672,7 @@ def chat():
                                 session_id=session_id,
                                 message=ai_response,
                                 sender='assistant',
-                                metadata=metadata
+                                context_data=context_data
                             )
                             db.session.add(ai_chat_entry)
                             db.session.commit()
@@ -714,7 +714,7 @@ def chat():
                 session_id=session_id,
                 message=ai_response,
                 sender='assistant',
-                metadata=metadata
+                context_data=context_data
             )
             db.session.add(ai_chat_entry)
             db.session.commit()
@@ -764,6 +764,94 @@ def detect_chat_intent(message):
         'timestamp': datetime.utcnow().isoformat(),
         'contains_question': '?' in message or 'क्या' in message_lower or 'कौन' in message_lower or 'कब' in message_lower
     }
+
+
+@app.route('/api/chat_history', methods=['GET'])
+def get_chat_history():
+    """Get chat history for a user"""
+    user_id = request.args.get('user_id', 'anonymous')
+    session_id = request.args.get('session_id')
+    limit = request.args.get('limit', 50, type=int)
+    
+    query = ChatHistory.query.filter_by(user_id=user_id)
+    
+    if session_id:
+        query = query.filter_by(session_id=session_id)
+    
+    # Get the most recent conversations
+    chat_history = query.order_by(ChatHistory.timestamp.desc()).limit(limit).all()
+    
+    # Reverse to get chronological order
+    chat_history = chat_history[::-1]
+    
+    return jsonify({
+        'history': [{
+            'id': entry.id,
+            'user_id': entry.user_id,
+            'session_id': entry.session_id,
+            'message': entry.message,
+            'sender': entry.sender,
+            'timestamp': entry.timestamp.isoformat(),
+            'intents': entry.context_data.get('intents', []) if entry.context_data else []
+        } for entry in chat_history]
+    })
+
+
+@app.route('/api/chat_sessions', methods=['GET'])
+def get_chat_sessions():
+    """Get unique chat sessions for a user"""
+    user_id = request.args.get('user_id', 'anonymous')
+    
+    # Use SQLAlchemy to get distinct session_ids with their most recent timestamp
+    sessions = db.session.query(
+        ChatHistory.session_id,
+        db.func.max(ChatHistory.timestamp).label('last_message_time')
+    ).filter_by(user_id=user_id).group_by(ChatHistory.session_id).all()
+    
+    # For each session, get the first message to use as a title
+    result = []
+    for session_id, last_time in sessions:
+        # Get first message in the session (usually a user question that started the conversation)
+        first_message = ChatHistory.query.filter_by(
+            user_id=user_id, 
+            session_id=session_id,
+            sender='user'
+        ).order_by(ChatHistory.timestamp.asc()).first()
+        
+        # Get message count
+        message_count = ChatHistory.query.filter_by(
+            user_id=user_id, 
+            session_id=session_id
+        ).count()
+        
+        # Get primary intent for this session
+        intents = {}
+        for chat in ChatHistory.query.filter_by(user_id=user_id, session_id=session_id).all():
+            if chat.context_data and 'intents' in chat.context_data:
+                for intent in chat.context_data['intents']:
+                    intents[intent] = intents.get(intent, 0) + 1
+        
+        # Sort intents by frequency
+        primary_intents = sorted(intents.items(), key=lambda x: x[1], reverse=True)
+        primary_intent = primary_intents[0][0] if primary_intents else 'general_query'
+        
+        session_info = {
+            'session_id': session_id,
+            'last_message_time': last_time.isoformat(),
+            'message_count': message_count,
+            'primary_intent': primary_intent,
+            'title': first_message.message[:50] + '...' if first_message and len(first_message.message) > 50 else 
+                    (first_message.message if first_message else 'New Conversation')
+        }
+        
+        result.append(session_info)
+    
+    # Sort by most recent sessions first
+    result.sort(key=lambda x: x['last_message_time'], reverse=True)
+    
+    return jsonify({
+        'sessions': result
+    })
 
 @app.route('/api/weather', methods=['GET'])
 def get_weather():
