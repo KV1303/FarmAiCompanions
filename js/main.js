@@ -3542,12 +3542,20 @@ function saveGuidanceToDashboard(cropType, soilType) {
   // Show success message with a proper toast notification instead of alert
   const alertsContainer = document.getElementById('alertsContainer');
   if (alertsContainer) {
-    alertsContainer.innerHTML = `
-      <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <strong>सफलता!</strong> मार्गदर्शन आपके डैशबोर्ड में सफलतापूर्वक सहेजा गया!
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-      </div>
+    // Create a simple direct notification instead of using browser's notification API
+    const notificationElement = document.createElement('div');
+    notificationElement.className = 'alert alert-success alert-dismissible fade show';
+    notificationElement.setAttribute('role', 'alert');
+    notificationElement.innerHTML = `
+      <strong>सफलता!</strong> मार्गदर्शन आपके डैशबोर्ड में सफलतापूर्वक सहेजा गया!
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     `;
+    
+    // Clear previous notifications
+    alertsContainer.innerHTML = '';
+    
+    // Add the new notification
+    alertsContainer.appendChild(notificationElement);
   } else {
     // Fallback to alert if container not found
     alert('Guidance saved to your dashboard successfully!');
@@ -3684,12 +3692,20 @@ function deleteSavedGuidance(guidanceId) {
   // Show success message with a proper toast notification instead of alert
   const alertsContainer = document.getElementById('alertsContainer');
   if (alertsContainer) {
-    alertsContainer.innerHTML = `
-      <div class="alert alert-warning alert-dismissible fade show" role="alert">
-        <strong>हटा दिया!</strong> मार्गदर्शन सफलतापूर्वक हटा दिया गया है।
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-      </div>
+    // Create a simple direct notification instead of using browser's notification API
+    const notificationElement = document.createElement('div');
+    notificationElement.className = 'alert alert-warning alert-dismissible fade show';
+    notificationElement.setAttribute('role', 'alert');
+    notificationElement.innerHTML = `
+      <strong>हटा दिया!</strong> मार्गदर्शन सफलतापूर्वक हटा दिया गया है।
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     `;
+    
+    // Clear previous notifications
+    alertsContainer.innerHTML = '';
+    
+    // Add the new notification
+    alertsContainer.appendChild(notificationElement);
   } else {
     // Fallback to alert if container not found
     alert('Guidance deleted successfully!');
