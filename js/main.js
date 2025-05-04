@@ -3072,7 +3072,7 @@ function loadChatHistory() {
   chatMessages.appendChild(loadingIndicator);
   
   // Load chat history from API
-  fetchAPI(`/api/chat_history?user_id=${userId}&session_id=${sessionId}`)
+  fetchAPI(`chat_history?user_id=${userId}&session_id=${sessionId}`)
     .then(response => {
       // Remove loading indicator
       const loadingIndicator = document.getElementById('chatHistoryLoading');
@@ -3256,7 +3256,7 @@ function showChatHistoryModal() {
   
   // Get chat sessions from API
   const userId = getCurrentUserId() || 'anonymous';
-  fetchAPI(`/api/chat_sessions?user_id=${userId}`)
+  fetchAPI(`chat_sessions?user_id=${userId}`)
     .then(response => {
       const chatSessionsList = document.getElementById('chatSessionsList');
       
@@ -3363,7 +3363,7 @@ function updateChatSessionHeader() {
   
   // Then try to get more info from the API
   const userId = getCurrentUserId() || 'anonymous';
-  fetchAPI(`/api/chat_sessions?user_id=${userId}`)
+  fetchAPI(`chat_sessions?user_id=${userId}`)
     .then(response => {
       if (response && response.sessions && response.sessions.length > 0) {
         // Find current session
@@ -3411,7 +3411,7 @@ async function generateAIResponse(userMessage) {
     const sessionId = getCurrentChatSessionId();
     
     // Call the API with user's question including session context
-    const response = await fetchAPI('/api/chat', 'POST', {
+    const response = await fetchAPI('chat', 'POST', {
       message: userMessage,
       user_id: getCurrentUserId() || 'anonymous',
       session_id: sessionId,

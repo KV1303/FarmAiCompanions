@@ -1221,17 +1221,25 @@
                 <h4 class="widget-title m-0">
                   <i class="fas fa-robot text-success me-2"></i> AI किसान चैटबॉट
                 </h4>
-                <button class="btn btn-sm btn-outline-danger" id="clearChatBtn" onclick="clearChat()">
-                  <i class="fas fa-trash me-1"></i> चैट साफ करें
-                </button>
+                <div class="chat-actions">
+                  <button class="btn btn-sm btn-outline-primary me-2" id="chatHistoryBtn">
+                    <i class="fas fa-history me-1"></i> पिछली बातचीत
+                  </button>
+                  <button class="btn btn-sm btn-outline-success me-2" id="newChatBtn">
+                    <i class="fas fa-plus me-1"></i> नई बातचीत
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger" id="clearChatBtn">
+                    <i class="fas fa-trash me-1"></i> चैट साफ करें
+                  </button>
+                </div>
               </div>
               <div class="chat-container">
+                <div id="chatHeader" class="chat-header">
+                  <h3>AI किसान <span class="chat-status-badge">ऑनलाइन</span></h3>
+                  <div class="chat-session-info">नई बातचीत</div>
+                </div>
                 <div id="chatMessages" class="chat-messages mb-3">
-                  <div class="chat-message bot">
-                    <div class="message-content">
-                      <p>नमस्ते! मैं आपका AI किसान सहायक हूँ। आप मुझसे खेती-बाड़ी के बारे में कोई भी सवाल पूछ सकते हैं।</p>
-                    </div>
-                  </div>
+                  <!-- Chat messages will be loaded here -->
                 </div>
                 <form id="chatForm" class="chat-input-form">
                   <div class="input-group">
