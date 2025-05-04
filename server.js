@@ -9,7 +9,7 @@ const FormData = require('form-data');
 
 const app = express();
 const PORT = 5000;
-const API_PORT = 5002;
+const API_PORT = 5003;
 
 // Create uploads directory if it doesn't exist
 if (!fs.existsSync('uploads')) {
