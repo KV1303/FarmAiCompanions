@@ -3005,24 +3005,6 @@ function setupChat() {
   const chatForm = document.getElementById('chatForm');
   if (!chatForm) return;
   
-  // Add initial welcome message if not already present
-  const chatMessages = document.getElementById('chatMessages');
-  if (chatMessages && chatMessages.children.length === 0) {
-    // Add a clear welcome message that indicates the user can start typing
-    const welcomeMessage = `
-      Hello! I'm AI Kisan, your personal farming assistant. I can help with:
-      
-      • Crop advice and best practices
-      • Disease identification and treatment
-      • Weather impact on farming
-      • Fertilizer and irrigation recommendations
-      • Sustainable farming methods
-      
-      Go ahead and ask me any farming-related question! Type your message below and press Enter.
-    `;
-    addChatMessage(welcomeMessage, 'bot', false);
-  }
-  
   // Load previous chat messages
   loadChatHistory();
   
@@ -3032,6 +3014,23 @@ function setupChat() {
     clearChatBtn.addEventListener('click', clearChat);
   }
   
+  // Add event listener for the chat history button
+  const historyBtn = document.getElementById('chatHistoryBtn');
+  if (historyBtn) {
+    historyBtn.addEventListener('click', showChatHistoryModal);
+  }
+  
+  // Add event listener for the new chat button
+  const newChatBtn = document.getElementById('newChatBtn');
+  if (newChatBtn) {
+    newChatBtn.addEventListener('click', function() {
+      if (confirm('क्या आप नई बातचीत शुरू करना चाहते हैं?')) {
+        clearChat();
+      }
+    });
+  }
+  
+  // Set up form submission
   chatForm.addEventListener('submit', function(e) {
     e.preventDefault();
     
@@ -3049,30 +3048,90 @@ function setupChat() {
     // Generate AI response
     generateAIResponse(userMessage);
   });
+  
+  // Update the chat header with session info
+  updateChatSessionHeader();
 }
 
 function loadChatHistory() {
-  if (!isLoggedIn()) return;
-  
-  // Get chat history from localStorage
-  const userId = getCurrentUserId();
-  const chatHistory = JSON.parse(localStorage.getItem(`chat_history_${userId}`) || '[]');
-  
   const chatMessages = document.getElementById('chatMessages');
   if (!chatMessages) return;
   
-  if (chatHistory.length > 0) {
-    // If we have history, clear the welcome message
-    chatMessages.innerHTML = '';
-    
-    // Add chat history
-    chatHistory.forEach(message => {
-      addChatMessage(message.text, message.sender, false);
+  // Get current user and session ID
+  const userId = getCurrentUserId() || 'anonymous';
+  const sessionId = getCurrentChatSessionId();
+  
+  // Clear existing messages first
+  chatMessages.innerHTML = '';
+  
+  // Add loading indicator
+  const loadingIndicator = document.createElement('div');
+  loadingIndicator.id = 'chatHistoryLoading';
+  loadingIndicator.className = 'chat-loading-indicator';
+  loadingIndicator.innerHTML = '<div class="loading-spinner"></div><p>पिछली बातचीत लोड हो रही है...</p>';
+  chatMessages.appendChild(loadingIndicator);
+  
+  // Load chat history from API
+  fetchAPI(`/api/chat_history?user_id=${userId}&session_id=${sessionId}`)
+    .then(response => {
+      // Remove loading indicator
+      const loadingIndicator = document.getElementById('chatHistoryLoading');
+      if (loadingIndicator) loadingIndicator.remove();
+      
+      if (response && response.history && response.history.length > 0) {
+        // Add each message to the chat without saving to history
+        response.history.forEach(entry => {
+          const senderClass = entry.sender === 'assistant' ? 'bot' : 'user';
+          addChatMessage(entry.message, senderClass, false);
+        });
+        
+        console.log(`Loaded ${response.history.length} messages from chat history`);
+      } else {
+        // No chat history, add welcome message
+        const welcomeMessage = `
+          नमस्ते! मैं AI किसान, आपका कृषि सहायक हूँ। मैं इन विषयों पर आपकी मदद कर सकता हूँ:
+          
+          • फसलों के बारे में सलाह और बेहतर प्रथाएँ
+          • रोगों की पहचान और उपचार
+          • मौसम का खेती पर प्रभाव
+          • उर्वरक और सिंचाई संबंधी सिफारिशें
+          • टिकाऊ खेती के तरीके
+          
+          कृपया अपना कोई भी कृषि संबंधित प्रश्न पूछें! नीचे संदेश लिखें और एंटर दबाएँ।
+        `;
+        addChatMessage(welcomeMessage, 'bot', false);
+      }
+      
+      // Scroll to bottom
+      scrollChatToBottom();
+    })
+    .catch(error => {
+      console.error('Error loading chat history:', error);
+      
+      // Remove loading indicator
+      const loadingIndicator = document.getElementById('chatHistoryLoading');
+      if (loadingIndicator) loadingIndicator.remove();
+      
+      // Add welcome message as fallback
+      const welcomeMessage = `
+        नमस्ते! मैं AI किसान, आपका कृषि सहायक हूँ। मैं इन विषयों पर आपकी मदद कर सकता हूँ:
+        
+        • फसलों के बारे में सलाह और बेहतर प्रथाएँ
+        • रोगों की पहचान और उपचार
+        • मौसम का खेती पर प्रभाव
+        • उर्वरक और सिंचाई संबंधी सिफारिशें
+        • टिकाऊ खेती के तरीके
+        
+        कृपया अपना कोई भी कृषि संबंधित प्रश्न पूछें! नीचे संदेश लिखें और एंटर दबाएँ।
+      `;
+      addChatMessage(welcomeMessage, 'bot', false);
+      
+      // Add error message
+      addChatMessage("चैट इतिहास लोड करने में समस्या: " + error.message, 'bot', false);
+      
+      // Scroll to bottom
+      scrollChatToBottom();
     });
-    
-    // Scroll to bottom
-    scrollChatToBottom();
-  }
 }
 
 function addChatMessage(text, sender, saveToHistory = true) {
@@ -3114,58 +3173,231 @@ function scrollChatToBottom() {
 }
 
 function saveChatMessage(text, sender) {
-  if (!isLoggedIn()) return;
-  
-  const userId = getCurrentUserId();
-  const chatHistory = JSON.parse(localStorage.getItem(`chat_history_${userId}`) || '[]');
-  
-  // Add new message
-  chatHistory.push({
-    id: Date.now(),
-    text: text,
-    sender: sender,
-    timestamp: new Date().toISOString()
-  });
-  
-  // Limit history to 50 messages
-  if (chatHistory.length > 50) {
-    chatHistory.shift();
-  }
-  
-  // Save back to localStorage
-  localStorage.setItem(`chat_history_${userId}`, JSON.stringify(chatHistory));
+  // We don't need to manually save messages anymore since they're stored via the API
+  // when generating responses. This function is kept for backward compatibility.
+  console.log('Chat message saved via API:', (text.length > 30 ? text.substring(0, 30) + '...' : text));
 }
 
 function clearChat() {
-  if (!confirm('Are you sure you want to clear the chat history?')) {
+  if (!confirm('क्या आप वाकई चैट इतिहास साफ़ करना चाहते हैं?')) {
     return;
   }
   
-  // Clear chat history from localStorage
-  if (isLoggedIn()) {
-    const userId = getCurrentUserId();
-    localStorage.removeItem(`chat_history_${userId}`);
-  }
+  // Generate a new session ID for a fresh conversation
+  const newSessionId = generateSessionId();
+  sessionStorage.setItem('current_chat_session_id', newSessionId);
+  console.log('Started new chat session:', newSessionId);
   
   // Clear chat UI and add a new welcome message
   const chatMessages = document.getElementById('chatMessages');
   if (chatMessages) {
     chatMessages.innerHTML = '';
     
-    // Add a new welcome message
+    // Add a new welcome message in Hindi
     const welcomeMessage = `
-      Hello! I'm AI Kisan, your personal farming assistant. I can help with:
+      नमस्ते! मैं AI किसान, आपका कृषि सहायक हूँ। मैं इन विषयों पर आपकी मदद कर सकता हूँ:
       
-      • Crop advice and best practices
-      • Disease identification and treatment
-      • Weather impact on farming
-      • Fertilizer and irrigation recommendations
-      • Sustainable farming methods
+      • फसलों के बारे में सलाह और बेहतर प्रथाएँ
+      • रोगों की पहचान और उपचार
+      • मौसम का खेती पर प्रभाव
+      • उर्वरक और सिंचाई संबंधी सिफारिशें
+      • टिकाऊ खेती के तरीके
       
-      Go ahead and ask me any farming-related question! Type your message below and press Enter.
+      कृपया अपना कोई भी कृषि संबंधित प्रश्न पूछें! नीचे संदेश लिखें और एंटर दबाएँ।
     `;
     addChatMessage(welcomeMessage, 'bot', false);
   }
+}
+
+// Function to display chat sessions history in a modal
+function showChatHistoryModal() {
+  // Create modal container
+  const modalContainer = document.createElement('div');
+  modalContainer.id = 'chatHistoryModal';
+  modalContainer.className = 'modal';
+  
+  // Create modal content
+  modalContainer.innerHTML = `
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>पिछली बातचीत</h3>
+        <span class="close">&times;</span>
+      </div>
+      <div class="modal-body">
+        <div id="chatSessionsList" class="chat-sessions-list">
+          <div class="loading-spinner"></div>
+          <p>पिछली बातचीत लोड हो रही है...</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="newChatButton" class="btn btn-primary">नई बातचीत शुरू करें</button>
+      </div>
+    </div>
+  `;
+  
+  // Add modal to DOM
+  document.body.appendChild(modalContainer);
+  
+  // Show modal
+  modalContainer.style.display = 'block';
+  
+  // Add close button functionality
+  const closeBtn = modalContainer.querySelector('.close');
+  closeBtn.onclick = function() {
+    document.body.removeChild(modalContainer);
+  };
+  
+  // Add new chat button functionality
+  const newChatBtn = document.getElementById('newChatButton');
+  newChatBtn.onclick = function() {
+    clearChat();
+    document.body.removeChild(modalContainer);
+  };
+  
+  // Get chat sessions from API
+  const userId = getCurrentUserId() || 'anonymous';
+  fetchAPI(`/api/chat_sessions?user_id=${userId}`)
+    .then(response => {
+      const chatSessionsList = document.getElementById('chatSessionsList');
+      
+      if (response && response.sessions && response.sessions.length > 0) {
+        // Clear loading indicator
+        chatSessionsList.innerHTML = '';
+        
+        // Create list of sessions
+        const sessionsList = document.createElement('ul');
+        sessionsList.className = 'sessions-list';
+        
+        response.sessions.forEach(session => {
+          // Format date
+          const sessionDate = new Date(session.last_message_time);
+          const formattedDate = sessionDate.toLocaleDateString('hi-IN');
+          const formattedTime = sessionDate.toLocaleTimeString('hi-IN', {hour: '2-digit', minute:'2-digit'});
+          
+          // Get intent emoji
+          const intentEmoji = getIntentEmoji(session.primary_intent);
+          
+          // Create session item
+          const sessionItem = document.createElement('li');
+          sessionItem.className = 'session-item';
+          sessionItem.innerHTML = `
+            <div class="session-info">
+              <span class="session-emoji">${intentEmoji}</span>
+              <div class="session-details">
+                <div class="session-title">${session.title}</div>
+                <div class="session-meta">
+                  <span class="session-date">${formattedDate} ${formattedTime}</span>
+                  <span class="session-count">${session.message_count} संदेश</span>
+                </div>
+              </div>
+            </div>
+          `;
+          
+          // Add click handler to load this session
+          sessionItem.onclick = function() {
+            // Set the session ID in storage
+            sessionStorage.setItem('current_chat_session_id', session.session_id);
+            
+            // Load the chat history for this session
+            loadChatHistory();
+            
+            // Close the modal
+            document.body.removeChild(modalContainer);
+          };
+          
+          sessionsList.appendChild(sessionItem);
+        });
+        
+        chatSessionsList.appendChild(sessionsList);
+      } else {
+        // No sessions found
+        chatSessionsList.innerHTML = `
+          <div class="no-sessions">
+            <p>कोई पिछली बातचीत नहीं मिली।</p>
+            <p>एक नई बातचीत शुरू करने के लिए नीचे वाले बटन पर क्लिक करें।</p>
+          </div>
+        `;
+      }
+    })
+    .catch(error => {
+      console.error('Error loading chat sessions:', error);
+      const chatSessionsList = document.getElementById('chatSessionsList');
+      chatSessionsList.innerHTML = `
+        <div class="error-message">
+          <p>बातचीत इतिहास लोड करने में त्रुटि: ${error.message}</p>
+        </div>
+      `;
+    });
+}
+
+// Helper function to get emoji for chat intent
+function getIntentEmoji(intent) {
+  const emojis = {
+    'greeting': '👋',
+    'weather': '☁️',
+    'crop_info': '🌾',
+    'disease': '🦠',
+    'fertilizer': '🧪',
+    'market': '💰',
+    'irrigation': '💧',
+    'farming_tech': '🚜',
+    'help': '❓',
+    'general_query': '💬'
+  };
+  
+  return emojis[intent] || '💬';
+}
+
+// Function to update the chat header with current session info
+function updateChatSessionHeader() {
+  const chatHeader = document.getElementById('chatHeader');
+  if (!chatHeader) return;
+  
+  const sessionId = getCurrentChatSessionId();
+  
+  // First, update with basic info
+  chatHeader.innerHTML = `
+    <h3>AI किसान <span class="chat-status-badge">ऑनलाइन</span></h3>
+    <div class="chat-session-info">नई बातचीत</div>
+  `;
+  
+  // Then try to get more info from the API
+  const userId = getCurrentUserId() || 'anonymous';
+  fetchAPI(`/api/chat_sessions?user_id=${userId}`)
+    .then(response => {
+      if (response && response.sessions && response.sessions.length > 0) {
+        // Find current session
+        const currentSession = response.sessions.find(s => s.session_id === sessionId);
+        
+        if (currentSession) {
+          // Update header with session info
+          const sessionDate = new Date(currentSession.last_message_time);
+          const formattedDate = sessionDate.toLocaleDateString('hi-IN');
+          
+          const sessionInfo = document.createElement('div');
+          sessionInfo.className = 'chat-session-info';
+          sessionInfo.innerHTML = `
+            <span class="session-emoji">${getIntentEmoji(currentSession.primary_intent)}</span>
+            <span class="session-title">${currentSession.title}</span>
+            <span class="session-meta">
+              <span class="session-date">${formattedDate}</span>
+              <span class="session-count">${currentSession.message_count} संदेश</span>
+            </span>
+          `;
+          
+          // Replace the session info in header
+          const oldSessionInfo = chatHeader.querySelector('.chat-session-info');
+          if (oldSessionInfo) {
+            chatHeader.replaceChild(sessionInfo, oldSessionInfo);
+          } else {
+            chatHeader.appendChild(sessionInfo);
+          }
+        }
+      }
+    })
+    .catch(error => {
+      console.error('Error updating chat header:', error);
+    });
 }
 
 async function generateAIResponse(userMessage) {
@@ -3175,10 +3407,15 @@ async function generateAIResponse(userMessage) {
   console.log('Sending chat message to API:', userMessage);
   
   try {
-    // Call the API with user's question - we'll use Gemini API on the backend
-    const response = await fetchAPI('chat', 'POST', {
+    // Get current session ID from storage or create a new one
+    const sessionId = getCurrentChatSessionId();
+    
+    // Call the API with user's question including session context
+    const response = await fetchAPI('/api/chat', 'POST', {
       message: userMessage,
-      user_id: getCurrentUserId() || 'anonymous'
+      user_id: getCurrentUserId() || 'anonymous',
+      session_id: sessionId,
+      context_window: 5  // Include last 5 messages for context
     }, 3); // Increased retries for better chance of success
     
     console.log('Chat API response:', response);
@@ -3213,6 +3450,25 @@ async function generateAIResponse(userMessage) {
     
     addChatMessage(fallbackResponse, 'bot');
   }
+}
+
+// Get the current chat session ID or create a new one
+function getCurrentChatSessionId() {
+  // Try to get from session storage
+  let sessionId = sessionStorage.getItem('current_chat_session_id');
+  
+  // If no session ID exists, create a new one
+  if (!sessionId) {
+    sessionId = generateSessionId();
+    sessionStorage.setItem('current_chat_session_id', sessionId);
+  }
+  
+  return sessionId;
+}
+
+// Generate a unique session ID
+function generateSessionId() {
+  return Date.now().toString(36) + Math.random().toString(36).substring(2, 10);
 }
 
 function addTypingIndicator() {
