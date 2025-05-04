@@ -2682,8 +2682,18 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('irrigationResults').classList.add('hidden');
   });
   
-  document.getElementById('generateFertilizerBtn').addEventListener('click', getAdvancedFertilizerRecommendations);
-  document.getElementById('generateIrrigationBtn').addEventListener('click', getIrrigationRecommendations);
+  // Add event listeners with null checks for fertilizer and irrigation buttons
+  const fertilizerBtn = document.getElementById('generateFertilizerBtn');
+  if (fertilizerBtn) {
+    fertilizerBtn.addEventListener('click', getAdvancedFertilizerRecommendations);
+    console.log('Added event listener to fertilizer button');
+  }
+  
+  const irrigationBtn = document.getElementById('generateIrrigationBtn');
+  if (irrigationBtn) {
+    irrigationBtn.addEventListener('click', getIrrigationRecommendations);
+    console.log('Added event listener to irrigation button');
+  }
   
   // Login form
   document.getElementById('loginForm').addEventListener('submit', async function(e) {
