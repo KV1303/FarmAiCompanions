@@ -731,13 +731,20 @@ function updateProfileInfo(username) {
     profileUsername.textContent = username;
   }
   
-  // Update email if available - we'll use a fallback for now
+  // Update email if available, using real email from localStorage
   const profileEmail = document.getElementById('profileEmail');
   if (profileEmail) {
-    // In a real app, this would fetch the email from the user data
-    // For now, just create a placeholder
-    profileEmail.textContent = `${username}@example.com`;
+    const email = localStorage.getItem('user_email');
+    if (email) {
+      profileEmail.textContent = email;
+    } else {
+      // Fallback if email not in localStorage
+      profileEmail.textContent = `${username}@example.com`;
+    }
   }
+  
+  // Set up profile image upload functionality
+  setupProfileImageUpload();
   
   // Update stats if available - we'll use hardcoded values for this demo
   const fieldCountElem = document.getElementById('fieldCount');
@@ -776,9 +783,44 @@ function updateProfileInfo(username) {
   }
 }
 
+// Function to handle profile image upload
+function setupProfileImageUpload() {
+  const imageUploadInput = document.getElementById('profileImageUpload');
+  const profileImage = document.getElementById('profileImageDisplay');
+  
+  if (imageUploadInput && profileImage) {
+    // Check if we have a saved profile image in localStorage
+    const savedImage = localStorage.getItem('profile_image');
+    if (savedImage) {
+      profileImage.src = savedImage;
+    }
+    
+    // Add event listener for image upload
+    imageUploadInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        if (file.type.startsWith('image/')) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const imageData = e.target.result;
+            profileImage.src = imageData;
+            
+            // Save the image to localStorage
+            localStorage.setItem('profile_image', imageData);
+          };
+          reader.readAsDataURL(file);
+        } else {
+          alert('कृपया एक छवि फ़ाइल अपलोड करें (Please upload an image file)');
+        }
+      }
+    });
+  }
+}
+
 function logout() {
   localStorage.removeItem('user_id');
   localStorage.removeItem('username');
+  localStorage.removeItem('user_email');
   updateAuthUI();
   showSection('loginSection');
 }
@@ -2585,7 +2627,12 @@ document.addEventListener('DOMContentLoaded', function() {
       console.log('Login successful:', data);
       
       if (data && data.id) {
-        login(data.id, data.username);
+        // Pass email to login function if available in the response
+        if (data.email) {
+          login(data.id, data.username, data.email);
+        } else {
+          login(data.id, data.username);
+        }
         showSection('dashboardSection');
         loadFields();
       } else {
@@ -2622,8 +2669,8 @@ document.addEventListener('DOMContentLoaded', function() {
         password 
       });
       
-      // Auto-login after registration
-      login(data.id, data.username);
+      // Auto-login after registration with email
+      login(data.id, data.username, email);
       showSection('dashboardSection');
       loadFields();
     } catch (error) {
