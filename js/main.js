@@ -3280,8 +3280,19 @@ function saveGuidanceToDashboard(cropType, soilType) {
   // Save back to localStorage
   localStorage.setItem('saved_guidances', JSON.stringify(savedGuidances));
   
-  // Show success message
-  alert('Guidance saved to your dashboard successfully!');
+  // Show success message with a proper toast notification instead of alert
+  const alertsContainer = document.getElementById('alertsContainer');
+  if (alertsContainer) {
+    alertsContainer.innerHTML = `
+      <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <strong>सफलता!</strong> मार्गदर्शन आपके डैशबोर्ड में सफलतापूर्वक सहेजा गया!
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    `;
+  } else {
+    // Fallback to alert if container not found
+    alert('Guidance saved to your dashboard successfully!');
+  }
   
   // Update the saved guidances list in dashboard if it exists
   loadSavedGuidances();
