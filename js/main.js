@@ -693,13 +693,30 @@ function logout() {
 function updateAuthUI() {
   const isAuthenticated = isLoggedIn();
   
-  // Update navbar
-  document.getElementById('loginNav').classList.toggle('hidden', isAuthenticated);
-  document.getElementById('registerNav').classList.toggle('hidden', isAuthenticated);
-  document.getElementById('logoutBtn').classList.toggle('hidden', !isAuthenticated);
+  // Safely toggle elements with null checks
+  const safeToggle = (id, className, condition) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.classList.toggle(className, condition);
+    }
+  };
+  
+  // Update navbar with safety checks
+  safeToggle('loginNav', 'hidden', isAuthenticated);
+  safeToggle('registerNav', 'hidden', isAuthenticated);
+  safeToggle('logoutBtn', 'hidden', !isAuthenticated);
   
   // Enable/disable protected sections
-  document.getElementById('dashboardNav').classList.toggle('disabled', !isAuthenticated);
+  safeToggle('dashboardNav', 'disabled', !isAuthenticated);
+  
+  // Update user welcome message if it exists
+  safeToggle('userWelcome', 'hidden', !isAuthenticated);
+  
+  // Update username display if it exists
+  const usernameDisplay = document.getElementById('usernameDisplay');
+  if (usernameDisplay && isAuthenticated) {
+    usernameDisplay.textContent = localStorage.getItem('username') || '';
+  }
   
   // If user is authenticated, check subscription status
   if (isAuthenticated) {
@@ -2304,9 +2321,18 @@ document.addEventListener('DOMContentLoaded', function() {
     loadFields();
   }
   
-  // Navigation links
-  document.getElementById('homeNav').addEventListener('click', () => showSection('homeSection'));
-  document.getElementById('dashboardNav').addEventListener('click', () => {
+  // Navigation links - with null checks
+  // Helper function to safely add click event listeners
+  function addSafeClickHandler(id, handler) {
+    const element = document.getElementById(id);
+    if (element) {
+      element.addEventListener('click', handler);
+    }
+  }
+  
+  // Add event listeners with null checks
+  addSafeClickHandler('homeNav', () => showSection('homeSection'));
+  addSafeClickHandler('dashboardNav', () => {
     if (isLoggedIn()) {
       showSection('dashboardSection');
       loadFields();
@@ -2314,28 +2340,29 @@ document.addEventListener('DOMContentLoaded', function() {
       showSection('loginSection');
     }
   });
-  document.getElementById('diseaseDetectNav').addEventListener('click', () => showSection('diseaseDetectionSection'));
-  document.getElementById('marketPricesNav').addEventListener('click', () => {
+  // More navigation links - all with safety checks
+  addSafeClickHandler('diseaseDetectNav', () => showSection('diseaseDetectionSection'));
+  addSafeClickHandler('marketPricesNav', () => {
     showSection('marketPricesSection');
     loadMarketPrices();
   });
-  document.getElementById('weatherNav').addEventListener('click', () => {
+  addSafeClickHandler('weatherNav', () => {
     showSection('weatherSection');
     loadWeather();
   });
   
-  // Auth links
-  document.getElementById('loginNav').addEventListener('click', () => showSection('loginSection'));
-  document.getElementById('registerNav').addEventListener('click', () => showSection('registerSection'));
-  document.getElementById('logoutBtn').addEventListener('click', () => {
+  // Auth links - with safety checks
+  addSafeClickHandler('loginNav', () => showSection('loginSection'));
+  addSafeClickHandler('registerNav', () => showSection('registerSection'));
+  addSafeClickHandler('logoutBtn', () => {
     logout();
     showSection('loginSection');
   });
-  document.getElementById('switchToRegister').addEventListener('click', () => showSection('registerSection'));
-  document.getElementById('switchToLogin').addEventListener('click', () => showSection('loginSection'));
+  addSafeClickHandler('switchToRegister', () => showSection('registerSection'));
+  addSafeClickHandler('switchToLogin', () => showSection('loginSection'));
   
-  // Feature links
-  document.getElementById('getStartedBtn').addEventListener('click', () => {
+  // Feature links - with safety checks
+  addSafeClickHandler('getStartedBtn', () => {
     if (isLoggedIn()) {
       showSection('dashboardSection');
       loadFields();
@@ -2343,15 +2370,15 @@ document.addEventListener('DOMContentLoaded', function() {
       showSection('registerSection');
     }
   });
-  document.getElementById('featureDiseaseBtn').addEventListener('click', () => showSection('diseaseDetectionSection'));
-  document.getElementById('featureMarketBtn').addEventListener('click', () => {
+  addSafeClickHandler('featureDiseaseBtn', () => showSection('diseaseDetectionSection'));
+  addSafeClickHandler('featureMarketBtn', () => {
     showSection('marketPricesSection');
     loadMarketPrices();
     if (isLoggedIn()) {
       loadUserAlerts();
     }
   });
-  document.getElementById('featureWeatherBtn').addEventListener('click', () => {
+  addSafeClickHandler('featureWeatherBtn', () => {
     showSection('weatherSection');
     loadWeather();
   });
