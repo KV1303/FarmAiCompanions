@@ -2625,14 +2625,11 @@ function displayRecommendations(data) {
   
   recommendationsContent.innerHTML = html;
   
-  // Ensure Bootstrap modals work by initializing them properly
-  document.querySelectorAll('[data-bs-toggle="modal"]').forEach(button => {
-    button.addEventListener('click', function() {
-      const targetModal = document.querySelector(this.getAttribute('data-bs-target'));
-      const bsModal = new bootstrap.Modal(targetModal);
-      bsModal.show();
-    });
-  });
+  // Re-initialize modal triggers after updating content
+  setTimeout(() => {
+    console.log('Re-initializing modal triggers in recommendations content');
+    initializeModalTriggers();
+  }, 100);
 }
 
 // Event listeners
