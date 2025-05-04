@@ -158,3 +158,17 @@ class WeatherForecast(db.Model):
     
     def __repr__(self):
         return f'<WeatherForecast {self.location} {self.forecast_date}>'
+        
+class ChatHistory(db.Model):
+    __tablename__ = 'chat_history'
+    
+    id = Column(Integer, primary_key=True)
+    user_id = Column(String(50), nullable=False)  # Can be actual user ID or 'anonymous'
+    session_id = Column(String(100), nullable=False)  # To group conversations
+    message = Column(Text, nullable=False)
+    sender = Column(String(20), nullable=False)  # 'user' or 'assistant'
+    timestamp = Column(DateTime, default=datetime.utcnow)
+    context_data = Column(JSON)  # For storing contextual information, detected intents, etc.
+    
+    def __repr__(self):
+        return f'<ChatHistory {self.user_id} {self.sender}>'

@@ -1,5 +1,6 @@
 import os
 import json
+import uuid
 import requests
 from datetime import datetime, timedelta
 from flask import Flask, request, jsonify
@@ -7,7 +8,10 @@ from flask_cors import CORS
 import google.generativeai as genai
 
 from db_config import init_db
-from models import db, User, Field, DiseaseReport, IrrigationRecord, FertilizerRecord, MarketPrice, MarketFavorite, WeatherForecast
+from models import (
+    db, User, Field, DiseaseReport, IrrigationRecord, FertilizerRecord, 
+    MarketPrice, MarketFavorite, WeatherForecast, ChatHistory
+)
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -509,17 +513,52 @@ def get_soil_specific_guidance(soil_type, crop_type):
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
-    """Process chat message and return AI response"""
+    """Process chat message and return AI response with context awareness"""
     try:
         data = request.json
         user_message = data.get('message', '')
         user_id = data.get('user_id', 'anonymous')
+        session_id = data.get('session_id', str(uuid.uuid4()))  # Generate a session ID if none provided
+        context_window = data.get('context_window', 5)  # Number of previous messages to include for context
         
         if not user_message:
             return jsonify({'error': 'No message provided'}), 400
         
         # Default response in case AI is not available - in Hindi
         default_response = "मैं AI किसान, आपका कृषि सहायक हूँ। मैं फसल की सलाह, रोग पहचान, मौसम की व्याख्या, और अधिक में आपकी मदद कर सकता हूँ। बेहतर सहायता के लिए कृपया अपने कृषि प्रश्न के बारे में विशिष्ट विवरण प्रदान करें।"
+        
+        # Detect topic/intent (simple keyword-based for now)
+        metadata = detect_chat_intent(user_message)
+        
+        # Save user message to chat history database
+        user_chat_entry = ChatHistory(
+            user_id=user_id,
+            session_id=session_id,
+            message=user_message,
+            sender='user',
+            metadata=metadata
+        )
+        db.session.add(user_chat_entry)
+        db.session.commit()
+        
+        # Get conversation history for context (limited to context_window most recent messages)
+        chat_history = ChatHistory.query.filter_by(
+            user_id=user_id, 
+            session_id=session_id
+        ).order_by(
+            ChatHistory.timestamp.desc()
+        ).limit(context_window).all()
+        
+        # Reverse the list to get chronological order
+        chat_history = chat_history[::-1]
+        
+        # Format chat history for AI context
+        conversation_context = ""
+        if chat_history and len(chat_history) > 1:  # If there's more than just the current message
+            conversation_context = "Previous conversation:\n"
+            for entry in chat_history[:-1]:  # Exclude the current message which we just saved
+                role = "किसान" if entry.sender == "user" else "AI किसान"
+                conversation_context += f"{role}: {entry.message}\n"
         
         # If Gemini API key is available, use AI for chat
         if GEMINI_API_KEY:
@@ -535,14 +574,17 @@ def chat():
                 3. Relevant to Indian farming conditions
                 4. Considerate of both traditional and modern farming approaches
                 5. Clear and easy to understand
-                6. ALWAYS IN HINDI LANGUAGE
+                6. ALWAYS IN HINDI LANGUAGE using Devanagari script
+                7. Contextually aware of the ongoing conversation
                 
                 When responding to queries about crop problems, ask for specifics like symptoms, 
                 affected plant parts, and growth stage. For weather-related queries, explain implications 
                 for farming activities. Always suggest sustainable practices when appropriate.
                 
-                IMPORTANT: You MUST respond in Hindi language using Devanagari script. Your users are rural Indian 
-                farmers who primarily speak Hindi. Even if the question is in English, always respond in Hindi.
+                IMPORTANT: Reference previous messages in the conversation to maintain context.
+                If the farmer is asking follow-up questions, make sure to connect your answer to previous exchanges.
+                REMEMBER: You MUST respond in Hindi language. Your users are rural Indian farmers who primarily speak Hindi.
+                Even if the question is in English, always respond in Hindi.
                 """
                 
                 # Use the latest available Gemini model
@@ -555,22 +597,57 @@ def chat():
                         "max_output_tokens": 1024,  # Increased token limit for more comprehensive answers
                     }
                     
-                    # Construct a clear prompt for Hindi responses
+                    # Construct a clear prompt for Hindi responses with context
                     improved_prompt = f"""
                     {system_prompt}
                     
-                    किसान का प्रश्न: {user_message}
+                    {conversation_context}
                     
-                    कृपया हिंदी में विस्तृत और मददगार उत्तर दें:
+                    किसान का वर्तमान प्रश्न: {user_message}
+                    
+                    कृपया हिंदी में विस्तृत और संदर्भ के अनुसार मददगार उत्तर दें:
                     """
                     
                     # Use one of the available Gemini models - gemini-1.5-pro-latest
                     model = genai.GenerativeModel('models/gemini-1.5-pro-latest')
+                    
+                    # Try detecting and incorporating user context (field info, previous interactions)
+                    try:
+                        # If the message mentions crops or fields, try to augment with user's field data
+                        field_data = None
+                        if any(keyword in user_message.lower() for keyword in ['field', 'crop', 'farm', 'खेत', 'फसल']):
+                            # Try to get the user's field data if they're a registered user
+                            if user_id.isdigit():
+                                fields = Field.query.filter_by(user_id=int(user_id)).all()
+                                if fields:
+                                    field_data = "\nउपयोगकर्ता के खेत की जानकारी:\n"
+                                    for field in fields:
+                                        field_data += f"- नाम: {field.name}, स्थान: {field.location or 'अज्ञात'}, फसल: {field.crop_type or 'अज्ञात'}, मिट्टी: {field.soil_type or 'अज्ञात'}\n"
+                        
+                        # Add field data to prompt if available
+                        if field_data:
+                            improved_prompt += f"\n{field_data}"
+                    except Exception as context_error:
+                        print(f"Error adding field context: {str(context_error)}")
+                    
                     response = model.generate_content(improved_prompt)
                     
                     if response and response.text:
+                        ai_response = response.text
                         print("Successfully generated Gemini response")
-                        return jsonify({'reply': response.text})
+                        
+                        # Save AI response to chat history
+                        ai_chat_entry = ChatHistory(
+                            user_id=user_id,
+                            session_id=session_id,
+                            message=ai_response,
+                            sender='assistant',
+                            metadata=metadata
+                        )
+                        db.session.add(ai_chat_entry)
+                        db.session.commit()
+                        
+                        return jsonify({'reply': ai_response})
                     else:
                         print("No valid response from Gemini model")
                         return jsonify({'reply': default_response})
@@ -582,12 +659,25 @@ def chat():
                         # Try gemini-1.5-flash model as fallback
                         fallback_model = genai.GenerativeModel('models/gemini-1.5-flash-latest')
                         response = fallback_model.generate_content(
-                            f"{system_prompt}\n\nFarmer's question: {user_message}\n\nYour expert response in Hindi:",
+                            f"{system_prompt}\n\n{conversation_context}\n\nFarmer's current question: {user_message}\n\nYour expert response in Hindi:",
                             generation_config={"temperature": 0.7, "max_output_tokens": 800}
                         )
                         
                         if response and response.text:
-                            return jsonify({'reply': response.text})
+                            ai_response = response.text
+                            
+                            # Save AI response to chat history
+                            ai_chat_entry = ChatHistory(
+                                user_id=user_id,
+                                session_id=session_id,
+                                message=ai_response,
+                                sender='assistant',
+                                metadata=metadata
+                            )
+                            db.session.add(ai_chat_entry)
+                            db.session.commit()
+                            
+                            return jsonify({'reply': ai_response})
                         else:
                             return jsonify({'reply': default_response})
                     except Exception as fallback_error:
@@ -612,16 +702,68 @@ def chat():
             
             # Check if the user message contains any keywords, with case-insensitive matching
             user_message_lower = user_message.lower()
+            ai_response = default_response
             for keyword, response in hindi_responses.items():
                 if keyword in user_message_lower:
-                    return jsonify({'reply': response})
+                    ai_response = response
+                    break
             
-            # Default response if no keywords match
-            return jsonify({'reply': default_response})
+            # Save AI response to chat history
+            ai_chat_entry = ChatHistory(
+                user_id=user_id,
+                session_id=session_id,
+                message=ai_response,
+                sender='assistant',
+                metadata=metadata
+            )
+            db.session.add(ai_chat_entry)
+            db.session.commit()
+            
+            return jsonify({'reply': ai_response})
             
     except Exception as e:
         print(f"Error in chat endpoint: {str(e)}")
         return jsonify({'error': 'Failed to process chat message'}), 500
+
+
+def detect_chat_intent(message):
+    """
+    Detect the user's intent from chat message to provide better context-aware responses
+    """
+    message_lower = message.lower()
+    
+    # Define intent categories with keywords (both English and Hindi)
+    intent_keywords = {
+        'greeting': ['hello', 'hi', 'hey', 'नमस्ते', 'नमस्कार', 'प्रणाम'],
+        'weather': ['weather', 'rain', 'temperature', 'forecast', 'climate', 'मौसम', 'बारिश', 'तापमान'],
+        'crop_info': ['crop', 'plant', 'cultivation', 'grow', 'फसल', 'बीज', 'खेती', 'उगाना'],
+        'disease': ['disease', 'pest', 'infection', 'रोग', 'कीट', 'संक्रमण', 'बीमारी'],
+        'fertilizer': ['fertilizer', 'manure', 'nutrition', 'उर्वरक', 'खाद'],
+        'market': ['price', 'market', 'sell', 'buy', 'बाजार', 'मूल्य', 'कीमत', 'बेचना', 'खरीदना'],
+        'irrigation': ['water', 'irrigation', 'moisture', 'पानी', 'सिंचाई', 'नमी'],
+        'farming_tech': ['technology', 'machine', 'equipment', 'तकनीक', 'मशीन', 'उपकरण'],
+        'help': ['help', 'support', 'मदद', 'सहायता']
+    }
+    
+    # Extract the top 3 likely intents
+    intents = []
+    for intent, keywords in intent_keywords.items():
+        for keyword in keywords:
+            if keyword in message_lower:
+                intents.append(intent)
+                break
+    
+    # If no specific intent is found, classify as 'general_query'
+    if not intents:
+        intents.append('general_query')
+    
+    # Return metadata with identified intents and original message properties
+    return {
+        'intents': intents[:3],  # Top 3 intents max
+        'message_length': len(message),
+        'timestamp': datetime.utcnow().isoformat(),
+        'contains_question': '?' in message or 'क्या' in message_lower or 'कौन' in message_lower or 'कब' in message_lower
+    }
 
 @app.route('/api/weather', methods=['GET'])
 def get_weather():
