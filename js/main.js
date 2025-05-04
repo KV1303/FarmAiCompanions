@@ -3146,8 +3146,9 @@ function addChatMessage(text, sender, saveToHistory = true) {
   const contentEl = document.createElement('div');
   contentEl.className = 'message-content';
   
-  // Format message text with paragraphs
-  const textHtml = text.split('\n')
+  // Remove any asterisks (*) and format message text with paragraphs
+  const cleanedText = text.replace(/\*/g, '');
+  const textHtml = cleanedText.split('\n')
     .filter(line => line.trim() !== '')
     .map(line => `<p>${line}</p>`)
     .join('');
@@ -3425,7 +3426,9 @@ async function generateAIResponse(userMessage) {
     
     // Add AI response to chat
     if (response && response.reply) {
-      addChatMessage(response.reply, 'bot');
+      // Remove asterisks (*) from the response
+      const cleanedReply = response.reply.replace(/\*/g, '');
+      addChatMessage(cleanedReply, 'bot');
     } else {
       console.error('Invalid API response format:', response);
       throw new Error('Invalid response format from AI service');
