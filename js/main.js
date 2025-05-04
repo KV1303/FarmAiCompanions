@@ -3180,6 +3180,17 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
   
+  // Add event listener for profile logout button
+  const profileLogoutBtn = document.getElementById('profileLogoutBtn');
+  if (profileLogoutBtn) {
+    profileLogoutBtn.addEventListener('click', function() {
+      if (confirm('क्या आप वाकई लॉग आउट करना चाहते हैं?')) {
+        logout();
+        showSection('loginSection');
+      }
+    });
+  }
+  
   // Update auth UI
   updateAuthUI();
   
