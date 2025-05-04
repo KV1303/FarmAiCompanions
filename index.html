@@ -1717,160 +1717,28 @@
   <script src="js/main.js"></script>
   
   <!-- Seamless Translation Integration (No visible Google elements) -->
-  <div id="translation-api-wrapper" style="display: none; height: 0; overflow: hidden;"></div>
+  <!-- Google Translate element removed - Hindi-only interface -->
   
-  <!-- Custom Translation Script -->
+  <!-- Hindi Only Script - No Translation Needed -->
   <script type="text/javascript">
-    // Connect top bar language buttons to translation function
     document.addEventListener('DOMContentLoaded', function() {
-      // Get all language option buttons
-      const languageOptions = document.querySelectorAll('.language-option');
+      // Set Hindi as default language
+      document.documentElement.lang = 'hi';
+      localStorage.setItem('preferred_language', 'hi');
       
-      // Add click handler to each language option
-      languageOptions.forEach(option => {
-        option.addEventListener('click', function(e) {
-          e.preventDefault();
-          const lang = this.getAttribute('data-lang');
-          changeLanguage(lang);
-        });
-      });
-      
-      // Load saved language if any
-      const savedLang = localStorage.getItem('preferred_language');
-      if (savedLang && savedLang !== 'en') {
-        setTimeout(() => changeLanguage(savedLang), 1000);
+      // Set all text elements with Hindi translations
+      // This could be expanded with more translations as needed
+      try {
+        // Find and update any language indicators in the UI
+        const languageText = document.querySelector('.language-text');
+        if (languageText) {
+          languageText.textContent = 'हिन्दी';
+        }
+      } catch (error) {
+        console.log("Error setting Hindi text: ", error);
       }
     });
-    
-    // Function to change language
-    function changeLanguage(lang) {
-      // Save the selected language
-      localStorage.setItem('preferred_language', lang);
-      
-      // Update the language display in dropdown
-      const languageText = document.querySelector('.language-text');
-      if (languageText) {
-        const langNames = {
-          'en': 'English',
-          'hi': 'हिन्दी',
-          'ta': 'தமிழ்',
-          'te': 'తెలుగు',
-          'bn': 'বাংলা',
-          'pa': 'ਪੰਜਾਬੀ'
-        };
-        languageText.textContent = langNames[lang] || 'English';
-      }
-      
-      // If English, reset to original content
-      if (lang === 'en') {
-        // Remove Google Translate modifications
-        const iframe = document.querySelector('.goog-te-menu-frame');
-        if (iframe) {
-          const doc = iframe.contentDocument || iframe.contentWindow.document;
-          const select = doc.querySelector('.goog-te-menu2-item span.text:contains("English")');
-          if (select) select.click();
-        }
-        
-        // Reset cookies
-        document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/;';
-        document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:01 GMT; domain=.' + location.hostname + '; path=/;';
-        
-        // Reload page
-        location.reload();
-        return;
-      }
-      
-      // For non-English languages, use the Google Translate API in the background
-      // but don't show their UI elements
-      if (window.googleTranslateIsReady) {
-        // Use the hidden translator element with our selected language
-        const selectBox = document.querySelector('.goog-te-combo');
-        if (selectBox) {
-          selectBox.value = lang;
-          selectBox.dispatchEvent(new Event('change'));
-        }
-      } else {
-        // If translation API isn't ready yet, set cookies directly
-        const domain = window.location.hostname;
-        document.cookie = `googtrans=/en/${lang}; domain=${domain}; path=/`;
-        document.cookie = `googtrans=/en/${lang}; domain=.${domain}; path=/`;
-        
-        // Reload the page to apply translations
-        location.reload();
-      }
-    }
-    
-    // Initialize Google Translate behind the scenes
-    function googleTranslateElementInit() {
-      new google.translate.TranslateElement({
-        pageLanguage: 'en',
-        includedLanguages: 'en,hi,ta,te,bn,pa',
-        layout: google.translate.TranslateElement.InlineLayout.NO_FRAME,
-        autoDisplay: false
-      }, 'translation-api-wrapper');
-      
-      // Mark translation API as ready
-      window.googleTranslateIsReady = true;
-      
-      // Hide Google elements
-      hideGoogleElements();
-    }
-    
-    // Function to hide all Google UI elements
-    function hideGoogleElements() {
-      // List of all Google Translate elements to hide
-      const elementsToHide = [
-        '.goog-te-banner-frame',
-        '.goog-te-menu-frame',
-        '.goog-te-balloon-frame',
-        '#goog-gt-tt',
-        '.goog-te-balloon-frame',
-        '.goog-tooltip',
-        '.goog-logo-link'
-      ];
-      
-      // Hide all elements in the list
-      elementsToHide.forEach(selector => {
-        const elements = document.querySelectorAll(selector);
-        elements.forEach(el => {
-          el.style.display = 'none';
-          el.style.visibility = 'hidden';
-        });
-      });
-      
-      // Set interval to keep hiding elements as they might be re-added
-      setTimeout(hideGoogleElements, 1000);
-    }
   </script>
-  
-  <!-- Style to hide Google elements -->
-  <style>
-    /* Hide all Google Translate elements */
-    .goog-te-banner-frame, 
-    .goog-te-menu-frame,
-    .goog-te-balloon-frame,
-    #goog-gt-tt, 
-    .goog-te-balloon-frame,
-    div#goog-gt-,
-    .goog-tooltip,
-    .goog-logo-link {
-      display: none !important;
-      visibility: hidden !important;
-    }
-    .goog-te-gadget {
-      height: 0 !important;
-      overflow: hidden !important;
-      position: absolute !important;
-      opacity: 0 !important;
-    }
-    .goog-text-highlight {
-      background-color: transparent !important;
-      box-shadow: none !important;
-    }
-    body {
-      top: 0 !important;
-    }
-  </style>
   
   <!-- Google Translate API has been removed as per requirement -->
   

@@ -16,6 +16,14 @@ document.addEventListener("DOMContentLoaded", function() {
   
   // Log that we no longer support language selectors
   console.log("Language selection has been disabled - Hindi only");
+  
+  // Safety check to avoid null references with classList
+  try {
+    // Apply Hindi class to body for any CSS targeting
+    document.body.setAttribute('lang', 'hi');
+  } catch (error) {
+    console.log("Error setting Hindi language attribute:", error);
+  }
 });
 
 // This function is kept for backward compatibility but doesn't do anything now
