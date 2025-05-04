@@ -587,78 +587,133 @@
     .saved-guidance-card:hover {
       transform: translateY(-5px);
     }
+    
+    /* Mobile Navigation Styles */
+    .mobile-nav {
+      display: none;
+      background-color: white;
+      border-top: 1px solid #eee;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+      z-index: 1100;
+      padding: 8px 0;
+    }
+    
+    .mobile-nav .nav-item {
+      color: #666;
+      text-decoration: none;
+      text-align: center;
+      padding: 8px 0;
+      transition: all 0.2s;
+    }
+    
+    .mobile-nav .nav-item.active {
+      color: var(--primary-color);
+    }
+    
+    .mobile-nav .nav-item i {
+      font-size: 20px;
+      display: block;
+      margin-bottom: 2px;
+    }
+    
+    .mobile-nav-padding {
+      padding-bottom: 70px;
+    }
+    
+    @media (max-width: 768px) {
+      .mobile-nav {
+        display: flex;
+      }
+      
+      .sidebar {
+        display: none !important;
+      }
+      
+      .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+        padding-bottom: 70px;
+      }
+    }
   </style>
 </head>
 <body>
-  <!-- Sidebar Navigation -->
+  <!-- Sidebar Navigation (Hindi) -->
   <div class="sidebar">
     <div class="sidebar-header">
       <a class="navbar-brand" href="#">
-        <i class="fas fa-leaf me-2"></i>FarmAssist AI
+        <i class="fas fa-leaf me-2"></i>फार्म सहायक AI
       </a>
     </div>
     <ul class="sidebar-menu">
       <li>
-        <a class="nav-link" href="#" id="homeNav" data-i18n="home">
-          <i class="fas fa-home"></i> Home
+        <a class="nav-link" href="#" id="homeNav">
+          <i class="fas fa-home"></i> होम
         </a>
       </li>
       <li>
-        <a class="nav-link" href="#" id="dashboardNav" data-i18n="dashboard">
-          <i class="fas fa-tachometer-alt"></i> Dashboard
+        <a class="nav-link" href="#" id="dashboardNav">
+          <i class="fas fa-tachometer-alt"></i> डैशबोर्ड
         </a>
       </li>
       <li>
-        <a class="nav-link" href="#" id="diseaseDetectNav" data-i18n="disease_detection">
-          <i class="fas fa-bug"></i> Disease Detection
+        <a class="nav-link" href="#" id="diseaseDetectNav">
+          <i class="fas fa-bug"></i> रोग पहचान
         </a>
       </li>
       <li>
-        <a class="nav-link" href="#" id="marketPricesNav" data-i18n="market_prices">
-          <i class="fas fa-rupee-sign"></i> Market Prices
+        <a class="nav-link" href="#" id="marketPricesNav">
+          <i class="fas fa-rupee-sign"></i> बाजार भाव
         </a>
       </li>
       <li>
-        <a class="nav-link" href="#" id="weatherNav" data-i18n="weather">
-          <i class="fas fa-cloud-sun"></i> Weather
+        <a class="nav-link" href="#" id="weatherNav">
+          <i class="fas fa-cloud-sun"></i> मौसम
         </a>
       </li>
       <li class="mt-4">
         <a class="nav-link" href="#" id="chatNav">
-          <i class="fas fa-comments"></i> AI Kisan Chatbot
+          <i class="fas fa-comments"></i> कृषि सलाहकार
         </a>
       </li>
     </ul>
     
     <!-- Auth Buttons in Sidebar -->
     <div class="px-3 mt-5">
-      <button class="btn btn-outline-light w-100 mb-2" id="loginNav" data-i18n="login">
-        <i class="fas fa-sign-in-alt me-2"></i>Login
+      <button class="btn btn-outline-light w-100 mb-2" id="loginNav">
+        <i class="fas fa-sign-in-alt me-2"></i>लॉगिन
       </button>
-      <button class="btn btn-outline-light w-100" id="registerNav" data-i18n="register">
-        <i class="fas fa-user-plus me-2"></i>Register
+      <button class="btn btn-outline-light w-100" id="registerNav">
+        <i class="fas fa-user-plus me-2"></i>रजिस्टर
       </button>
-      <button class="btn btn-outline-light w-100 hidden" id="logoutBtn" data-i18n="logout">
-        <i class="fas fa-sign-out-alt me-2"></i>Logout
+      <button class="btn btn-outline-light w-100 hidden" id="logoutBtn">
+        <i class="fas fa-sign-out-alt me-2"></i>लॉगआउट
       </button>
     </div>
-    
-    <!-- Language Selector in Sidebar -->
-    <div class="px-3 mt-4">
-      <div class="dropdown w-100">
-        <button class="btn btn-outline-light w-100 dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-          <i class="fas fa-globe me-1"></i> <span class="language-text">English</span>
-        </button>
-        <ul class="dropdown-menu w-100" aria-labelledby="languageDropdown">
-          <li><a class="dropdown-item language-option" href="#" data-lang="en">English</a></li>
-          <li><a class="dropdown-item language-option" href="#" data-lang="hi">हिन्दी (Hindi)</a></li>
-          <li><a class="dropdown-item language-option" href="#" data-lang="ta">தமிழ் (Tamil)</a></li>
-          <li><a class="dropdown-item language-option" href="#" data-lang="te">తెలుగు (Telugu)</a></li>
-          <li><a class="dropdown-item language-option" href="#" data-lang="bn">বাংলা (Bengali)</a></li>
-          <li><a class="dropdown-item language-option" href="#" data-lang="pa">ਪੰਜਾਬੀ (Punjabi)</a></li>
-        </ul>
-      </div>
-    </div>
+  </div>
+  
+  <!-- Mobile Bottom Navigation -->
+  <div class="mobile-nav fixed-bottom d-flex justify-content-around align-items-center py-2">
+    <a href="#" class="nav-item" id="mobileHomeNav">
+      <i class="fas fa-home"></i>
+      <div>होम</div>
+    </a>
+    <a href="#" class="nav-item" id="mobileDashboardNav">
+      <i class="fas fa-seedling"></i>
+      <div>खेत</div>
+    </a>
+    <a href="#" class="nav-item" id="mobileWeatherNav">
+      <i class="fas fa-cloud-sun"></i>
+      <div>मौसम</div>
+    </a>
+    <a href="#" class="nav-item" id="mobileChatNav">
+      <i class="fas fa-comments"></i>
+      <div>सलाह</div>
+    </a>
+    <a href="#" class="nav-item" id="mobileProfileNav">
+      <i class="fas fa-user"></i>
+      <div>प्रोफाइल</div>
+    </a>
   </div>
 
   <!-- Main Content -->
@@ -668,10 +723,10 @@
       <button id="sidebarToggle">
         <i class="fas fa-bars"></i>
       </button>
-      <div id="pageTitle" class="h5 mb-0">Home</div>
+      <div id="pageTitle" class="h5 mb-0">होम</div>
       <div>
-        <span id="userWelcome" class="me-2 hidden">Welcome, <span id="usernameDisplay"></span></span>
-        <span class="badge bg-success" id="subscriptionBadge">Premium</span>
+        <span id="userWelcome" class="me-2 hidden">नमस्ते, <span id="usernameDisplay"></span></span>
+        <span class="badge bg-success" id="subscriptionBadge">प्रीमियम</span>
       </div>
     </div>
     
@@ -679,75 +734,75 @@
     <main class="p-3">
     <!-- Home Section -->
     <section id="homeSection">
-      <!-- Hero Section -->
+      <!-- Hero Section (Hindi) -->
       <div class="hero-section text-center">
         <div class="container">
-          <h1 class="display-4" data-i18n="revolutionize_farming">Revolutionize Your Farming</h1>
-          <p class="lead" data-i18n="ai_companion">AI-powered companion for modern farmers</p>
-          <button class="btn btn-outline-light btn-lg mt-3" id="getStartedBtn" data-i18n="get_started">Get Started</button>
+          <h1 class="display-4">आधुनिक खेती की क्रांति</h1>
+          <p class="lead">किसानों के लिए AI-आधारित सहायक</p>
+          <button class="btn btn-outline-light btn-lg mt-3" id="getStartedBtn">शुरू करें</button>
         </div>
       </div>
 
-      <!-- AI Farm Guidance Section -->
+      <!-- AI Farm Guidance Section (Hindi) -->
       <div class="container mt-5">
         <div class="row">
           <div class="col-md-12">
             <div class="card border-success">
               <div class="card-header bg-success text-white">
-                <h3 class="mb-0"><i class="fas fa-robot me-2"></i> <span data-i18n="ai_farm_guidance">AI Farm Guidance System</span></h3>
+                <h3 class="mb-0"><i class="fas fa-robot me-2"></i> AI कृषि मार्गदर्शन प्रणाली</h3>
               </div>
               <div class="card-body">
                 <div class="row">
                   <div class="col-md-6">
-                    <h4 data-i18n="personalized_recommendations">Get personalized farming recommendations</h4>
-                    <p data-i18n="guidance_description">Our AI-powered farm guidance system provides comprehensive recommendations tailored to your specific crops, soil type, and location.</p>
+                    <h4>व्यक्तिगत खेती सिफारिशें प्राप्त करें</h4>
+                    <p>हमारी AI-संचालित कृषि मार्गदर्शन प्रणाली आपकी फसल, मिट्टी और स्थान के अनुसार विशेष सिफारिशें प्रदान करती है।</p>
                     
                     <form id="quickGuidanceForm" class="mt-4">
                       <div class="mb-3">
-                        <label for="quickCropType" class="form-label" data-i18n="crop_type">Crop Type</label>
+                        <label for="quickCropType" class="form-label">फसल प्रकार</label>
                         <select class="form-select" id="quickCropType" required>
-                          <option value="" data-i18n="select_crop">Select a crop</option>
-                          <option value="Rice">Rice</option>
-                          <option value="Wheat">Wheat</option>
-                          <option value="Cotton">Cotton</option>
-                          <option value="Sugarcane">Sugarcane</option>
-                          <option value="Maize">Maize</option>
-                          <option value="Potato">Potato</option>
-                          <option value="Tomato">Tomato</option>
-                          <option value="Chickpea">Chickpea</option>
-                          <option value="Soybean">Soybean</option>
-                          <option value="Mustard">Mustard</option>
-                          <option value="Groundnut">Groundnut</option>
-                          <option value="Turmeric">Turmeric</option>
-                          <option value="Onion">Onion</option>
-                          <option value="Garlic">Garlic</option>
-                          <option value="Chilli">Chilli</option>
-                          <option value="Okra">Okra (Bhindi)</option>
-                          <option value="Millet">Millet (Bajra)</option>
-                          <option value="Barley">Barley</option>
-                          <option value="Sunflower">Sunflower</option>
+                          <option value="">फसल चुनें</option>
+                          <option value="Rice">चावल</option>
+                          <option value="Wheat">गेहूं</option>
+                          <option value="Cotton">कपास</option>
+                          <option value="Sugarcane">गन्ना</option>
+                          <option value="Maize">मक्का</option>
+                          <option value="Potato">आलू</option>
+                          <option value="Tomato">टमाटर</option>
+                          <option value="Chickpea">चना</option>
+                          <option value="Soybean">सोयाबीन</option>
+                          <option value="Mustard">सरसों</option>
+                          <option value="Groundnut">मूंगफली</option>
+                          <option value="Turmeric">हल्दी</option>
+                          <option value="Onion">प्याज</option>
+                          <option value="Garlic">लहसुन</option>
+                          <option value="Chilli">मिर्च</option>
+                          <option value="Okra">भिंडी</option>
+                          <option value="Millet">बाजरा</option>
+                          <option value="Barley">जौ</option>
+                          <option value="Sunflower">सूरजमुखी</option>
                         </select>
                       </div>
                       <div class="mb-3">
-                        <label for="quickSoilType" class="form-label" data-i18n="soil_type">Soil Type</label>
+                        <label for="quickSoilType" class="form-label">मिट्टी का प्रकार</label>
                         <select class="form-select" id="quickSoilType" required>
-                          <option value="" data-i18n="select_soil">Select soil type</option>
-                          <option value="Sandy">Sandy</option>
-                          <option value="Clay">Clay</option>
-                          <option value="Loamy">Loamy</option>
-                          <option value="Silt">Silt</option>
-                          <option value="Black">Black</option>
-                          <option value="Red">Red</option>
-                          <option value="Alluvial">Alluvial</option>
-                          <option value="Laterite">Laterite</option>
-                          <option value="Peaty">Peaty</option>
-                          <option value="Calcareous">Calcareous</option>
-                          <option value="Saline">Saline</option>
-                          <option value="Acidic">Acidic</option>
+                          <option value="">मिट्टी का प्रकार चुनें</option>
+                          <option value="Sandy">बलुई</option>
+                          <option value="Clay">चिकनी</option>
+                          <option value="Loamy">दोमट</option>
+                          <option value="Silt">गाद</option>
+                          <option value="Black">काली</option>
+                          <option value="Red">लाल</option>
+                          <option value="Alluvial">जलोढ़</option>
+                          <option value="Laterite">लेटराइट</option>
+                          <option value="Peaty">पीटी</option>
+                          <option value="Calcareous">चूना युक्त</option>
+                          <option value="Saline">लवणीय</option>
+                          <option value="Acidic">अम्लीय</option>
                         </select>
                       </div>
                       <button type="submit" class="btn btn-success" id="getGuidanceBtn">
-                        <i class="fas fa-lightbulb me-2"></i><span data-i18n="get_farm_guidance">Get Farm Guidance</span>
+                        <i class="fas fa-lightbulb me-2"></i>कृषि मार्गदर्शन प्राप्त करें
                       </button>
                     </form>
                   </div>
@@ -755,8 +810,8 @@
                     <div id="guidanceResults" class="p-3 border rounded">
                       <div class="text-center py-5">
                         <i class="fas fa-seedling fa-3x text-success mb-3"></i>
-                        <h5 data-i18n="ai_farm_guidance">AI Farm Guidance</h5>
-                        <p class="text-muted" data-i18n="guidance_description">Select your crop and soil type to get personalized farming recommendations.</p>
+                        <h5>AI कृषि मार्गदर्शन</h5>
+                        <p class="text-muted">व्यक्तिगत खेती सिफारिशें प्राप्त करने के लिए अपनी फसल और मिट्टी का प्रकार चुनें।</p>
                       </div>
                     </div>
                   </div>
@@ -1843,7 +1898,7 @@
   <!-- Load Google Translate API in the background -->
   <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
   
-  <!-- Sidebar Toggle Script -->
+  <!-- Sidebar and Navigation Script -->
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       // Sidebar toggle functionality
@@ -1872,15 +1927,110 @@
           // Update page title
           const pageTitle = document.getElementById('pageTitle');
           if (pageTitle) {
-            pageTitle.textContent = this.textContent.trim();
+            pageTitle.textContent = this.innerText.trim();
+          }
+          
+          // Show the corresponding section
+          navigateToSection(this.id);
+        });
+      });
+      
+      // Mobile navigation handlers
+      const mobileNavLinks = document.querySelectorAll('.mobile-nav .nav-item');
+      
+      mobileNavLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          
+          // Remove active class from all mobile links
+          mobileNavLinks.forEach(item => item.classList.remove('active'));
+          
+          // Add active class to clicked link
+          this.classList.add('active');
+          
+          // Show the corresponding section based on id
+          const sectionMap = {
+            'mobileHomeNav': 'homeNav',
+            'mobileDashboardNav': 'dashboardNav',
+            'mobileWeatherNav': 'weatherNav',
+            'mobileChatNav': 'chatNav',
+            'mobileProfileNav': 'loginNav'
+          };
+          
+          const desktopNavId = sectionMap[this.id];
+          if (desktopNavId) {
+            navigateToSection(desktopNavId);
+            
+            // Update page title
+            const pageTitle = document.getElementById('pageTitle');
+            if (pageTitle) {
+              const textElement = this.querySelector('div');
+              if (textElement) {
+                pageTitle.textContent = textElement.textContent.trim();
+              }
+            }
           }
         });
       });
       
-      // Set home as default active
+      // Function to navigate to the corresponding section
+      function navigateToSection(navId) {
+        // Hide all sections first
+        const allSections = ['homeSection', 'dashboardSection', 'diseaseDetectionSection', 
+                            'marketPricesSection', 'weatherSection', 'chatSection',
+                            'loginSection', 'registerSection'];
+        
+        allSections.forEach(section => {
+          const el = document.getElementById(section);
+          if (el) el.classList.add('hidden');
+        });
+        
+        // Show the selected section
+        let sectionToShow = '';
+        
+        switch(navId) {
+          case 'homeNav':
+            sectionToShow = 'homeSection';
+            break;
+          case 'dashboardNav':
+            sectionToShow = 'dashboardSection';
+            break;
+          case 'diseaseDetectNav':
+            sectionToShow = 'diseaseDetectionSection';
+            break;
+          case 'marketPricesNav':
+            sectionToShow = 'marketPricesSection';
+            break;
+          case 'weatherNav':
+            sectionToShow = 'weatherSection';
+            break;
+          case 'chatNav':
+            sectionToShow = 'chatSection';
+            break;
+          case 'loginNav':
+            sectionToShow = 'loginSection';
+            break;
+          case 'registerNav':
+            sectionToShow = 'registerSection';
+            break;
+        }
+        
+        if (sectionToShow) {
+          const section = document.getElementById(sectionToShow);
+          if (section) section.classList.remove('hidden');
+        }
+      }
+      
+      // Set home as default active on sidebar
       const homeLink = document.getElementById('homeNav');
       if (homeLink) {
         homeLink.classList.add('active');
+      }
+      
+      // Set home as default active on mobile
+      const mobileHomeLink = document.getElementById('mobileHomeNav');
+      if (mobileHomeLink) {
+        mobileHomeLink.classList.add('active');
       }
     });
   </script>
