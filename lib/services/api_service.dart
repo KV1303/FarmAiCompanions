@@ -1,412 +1,301 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
 import 'package:http/http.dart' as http;
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-
-import '../constants/app_constants.dart';
-import '../models/field_model.dart';
-import '../models/weather_model.dart';
-import '../models/market_price_model.dart';
-import '../models/disease_model.dart';
-import '../utils/helpers.dart';
+import '../models/user.dart';
+import '../models/field.dart';
+import '../models/disease_report.dart';
+import '../models/market_price.dart';
+import '../models/weather_forecast.dart';
 
 class ApiService {
-  final Dio _dio = Dio();
-  final Random _random = Random();
-
-  ApiService() {
-    _dio.options.connectTimeout = const Duration(seconds: 10);
-    _dio.options.receiveTimeout = const Duration(seconds: 10);
-    _dio.options.headers = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
-
-    _dio.interceptors.add(InterceptorsWrapper(
-      onError: (DioException e, ErrorInterceptorHandler handler) async {
-        if (e.type == DioExceptionType.connectionTimeout ||
-            e.type == DioExceptionType.receiveTimeout ||
-            e.type == DioExceptionType.sendTimeout) {
-          return handler.resolve(
-            Response(
-              requestOptions: e.requestOptions,
-              statusCode: 408,
-              data: {'message': 'Connection timeout. Please check your internet connection.'},
-            ),
-          );
-        }
-        return handler.next(e);
-      },
-    ));
-  }
-
-  // Field Management API Calls
-  Future<List<Field>> fetchFields(String userId) async {
-    try {
-      // In a real app, this would be an actual API call
-      // final response = await _dio.get('${AppConstants.baseUrl}/fields?userId=$userId');
+  // Base URL for the API
+  // The final deployed API URL will be used here
+  static String baseUrl = kReleaseMode
+      ? 'https://farmassist-api.example.com' // Replace with actual production URL
+      : 'http://localhost:5003'; // Local development URL
       
-      // Since we don't have a real backend, we'll simulate offline-first approach
-      // For a real implementation, update this to use actual API endpoints
-      await Future.delayed(const Duration(milliseconds: 800));
-      throw Exception("Network error - using local data instead");
-    } catch (e) {
-      debugPrint('Error fetching fields: $e');
-      return [];
-    }
-  }
+  // Headers for API requests
+  static Map<String, String> headers = {
+    'Content-Type': 'application/json',
+  };
 
-  Future<Field?> fetchFieldDetails(String fieldId) async {
+  // Authentication
+  Future<User?> login(String username, String password) async {
     try {
-      // In a real app, this would be an actual API call
-      // final response = await _dio.get('${AppConstants.baseUrl}/fields/$fieldId');
-      
-      await Future.delayed(const Duration(milliseconds: 800));
-      throw Exception("Network error - using local data instead");
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/users/login'),
+        headers: headers,
+        body: jsonEncode({
+          'username': username,
+          'password': password,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return User.fromJson(jsonDecode(response.body));
+      }
+      return null;
     } catch (e) {
-      debugPrint('Error fetching field details: $e');
+      print('Login error: $e');
       return null;
     }
   }
 
-  Future<bool> addField(Field field) async {
+  Future<User?> register(String username, String email, String password) async {
     try {
-      // In a real app, this would be an actual API call
-      // final response = await _dio.post(
-      //   '${AppConstants.baseUrl}/fields',
-      //   data: jsonEncode(field.toJson()),
-      // );
-      
-      await Future.delayed(const Duration(milliseconds: 800));
-      return true;
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/users/register'),
+        headers: headers,
+        body: jsonEncode({
+          'username': username,
+          'email': email,
+          'password': password,
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        return User.fromJson(jsonDecode(response.body));
+      }
+      return null;
     } catch (e) {
-      debugPrint('Error adding field: $e');
-      return false;
+      print('Registration error: $e');
+      return null;
     }
   }
 
-  Future<bool> updateField(Field field) async {
+  // Fields
+  Future<List<Field>> getFields(int userId) async {
     try {
-      // In a real app, this would be an actual API call
-      // final response = await _dio.put(
-      //   '${AppConstants.baseUrl}/fields/${field.id}',
-      //   data: jsonEncode(field.toJson()),
-      // );
-      
-      await Future.delayed(const Duration(milliseconds: 800));
-      return true;
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/fields?user_id=$userId'),
+        headers: headers,
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        if (data.containsKey('fields')) {
+          final List<dynamic> fields = data['fields'];
+          return fields.map((field) => Field.fromJson(field)).toList();
+        }
+      }
+      return [];
     } catch (e) {
-      debugPrint('Error updating field: $e');
-      return false;
+      print('Get fields error: $e');
+      return [];
     }
   }
 
-  Future<bool> deleteField(String fieldId) async {
+  // Disease Detection
+  Future<Map<String, dynamic>?> detectDisease(File imageFile, int userId, int fieldId) async {
     try {
-      // In a real app, this would be an actual API call
-      // final response = await _dio.delete('${AppConstants.baseUrl}/fields/$fieldId');
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/api/detect_disease'),
+      );
       
-      await Future.delayed(const Duration(milliseconds: 800));
-      return true;
-    } catch (e) {
-      debugPrint('Error deleting field: $e');
-      return false;
-    }
-  }
+      request.fields['user_id'] = userId.toString();
+      request.fields['field_id'] = fieldId.toString();
+      
+      request.files.add(await http.MultipartFile.fromPath(
+        'image',
+        imageFile.path,
+      ));
 
-  // Weather API Calls
-  Future<List<Weather>?> fetchWeatherData(double latitude, double longitude, String location) async {
-    try {
-      const apiKey = String.fromEnvironment('WEATHER_API_KEY', defaultValue: '');
-      
-      // In a real app with valid API key, this would call the actual weather API
-      final url = '${AppConstants.weatherApiUrl}?location=$latitude,$longitude&key=$apiKey&unitGroup=metric&contentType=json';
-      
-      final response = await _dio.get(url);
+      final response = await request.send();
+      final responseData = await response.stream.bytesToString();
       
       if (response.statusCode == 200) {
-        // Process the response data and return Weather objects
-        // This would depend on the actual response format from the Visual Crossing API
-        return parseWeatherResponse(response.data, location);
-      } else {
-        debugPrint('Failed to load weather data. Status: ${response.statusCode}');
-        return null;
+        return jsonDecode(responseData);
       }
+      return null;
     } catch (e) {
-      debugPrint('Error fetching weather data: $e');
-      // Create mock weather data if API fails
+      print('Disease detection error: $e');
       return null;
     }
   }
 
-  List<Weather> parseWeatherResponse(Map<String, dynamic> data, String location) {
-    final List<Weather> weatherList = [];
-    final now = DateTime.now();
-    
+  // Weather Data
+  Future<WeatherForecast?> getWeatherForecast(String location) async {
     try {
-      // This is a sample parser for the Visual Crossing API format
-      // You would need to adjust this based on the actual API response structure
-      final currentConditions = data['currentConditions'];
-      final forecast = data['days'];
-      
-      // Add current weather
-      weatherList.add(Weather(
-        id: 'current',
-        latitude: data['latitude'] ?? 0.0,
-        longitude: data['longitude'] ?? 0.0,
-        location: location,
-        date: now,
-        temperature: currentConditions['temp'] ?? 0.0,
-        minTemperature: currentConditions['tempmin'] ?? 0.0,
-        maxTemperature: currentConditions['tempmax'] ?? 0.0,
-        humidity: currentConditions['humidity'] ?? 0.0,
-        precipitation: currentConditions['precip'] ?? 0.0,
-        windSpeed: currentConditions['windspeed'] ?? 0.0,
-        windDirection: currentConditions['winddir'] ?? '',
-        description: currentConditions['conditions'] ?? '',
-        iconCode: mapWeatherConditionToIcon(currentConditions['conditions'] ?? ''),
-        lastUpdated: now,
-      ));
-      
-      // Add forecast data for next days
-      for (int i = 0; i < min(5, forecast.length); i++) {
-        final day = forecast[i];
-        final forecastDate = now.add(Duration(days: i + 1));
-        
-        weatherList.add(Weather(
-          id: 'forecast_$i',
-          latitude: data['latitude'] ?? 0.0,
-          longitude: data['longitude'] ?? 0.0,
-          location: location,
-          date: forecastDate,
-          temperature: day['temp'] ?? 0.0,
-          minTemperature: day['tempmin'] ?? 0.0,
-          maxTemperature: day['tempmax'] ?? 0.0,
-          humidity: day['humidity'] ?? 0.0,
-          precipitation: day['precip'] ?? 0.0,
-          windSpeed: day['windspeed'] ?? 0.0,
-          windDirection: day['winddir'] ?? '',
-          description: day['conditions'] ?? '',
-          iconCode: mapWeatherConditionToIcon(day['conditions'] ?? ''),
-          lastUpdated: now,
-        ));
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/weather?location=$location'),
+        headers: headers,
+      );
+
+      if (response.statusCode == 200) {
+        return WeatherForecast.fromJson(jsonDecode(response.body));
+      }
+      return null;
+    } catch (e) {
+      print('Weather forecast error: $e');
+      return null;
+    }
+  }
+
+  // Market Prices
+  Future<List<MarketPrice>> getMarketPrices({String? cropType}) async {
+    try {
+      String url = '$baseUrl/api/market_prices';
+      if (cropType != null && cropType.isNotEmpty) {
+        url += '?crop_type=$cropType';
       }
       
-      return weatherList;
-    } catch (e) {
-      debugPrint('Error parsing weather data: $e');
-      return [];
-    }
-  }
+      final response = await http.get(
+        Uri.parse(url),
+        headers: headers,
+      );
 
-  String mapWeatherConditionToIcon(String condition) {
-    // Map weather condition text to icon code
-    final conditionLower = condition.toLowerCase();
-    
-    if (conditionLower.contains('clear') || conditionLower.contains('sunny')) {
-      return '01d';
-    } else if (conditionLower.contains('partly cloudy')) {
-      return '02d';
-    } else if (conditionLower.contains('cloudy') || conditionLower.contains('overcast')) {
-      return '03d';
-    } else if (conditionLower.contains('rain') || conditionLower.contains('shower')) {
-      return '10d';
-    } else if (conditionLower.contains('thunderstorm') || conditionLower.contains('storm')) {
-      return '11d';
-    } else if (conditionLower.contains('snow')) {
-      return '13d';
-    } else if (conditionLower.contains('mist') || conditionLower.contains('fog')) {
-      return '50d';
-    } else {
-      return '02d'; // Default - few clouds
-    }
-  }
-
-  // Market Price API Calls
-  Future<List<MarketPrice>> fetchMarketPrices(String cropType, String state) async {
-    try {
-      // This would be a call to eNAM API in a real app
-      // For now, we'll simulate API error to use local data
-      await Future.delayed(const Duration(milliseconds: 800));
-      throw Exception("Network error - using local data instead");
-    } catch (e) {
-      debugPrint('Error fetching market prices: $e');
-      return [];
-    }
-  }
-
-  Future<List<MarketPrice>> fetchHistoricalPrices(String cropType, String marketName) async {
-    try {
-      // This would be a call to eNAM API in a real app
-      // For now, we'll simulate API error to use local data
-      await Future.delayed(const Duration(milliseconds: 800));
-      throw Exception("Network error - using local data instead");
-    } catch (e) {
-      debugPrint('Error fetching historical prices: $e');
-      return [];
-    }
-  }
-
-  // Disease API Calls
-  Future<List<Disease>> fetchDiseases() async {
-    try {
-      // In a real app, this would be an actual API call
-      // For now, return common diseases for the demo
-      await Future.delayed(const Duration(milliseconds: 800));
-      
-      return createCommonDiseases();
-    } catch (e) {
-      debugPrint('Error fetching diseases: $e');
-      return [];
-    }
-  }
-
-  Future<bool> saveDiseaseDetection(Disease disease) async {
-    try {
-      // In a real app, this would be an actual API call
-      // final response = await _dio.post(
-      //   '${AppConstants.baseUrl}/diseases',
-      //   data: jsonEncode(disease.toJson()),
-      // );
-      
-      await Future.delayed(const Duration(milliseconds: 800));
-      return true;
-    } catch (e) {
-      debugPrint('Error saving disease detection: $e');
-      return false;
-    }
-  }
-
-  List<Disease> createCommonDiseases() {
-    final diseases = <Disease>[];
-    final diseaseData = [
-      {
-        'id': 'disease_1',
-        'name': 'Bacterial Leaf Blight',
-        'scientific_name': 'Xanthomonas oryzae pv. oryzae',
-        'crop_type': 'Rice',
-        'symptoms': [
-          'Water-soaked yellowish stripes on leaf edges',
-          'Lesions turn white or gray and then yellow',
-          'Affected leaves dry up and die',
-          'Wilting of seedlings'
-        ],
-        'treatments': [
-          'Use resistant rice varieties',
-          'Apply copper-based bactericides',
-          'Drain the field during severe infections',
-          'Balanced use of nitrogen fertilizers'
-        ],
-        'preventive_measures': [
-          'Use disease-free seeds',
-          'Treat seeds with hot water before planting',
-          'Maintain proper spacing between plants',
-          'Avoid excessive nitrogen application'
-        ],
-        'image_url': 'https://images.unsplash.com/photo-1607326207820-989c6d53a0a2',
-        'severity': 'High',
-        'affected_crops': ['Rice']
-      },
-      {
-        'id': 'disease_2',
-        'name': 'Powdery Mildew',
-        'scientific_name': 'Erysiphe graminis',
-        'crop_type': 'Wheat',
-        'symptoms': [
-          'White powdery patches on leaves and stems',
-          'Yellowing of affected tissue',
-          'Stunted growth',
-          'Reduced yield'
-        ],
-        'treatments': [
-          'Apply sulfur or potassium bicarbonate sprays',
-          'Use fungicides containing triazoles',
-          'Remove and destroy infected plant parts',
-          'Apply neem oil or milk spray for organic management'
-        ],
-        'preventive_measures': [
-          'Use resistant varieties',
-          'Ensure proper spacing for good air circulation',
-          'Avoid overhead irrigation',
-          'Maintain balanced soil fertility'
-        ],
-        'image_url': 'https://images.unsplash.com/photo-1528839390497-a161db4bac71',
-        'severity': 'Medium',
-        'affected_crops': ['Wheat', 'Barley']
-      },
-      {
-        'id': 'disease_3',
-        'name': 'Late Blight',
-        'scientific_name': 'Phytophthora infestans',
-        'crop_type': 'Potato',
-        'symptoms': [
-          'Dark brown spots on leaves with pale green borders',
-          'White fungal growth on leaf undersides',
-          'Dark areas on potato tubers',
-          'Rapid wilting and death in humid conditions'
-        ],
-        'treatments': [
-          'Apply copper-based fungicides',
-          'Use systemic fungicides in severe cases',
-          'Remove and destroy infected plants',
-          'Harvest potatoes when vines die back'
-        ],
-        'preventive_measures': [
-          'Use certified disease-free seed potatoes',
-          'Plant resistant varieties',
-          'Ensure good drainage',
-          'Practice crop rotation'
-        ],
-        'image_url': 'https://images.unsplash.com/photo-1576669801820-a9ab287ac2d1',
-        'severity': 'Severe',
-        'affected_crops': ['Potato', 'Tomato']
-      },
-      {
-        'id': 'disease_4',
-        'name': 'Anthracnose',
-        'scientific_name': 'Colletotrichum species',
-        'crop_type': 'Chilli',
-        'symptoms': [
-          'Dark, sunken lesions on fruits',
-          'Circular spots on leaves and stems',
-          'Pink or orange spore masses in lesions',
-          'Premature fruit drop'
-        ],
-        'treatments': [
-          'Apply copper oxychloride or mancozeb',
-          'Use Trichoderma as biological control',
-          'Remove and destroy infected plant parts',
-          'Apply potassium fertilizers to strengthen plant'
-        ],
-        'preventive_measures': [
-          'Use disease-free seeds',
-          'Treat seeds with fungicides before sowing',
-          'Maintain proper plant spacing',
-          'Avoid overhead irrigation'
-        ],
-        'image_url': 'https://images.unsplash.com/photo-1578496479914-7ef3b0193be3',
-        'severity': 'Medium',
-        'affected_crops': ['Chilli', 'Mango', 'Bean']
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        if (data.containsKey('prices')) {
+          final List<dynamic> prices = data['prices'];
+          return prices.map((price) => MarketPrice.fromJson(price)).toList();
+        }
       }
-    ];
-    
-    for (final data in diseaseData) {
-      diseases.add(Disease(
-        id: data['id'] as String,
-        name: data['name'] as String,
-        scientificName: data['scientific_name'] as String,
-        cropType: data['crop_type'] as String,
-        symptoms: List<String>.from(data['symptoms'] as List),
-        treatments: List<String>.from(data['treatments'] as List),
-        preventiveMeasures: List<String>.from(data['preventive_measures'] as List),
-        imageUrl: data['image_url'] as String,
-        severity: data['severity'] as String,
-        affectedCrops: List<String>.from(data['affected_crops'] as List),
-      ));
+      return [];
+    } catch (e) {
+      print('Market prices error: $e');
+      return [];
     }
-    
-    return diseases;
+  }
+
+  // Farm Guidance
+  Future<Map<String, dynamic>?> getFarmGuidance(int fieldId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/farm_guidance?field_id=$fieldId'),
+        headers: headers,
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+      return null;
+    } catch (e) {
+      print('Farm guidance error: $e');
+      return null;
+    }
+  }
+  
+  // Quick Farm Guidance
+  Future<Map<String, dynamic>?> getQuickFarmGuidance(String cropType, String soilType) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/quick_farm_guidance?crop_type=$cropType&soil_type=$soilType'),
+        headers: headers,
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+      return null;
+    } catch (e) {
+      print('Quick farm guidance error: $e');
+      return null;
+    }
+  }
+  
+  // Fertilizer Recommendations
+  Future<Map<String, dynamic>?> getFertilizerRecommendations({
+    required String cropType,
+    required String soilType,
+    required String growthStage,
+    String? nitrogenLevel,
+    String? phosphorusLevel,
+    String? potassiumLevel,
+    double? phLevel,
+  }) async {
+    try {
+      final Map<String, dynamic> params = {
+        'crop_type': cropType,
+        'soil_type': soilType,
+        'growth_stage': growthStage,
+      };
+      
+      if (nitrogenLevel != null) params['nitrogen_level'] = nitrogenLevel;
+      if (phosphorusLevel != null) params['phosphorus_level'] = phosphorusLevel;
+      if (potassiumLevel != null) params['potassium_level'] = potassiumLevel;
+      if (phLevel != null) params['ph_level'] = phLevel.toString();
+      
+      final uri = Uri.parse('$baseUrl/api/fertilizer_recommendations')
+          .replace(queryParameters: params);
+      
+      final response = await http.get(
+        uri,
+        headers: headers,
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+      return null;
+    } catch (e) {
+      print('Fertilizer recommendations error: $e');
+      return null;
+    }
+  }
+  
+  // Chat
+  Future<Map<String, dynamic>?> sendChatMessage(String message, String userId, String sessionId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/chat'),
+        headers: headers,
+        body: jsonEncode({
+          'message': message,
+          'user_id': userId,
+          'session_id': sessionId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+      return null;
+    } catch (e) {
+      print('Chat error: $e');
+      return null;
+    }
+  }
+  
+  Future<List<Map<String, dynamic>>> getChatHistory(String userId, String sessionId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/chat_history?user_id=$userId&session_id=$sessionId'),
+        headers: headers,
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        if (data.containsKey('history')) {
+          return List<Map<String, dynamic>>.from(data['history']);
+        }
+      }
+      return [];
+    } catch (e) {
+      print('Chat history error: $e');
+      return [];
+    }
+  }
+  
+  Future<List<Map<String, dynamic>>> getChatSessions(String userId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/chat_sessions?user_id=$userId'),
+        headers: headers,
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        if (data.containsKey('sessions')) {
+          return List<Map<String, dynamic>>.from(data['sessions']);
+        }
+      }
+      return [];
+    } catch (e) {
+      print('Chat sessions error: $e');
+      return [];
+    }
   }
 }
