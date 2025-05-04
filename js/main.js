@@ -681,6 +681,61 @@ function login(userId, username) {
   localStorage.setItem('username', username);
   updateAuthUI();
   showSection('homeSection');
+  
+  // Update profile page with user info
+  updateProfileInfo(username);
+}
+
+// Function to update profile information
+function updateProfileInfo(username) {
+  const profileUsername = document.getElementById('profileUsername');
+  if (profileUsername) {
+    profileUsername.textContent = username;
+  }
+  
+  // Update email if available - we'll use a fallback for now
+  const profileEmail = document.getElementById('profileEmail');
+  if (profileEmail) {
+    // In a real app, this would fetch the email from the user data
+    // For now, just create a placeholder
+    profileEmail.textContent = `${username}@example.com`;
+  }
+  
+  // Update stats if available - we'll use hardcoded values for this demo
+  const fieldCountElem = document.getElementById('fieldCount');
+  const diseaseCountElem = document.getElementById('diseaseCount');
+  const guidanceCountElem = document.getElementById('guidanceCount');
+  
+  if (fieldCountElem) fieldCountElem.textContent = '2';
+  if (diseaseCountElem) diseaseCountElem.textContent = '3';
+  if (guidanceCountElem) guidanceCountElem.textContent = '5';
+  
+  // If we have subscription data, update the subscription section
+  const subscriptionData = getSubscriptionData();
+  if (subscriptionData) {
+    if (subscriptionData.status === 'active') {
+      updateProfileSubscriptionInfo(subscriptionData);
+    } else if (subscriptionData.status === 'trial') {
+      // Calculate days remaining
+      const trialEnd = new Date(subscriptionData.trialEndDate);
+      const now = new Date();
+      const daysRemaining = Math.max(0, Math.ceil((trialEnd - now) / (1000 * 60 * 60 * 24)));
+      
+      // Update trial info
+      const profileTrialDays = document.getElementById('profileTrialDaysRemaining');
+      if (profileTrialDays) {
+        profileTrialDays.textContent = daysRemaining;
+      }
+      
+      // Update trial end date
+      const profileTrialEndDate = document.getElementById('profileTrialEndDate');
+      if (profileTrialEndDate) {
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        const formattedDate = trialEnd.toLocaleDateString('hi-IN', options);
+        profileTrialEndDate.textContent = formattedDate;
+      }
+    }
+  }
 }
 
 function logout() {
@@ -798,27 +853,43 @@ function setupFreeTrial() {
 }
 
 function showTrialBanner(daysRemaining) {
-  // Check if banner container exists, otherwise create it
-  let bannerContainer = document.getElementById('subscription-banner');
-  if (!bannerContainer) {
-    bannerContainer = document.createElement('div');
-    bannerContainer.id = 'subscription-banner';
-    bannerContainer.className = 'alert alert-info alert-dismissible fade show subscription-banner';
-    document.body.insertBefore(bannerContainer, document.body.firstChild);
+  // Instead of showing a top banner, update the profile page with trial info
+  
+  // Update profile trial days remaining
+  const profileTrialDays = document.getElementById('profileTrialDaysRemaining');
+  if (profileTrialDays) {
+    profileTrialDays.textContent = daysRemaining;
   }
   
-  // Set banner content for trial
-  bannerContainer.innerHTML = `
-    <strong>Free Trial:</strong> ${daysRemaining} day${daysRemaining !== 1 ? 's' : ''} remaining in your trial. 
-    <a href="#" class="subscribe-link">Subscribe now</a> for uninterrupted access at just ₹99/year.
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-  `;
+  // Calculate and update trial end date
+  const now = new Date();
+  const trialEndDate = new Date(now);
+  trialEndDate.setDate(now.getDate() + daysRemaining);
   
-  // Add event listener to subscribe link
-  document.querySelector('.subscribe-link')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    showSubscriptionModal();
-  });
+  // Format date for display (e.g., "10 मई, 2025")
+  const options = { year: 'numeric', month: 'long', day: 'numeric' };
+  const formattedDate = trialEndDate.toLocaleDateString('hi-IN', options);
+  
+  const profileTrialEndDate = document.getElementById('profileTrialEndDate');
+  if (profileTrialEndDate) {
+    profileTrialEndDate.textContent = formattedDate;
+  }
+  
+  // Make sure trial info is visible and subscription info is hidden
+  const trialInfo = document.getElementById('profileTrialInfo');
+  const subInfo = document.getElementById('profileActiveSubscription');
+  
+  if (trialInfo) trialInfo.classList.remove('hidden');
+  if (subInfo) subInfo.classList.add('hidden');
+  
+  // Add event listener to upgrade button
+  const upgradeBtn = document.getElementById('upgradeSubscriptionBtn');
+  if (upgradeBtn) {
+    upgradeBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      showSubscriptionModal();
+    });
+  }
 }
 
 function showTrialWelcomeBanner() {
@@ -1024,8 +1095,54 @@ function handleSubscriptionSuccess(paymentResponse) {
   const banner = document.getElementById('subscription-banner');
   if (banner) banner.remove();
   
+  // Update profile page
+  updateProfileSubscriptionInfo(subscriptionData);
+  
   // Show success message
   showSubscriptionSuccessBanner();
+}
+
+// New function to update profile page subscription info
+function updateProfileSubscriptionInfo(subscriptionData) {
+  // Hide trial info and show subscription info
+  const trialInfo = document.getElementById('profileTrialInfo');
+  const subInfo = document.getElementById('profileActiveSubscription');
+  
+  if (trialInfo) trialInfo.classList.add('hidden');
+  if (subInfo) subInfo.classList.remove('hidden');
+  
+  // Update subscription end date
+  const endDateElement = document.getElementById('profileSubscriptionEndDate');
+  if (endDateElement && subscriptionData.expiryDate) {
+    const endDate = new Date(subscriptionData.expiryDate);
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    const formattedDate = endDate.toLocaleDateString('hi-IN', options);
+    endDateElement.textContent = formattedDate;
+  }
+  
+  // Add payment to history table
+  updatePaymentHistory(subscriptionData);
+}
+
+// Add function to update payment history table
+function updatePaymentHistory(subscriptionData) {
+  const paymentHistoryTable = document.getElementById('paymentHistoryTable');
+  if (!paymentHistoryTable) return;
+  
+  // Format date for display
+  const paymentDate = new Date(subscriptionData.startDate);
+  const options = { year: 'numeric', month: 'long', day: 'numeric' };
+  const formattedDate = paymentDate.toLocaleDateString('hi-IN', options);
+  
+  // Replace empty message with payment record
+  paymentHistoryTable.innerHTML = `
+    <tr>
+      <td>${formattedDate}</td>
+      <td>वार्षिक सदस्यता</td>
+      <td>₹99.00</td>
+      <td><span class="badge bg-success">सफल</span></td>
+    </tr>
+  `;
 }
 
 function showSubscriptionSuccessBanner() {

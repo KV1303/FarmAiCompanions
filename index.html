@@ -953,6 +953,120 @@
         </form>
       </div>
     </section>
+    
+    <!-- Profile Section (Hindi) -->
+    <section id="profileSection" class="hidden">
+      <div class="container">
+        <h2 class="mb-4">उपयोगकर्ता प्रोफाइल</h2>
+        
+        <div class="row">
+          <div class="col-md-4">
+            <div class="card shadow-sm mb-4">
+              <div class="card-body text-center">
+                <div class="profile-image-container mb-3">
+                  <img src="https://via.placeholder.com/120" alt="प्रोफाइल फोटो" class="rounded-circle profile-image">
+                </div>
+                <h3 id="profileUsername">उपयोगकर्ता</h3>
+                <p class="text-muted" id="profileEmail">user@example.com</p>
+                <button class="btn btn-outline-primary btn-sm mt-2">
+                  <i class="fas fa-edit me-2"></i>प्रोफ़ाइल अपडेट करें
+                </button>
+              </div>
+            </div>
+            
+            <!-- Subscription Information Card -->
+            <div class="card shadow-sm">
+              <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">सदस्यता जानकारी</h5>
+              </div>
+              <div class="card-body">
+                <!-- Free Trial Information -->
+                <div id="profileTrialInfo">
+                  <div class="alert alert-info mb-3">
+                    <strong>मुफ्त ट्रायल:</strong> <span id="profileTrialDaysRemaining">7</span> दिन शेष हैं
+                  </div>
+                  <p>आपका मुफ्त ट्रायल <span id="profileTrialEndDate">10 मई, 2025</span> को समाप्त हो जाएगा।</p>
+                  <button class="btn btn-success w-100" id="upgradeSubscriptionBtn">
+                    <i class="fas fa-crown me-2"></i>अभी अपग्रेड करें
+                  </button>
+                </div>
+                
+                <!-- Active Subscription Information - Hidden by default -->
+                <div id="profileActiveSubscription" class="hidden">
+                  <div class="alert alert-success mb-3">
+                    <strong>सक्रिय सदस्यता</strong>
+                  </div>
+                  <p>आपकी सदस्यता <span id="profileSubscriptionEndDate">4 मई, 2026</span> तक वैध है।</p>
+                  <div class="d-flex justify-content-between mt-3">
+                    <span class="text-muted">वार्षिक योजना</span>
+                    <span class="text-success">₹99/वर्ष</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-8">
+            <!-- Usage Statistics -->
+            <div class="card shadow-sm mb-4">
+              <div class="card-header bg-light">
+                <h5 class="mb-0">उपयोग आँकड़े</h5>
+              </div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-md-4">
+                    <div class="border rounded p-3 text-center">
+                      <i class="fas fa-seedling fa-2x text-success mb-2"></i>
+                      <h3 id="fieldCount">0</h3>
+                      <p class="text-muted mb-0">खेत</p>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="border rounded p-3 text-center">
+                      <i class="fas fa-bug fa-2x text-danger mb-2"></i>
+                      <h3 id="diseaseCount">0</h3>
+                      <p class="text-muted mb-0">रोग जांच</p>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="border rounded p-3 text-center">
+                      <i class="fas fa-robot fa-2x text-primary mb-2"></i>
+                      <h3 id="guidanceCount">0</h3>
+                      <p class="text-muted mb-0">AI मार्गदर्शन</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Payment History -->
+            <div class="card shadow-sm">
+              <div class="card-header bg-light">
+                <h5 class="mb-0">भुगतान इतिहास</h5>
+              </div>
+              <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th>दिनांक</th>
+                      <th>विवरण</th>
+                      <th>राशि</th>
+                      <th>स्थिति</th>
+                    </tr>
+                  </thead>
+                  <tbody id="paymentHistoryTable">
+                    <!-- For a free trial user with no payments yet -->
+                    <tr>
+                      <td colspan="4" class="text-center py-4">कोई भुगतान इतिहास नहीं</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <!-- Dashboard Section (Hindi) -->
     <section id="dashboardSection" class="hidden">
