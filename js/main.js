@@ -13,27 +13,11 @@ async function getAdvancedFertilizerRecommendations() {
   }
   
   try {
-    // First, close the modal to prevent freezing
+    // Close the modal using our pure JavaScript implementation
     const modal = document.getElementById('fertilizerModal');
     if (modal) {
-      console.log('Closing modal:', modal.id);
-      // Try to use the global hideModal function if available
-      if (typeof window.hideModal === 'function') {
-        window.hideModal(modal);
-      } else {
-        // Manual fallback
-        try {
-          const bsModal = bootstrap.Modal.getInstance(modal);
-          if (bsModal) bsModal.hide();
-        } catch (e) {
-          console.warn('Modal close error:', e);
-          modal.style.display = 'none';
-          modal.classList.remove('show');
-          document.body.classList.remove('modal-open');
-          const backdrop = document.querySelector('.modal-backdrop');
-          if (backdrop) backdrop.remove();
-        }
-      }
+      console.log('Closing fertilizer modal before processing');
+      hideModal(modal);
     }
     
     // SHORT DELAY to ensure modal is fully closed before showing spinner
@@ -243,27 +227,11 @@ async function getIrrigationRecommendations() {
   }
   
   try {
-    // First, close the modal to prevent freezing
+    // Close the modal using our pure JavaScript implementation
     const modal = document.getElementById('irrigationModal');
     if (modal) {
-      console.log('Closing modal:', modal.id);
-      // Try to use the global hideModal function if available
-      if (typeof window.hideModal === 'function') {
-        window.hideModal(modal);
-      } else {
-        // Manual fallback
-        try {
-          const bsModal = bootstrap.Modal.getInstance(modal);
-          if (bsModal) bsModal.hide();
-        } catch (e) {
-          console.warn('Modal close error:', e);
-          modal.style.display = 'none';
-          modal.classList.remove('show');
-          document.body.classList.remove('modal-open');
-          const backdrop = document.querySelector('.modal-backdrop');
-          if (backdrop) backdrop.remove();
-        }
-      }
+      console.log('Closing irrigation modal before processing');
+      hideModal(modal);
     }
     
     // SHORT DELAY to ensure modal is fully closed before showing spinner
@@ -2797,55 +2765,46 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Added event listener to irrigation button');
   }
   
-  // Ensure bootstrap modals can be shown and hidden properly through JavaScript
+  // Pure JavaScript modal management - no Bootstrap modal dependency
   function initializeModalTriggers() {
-    console.log('Initializing modal triggers');
+    console.log('Initializing pure JavaScript modal triggers');
     
-    // First, ensure all close buttons work properly
-    document.querySelectorAll('[data-bs-dismiss="modal"]').forEach(closeBtn => {
-      closeBtn.addEventListener('click', function() {
-        const modal = this.closest('.modal');
-        if (modal) {
-          console.log('Closing modal:', modal.id);
-          hideModal(modal);
-        }
-      });
-    });
+    // Clean up any existing modals first
+    if (typeof window.forceCleanupAllModals === 'function') {
+      window.forceCleanupAllModals();
+    }
     
     // Initialize modal open triggers
     document.querySelectorAll('[data-bs-toggle="modal"]').forEach(button => {
-      button.addEventListener('click', function() {
-        try {
-          const targetModalId = this.getAttribute('data-bs-target');
-          console.log('Attempting to show modal:', targetModalId);
-          const targetModal = document.querySelector(targetModalId);
-          if (targetModal) {
-            showModal(targetModal);
-          } else {
-            console.error('Target modal not found:', targetModalId);
-          }
-        } catch (error) {
-          console.error('Error showing modal:', error);
-        }
-      });
+      // Remove existing listeners
+      button.removeEventListener('click', modalOpenHandler);
+      // Add new listener
+      button.addEventListener('click', modalOpenHandler);
     });
+  }
+  
+  // Event handler for modal open buttons
+  function modalOpenHandler(e) {
+    e.preventDefault();
+    e.stopPropagation();
     
-    // Initialize ESC key to close modals
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') {
-        const openModal = document.querySelector('.modal.show');
-        if (openModal) {
-          hideModal(openModal);
+    try {
+      const targetModalId = this.getAttribute('data-bs-target');
+      console.log('Showing modal:', targetModalId);
+      const targetModal = document.querySelector(targetModalId);
+      
+      if (targetModal) {
+        if (typeof window.showModal === 'function') {
+          window.showModal(targetModal);
+        } else {
+          console.error('Global showModal function not available!');
         }
+      } else {
+        console.error('Target modal not found:', targetModalId);
       }
-    });
-    
-    // Initialize backdrop clicks to close modals
-    document.addEventListener('click', function(e) {
-      if (e.target.classList.contains('modal') && e.target.classList.contains('show')) {
-        hideModal(e.target);
-      }
-    });
+    } catch (error) {
+      console.error('Error showing modal:', error);
+    }
   }
   
   // Show modal helper function
@@ -2989,8 +2948,10 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Add field modal
   document.getElementById('addFieldBtn').addEventListener('click', function() {
-    const modal = new bootstrap.Modal(document.getElementById('addFieldModal'));
-    modal.show();
+    const addFieldModal = document.getElementById('addFieldModal');
+    if (addFieldModal) {
+      window.showModal(addFieldModal);
+    }
   });
   
   // Save field
@@ -3044,8 +3005,11 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
       `;
       
-      // Close modal and refresh fields
-      bootstrap.Modal.getInstance(document.getElementById('addFieldModal')).hide();
+      // Close modal using our pure JavaScript implementation and refresh fields
+      const addFieldModal = document.getElementById('addFieldModal');
+      if (addFieldModal) {
+        window.hideModal(addFieldModal);
+      }
       document.getElementById('fieldForm').reset();
       
       // Reload the fields list

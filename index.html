@@ -2178,88 +2178,146 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
   
-  <!-- Global modal management functions -->
+  <!-- Pure JavaScript modal management without Bootstrap's modal implementation -->
   <script>
-    // Global function to properly hide any modal
-    window.hideModal = function(modalEl) {
-      if (!modalEl) return;
-      
-      console.log('Global hideModal function called for:', modalEl.id);
-      
-      try {
-        // Try Bootstrap's built-in method first
-        const bsModal = bootstrap.Modal.getInstance(modalEl);
-        if (bsModal) {
-          bsModal.hide();
-          // Wait a bit and perform additional cleanup
-          setTimeout(() => {
-            cleanupModalEffects();
-          }, 150);
-          return;
-        }
-      } catch (e) {
-        console.warn('Bootstrap modal error:', e);
-      }
-      
-      // Manual fallback with multiple cleanup steps for guaranteed cleanup
-      try {
-        // 1. Direct DOM manipulation
-        modalEl.style.display = 'none';
-        modalEl.classList.remove('show');
-        document.body.classList.remove('modal-open');
-        
-        // 2. Remove backdrop
-        const backdrop = document.querySelector('.modal-backdrop');
-        if (backdrop) backdrop.remove();
-        
-        // 3. Additional cleanup
-        cleanupModalEffects();
-      } catch (e) {
-        console.error('Modal cleanup error:', e);
-      }
-    };
+    // Store previously opened modals for cleanup
+    let activeModalBackdrop = null;
     
-    // Helper function to clean up modal side effects
-    function cleanupModalEffects() {
-      // Remove any inline styles that Bootstrap might have added
-      document.body.style.removeProperty('overflow');
-      document.body.style.removeProperty('padding-right');
-      
-      // Explicitly re-enable scrolling
-      document.body.style.overflow = 'visible';
-      
-      // Remove any stray backdrops
-      const backdrops = document.querySelectorAll('.modal-backdrop');
-      backdrops.forEach(el => el.remove());
-      
-      // Force layout recalculation to apply changes
-      document.body.offsetHeight;
-    }
-
-    // Global function to safely show modals
+    // Pure JavaScript modal show function - no Bootstrap dependency
     window.showModal = function(modalEl) {
       if (!modalEl) return;
+      console.log('Manual showModal called for:', modalEl.id);
       
-      console.log('Global showModal function called for:', modalEl.id);
+      // First clean up any previously open modals
+      forceCleanupAllModals();
       
-      try {
-        const bsModal = new bootstrap.Modal(modalEl);
-        bsModal.show();
-      } catch (e) {
-        console.warn('Error showing modal:', e);
-        // Manual fallback
-        modalEl.style.display = 'block';
+      // Create backdrop
+      const backdrop = document.createElement('div');
+      backdrop.className = 'modal-backdrop fade';
+      document.body.appendChild(backdrop);
+      
+      // Force reflow for animation
+      void backdrop.offsetWidth;
+      backdrop.classList.add('show');
+      activeModalBackdrop = backdrop;
+      
+      // Show modal with animation
+      modalEl.style.display = 'block';
+      setTimeout(() => {
         modalEl.classList.add('show');
         document.body.classList.add('modal-open');
-        
-        // Create backdrop
-        if (!document.querySelector('.modal-backdrop')) {
-          const backdrop = document.createElement('div');
-          backdrop.className = 'modal-backdrop fade show';
-          document.body.appendChild(backdrop);
-        }
-      }
+      }, 10);
+      
+      // Set up event listeners for modal close buttons
+      const closeButtons = modalEl.querySelectorAll('[data-bs-dismiss="modal"], .btn-close, .close');
+      closeButtons.forEach(btn => {
+        // Remove existing listeners to prevent duplicates
+        btn.removeEventListener('click', modalCloseBtnHandler);
+        // Add new listener
+        btn.addEventListener('click', modalCloseBtnHandler);
+      });
+      
+      // Set up backdrop click to close
+      backdrop.addEventListener('click', function() {
+        hideModal(modalEl);
+      });
+      
+      // Handle ESC key to close
+      document.addEventListener('keydown', modalEscKeyHandler);
     };
+    
+    // Event handler for modal close buttons
+    function modalCloseBtnHandler(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const modal = this.closest('.modal');
+      if (modal) hideModal(modal);
+    }
+    
+    // Event handler for ESC key
+    function modalEscKeyHandler(e) {
+      if (e.key === 'Escape') {
+        const openModal = document.querySelector('.modal.show');
+        if (openModal) hideModal(openModal);
+      }
+    }
+    
+    // Pure JavaScript modal hide function - no Bootstrap dependency
+    window.hideModal = function(modalEl) {
+      if (!modalEl) return;
+      console.log('Manual hideModal called for:', modalEl.id);
+      
+      // Immediately prevent interactions to avoid multiple clicks
+      const overlay = document.createElement('div');
+      overlay.style.position = 'fixed';
+      overlay.style.top = '0';
+      overlay.style.left = '0';
+      overlay.style.width = '100%';
+      overlay.style.height = '100%';
+      overlay.style.backgroundColor = 'transparent';
+      overlay.style.zIndex = '9999';
+      document.body.appendChild(overlay);
+      
+      // Remove modal classes
+      modalEl.classList.remove('show');
+      
+      // Fade out backdrop
+      if (activeModalBackdrop) {
+        activeModalBackdrop.classList.remove('show');
+      }
+      
+      // Wait for animation to complete then clean up
+      setTimeout(() => {
+        // Complete cleanup
+        forceCleanupAllModals();
+        document.body.removeChild(overlay);
+      }, 200);  // Match Bootstrap's fade transition time
+    };
+    
+    // Forcefully clean up all modal-related elements and state
+    function forceCleanupAllModals() {
+      // Remove event listeners
+      document.removeEventListener('keydown', modalEscKeyHandler);
+      
+      // Hide all modals
+      document.querySelectorAll('.modal').forEach(modal => {
+        modal.style.display = 'none';
+        modal.classList.remove('show');
+      });
+      
+      // Remove all backdrops
+      document.querySelectorAll('.modal-backdrop').forEach(el => {
+        el.remove();
+      });
+      
+      // Reset body
+      document.body.classList.remove('modal-open');
+      document.body.style.removeProperty('overflow');
+      document.body.style.removeProperty('padding-right');
+      document.body.style.overflow = 'auto';
+      
+      // Reset active backdrop reference
+      activeModalBackdrop = null;
+      
+      // Force reflow
+      void document.body.offsetHeight;
+    }
+    
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initial cleanup
+      forceCleanupAllModals();
+      
+      // Set up all modal triggers
+      document.querySelectorAll('[data-bs-toggle="modal"]').forEach(button => {
+        button.addEventListener('click', function(e) {
+          e.preventDefault();
+          const targetModalId = this.getAttribute('data-bs-target');
+          const targetModal = document.querySelector(targetModalId);
+          if (targetModal) showModal(targetModal);
+        });
+      });
+    });
   </script>
   
   <!-- Add JavaScript files -->
