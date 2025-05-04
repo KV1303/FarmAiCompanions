@@ -1960,6 +1960,14 @@
             break;
           case 'profileNav':
             sectionToShow = 'profileSection';
+            // Update profile information when navigating to profile section
+            const username = localStorage.getItem('username');
+            if (username) {
+              // Call the updateProfileInfo function from main.js if it exists
+              if (typeof updateProfileInfo === 'function') {
+                updateProfileInfo(username);
+              }
+            }
             break;
         }
         
