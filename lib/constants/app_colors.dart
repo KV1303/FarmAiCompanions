@@ -1,49 +1,46 @@
 import 'package:flutter/material.dart';
 
-/// App color palette
+/// Color constants used throughout the app
 class AppColors {
   // Primary theme colors
-  static const Color primaryColor = Color(0xFF1B5E20); // Dark green
-  static const Color accentColor = Color(0xFFFF9800); // Orange
-  static const Color backgroundColor = Color(0xFFF5F5F5); // Light grey background
-  static const Color textColor = Color(0xFF212121); // Dark text
+  static const Color primaryColor = Color(0xFF2E7D32); // Forest green
+  static const Color secondaryColor = Color(0xFF558B2F); // Lighter green
+  static const Color accentColor = Color(0xFFF9A825); // Amber/gold
   
-  // UI element colors
-  static const Color borderColor = Color(0xFFDDDDDD); // Light grey border
-  static const Color errorColor = Color(0xFFB71C1C); // Red error color
-  static const Color successColor = Color(0xFF388E3C); // Green success color
-  static const Color warningColor = Color(0xFFFFA000); // Yellow warning color
+  // Background and surface colors
+  static const Color lightBackground = Color(0xFFF9F7F2); // Light cream
+  static const Color cardBackground = Colors.white;
   
-  // Component-specific colors
-  static const Color cardBackgroundColor = Colors.white;
-  static const Color dividerColor = Color(0xFFE0E0E0);
-  static const Color disabledColor = Color(0xFFBDBDBD);
-  static const Color hintTextColor = Color(0xFF9E9E9E);
+  // Text colors
+  static const Color darkText = Color(0xFF2E2E2E);
+  static const Color lightText = Colors.white;
+  static const Color disabledText = Color(0xFF9E9E9E);
   
   // Status colors
-  static const Color activeStatusColor = Color(0xFF4CAF50);
-  static const Color inactiveStatusColor = Color(0xFF9E9E9E);
+  static const Color success = Color(0xFF4CAF50);
+  static const Color info = Color(0xFF2196F3);
+  static const Color warning = Color(0xFFFF9800);
+  static const Color error = Color(0xFFF44336);
   
-  // Dark mode variants
-  static const Color darkPrimaryColor = Color(0xFF2E7D32);
-  static const Color darkBackgroundColor = Color(0xFF121212);
-  static const Color darkSurfaceColor = Color(0xFF1E1E1E);
-  static const Color darkTextColor = Color(0xFFEEEEEE);
+  // Weather specific colors
+  static const Color weatherBackground = Color(0xFFFFD687);
   
-  // Specific feature colors
-  static const Color weatherBackgroundColor = Color(0xFF64B5F6);
-  static const Color cropHealthColor = Color(0xFF66BB6A);
-  static const Color soilMoistureColor = Color(0xFF795548);
-  static const Color marketPricesColor = Color(0xFFFFA726);
+  // Specialized feature colors
+  static const Color disease = Color(0xFFE57373); // Light red for disease detection
+  static const Color irrigation = Color(0xFF4FC3F7); // Light blue for irrigation
+  static const Color fertilizer = Color(0xFF81C784); // Light green for fertilizer
+  static const Color market = Color(0xFFFFB74D); // Light orange for market prices
   
-  // Price indication colors
-  static const Color priceIncreaseColor = Color(0xFF4CAF50);
-  static const Color priceDecreaseColor = Color(0xFFF44336);
-  static const Color priceStableColor = Color(0xFF9E9E9E);
+  // Premium/subscription colors
+  static const Color premium = Color(0xFFAA00FF); // Purple for premium features
+  static const Color trial = Color(0xFF673AB7); // Darker purple for trial
   
-  // Gradient colors
-  static const List<Color> primaryGradient = [
-    Color(0xFF1B5E20), // Dark green
-    Color(0xFF4CAF50), // Light green
-  ];
+  // Ad-related colors
+  static const Color adLabel = Color(0xFFFFD700); // Gold for ad labels
+  static const Color adBackground = Color(0xFFF0F0F0); // Light grey for ad backgrounds
+  static const Color adCta = Color(0xFF1B5E20); // Dark green for ad CTAs
+  
+  // Chat-related colors
+  static const Color userMessage = Color(0xFFE3F2FD); // Light blue for user messages
+  static const Color botMessage = Color(0xFFE9F5E9); // Light green for bot messages
 }

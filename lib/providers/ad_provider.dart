@@ -1,247 +1,128 @@
 import 'package:flutter/foundation.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../services/ad_service.dart';
 
+/// Provider class that manages ad state and premium subscription status
 class AdProvider with ChangeNotifier {
-  BannerAd? _bannerAd;
-  InterstitialAd? _interstitialAd;
-  RewardedAd? _rewardedAd;
-  bool _isRewardedAdLoaded = false;
-  bool _isBannerAdLoaded = false;
-  bool _isInterstitialAdLoaded = false;
   bool _isPremium = false;
-  bool _personalizedAdsEnabled = true;
-  bool _consentRequested = false;
+  bool _hasConsent = false;
+  bool _adsInitialized = false;
+  DateTime? _trialEndDate;
+  int _adFrequencyCap = 3; // Number of actions before showing interstitial
+  int _currentActionCount = 0;
   
-  // Counters for ad frequency optimization
-  int _pageViewCount = 0;
-  int _userActionCount = 0;
-  
-  BannerAd? get bannerAd => _bannerAd;
-  bool get isBannerAdLoaded => _isBannerAdLoaded;
-  bool get isRewardedAdLoaded => _isRewardedAdLoaded;
+  // Getters
   bool get isPremium => _isPremium;
-  bool get personalizedAdsEnabled => _personalizedAdsEnabled;
-  bool get consentRequested => _consentRequested;
+  bool get hasConsent => _hasConsent;
+  bool get adsInitialized => _adsInitialized;
+  bool get isInTrial => _trialEndDate != null && _trialEndDate!.isAfter(DateTime.now());
+  int get daysLeftInTrial {
+    if (_trialEndDate == null) return 0;
+    final difference = _trialEndDate!.difference(DateTime.now());
+    return difference.inDays >= 0 ? difference.inDays + 1 : 0; // +1 to include today
+  }
   
+  // Constructor
   AdProvider() {
     _loadPreferences();
   }
   
+  /// Load ad preferences from SharedPreferences
   Future<void> _loadPreferences() async {
     final prefs = await SharedPreferences.getInstance();
-    _consentRequested = prefs.getBool('adConsentRequested') ?? false;
-    _personalizedAdsEnabled = prefs.getBool('personalizedAdsEnabled') ?? true;
     _isPremium = prefs.getBool('isPremium') ?? false;
+    _hasConsent = prefs.getBool('adConsent') ?? false;
     
-    // If consent has been requested, initialize ads
-    if (_consentRequested) {
-      initializeAds(_personalizedAdsEnabled);
+    // Load trial end date if it exists
+    final trialEndMillis = prefs.getInt('trialEndDate');
+    if (trialEndMillis != null) {
+      _trialEndDate = DateTime.fromMillisecondsSinceEpoch(trialEndMillis);
     }
     
-    notifyListeners();
-  }
-  
-  Future<void> setConsentRequested(bool value) async {
-    _consentRequested = value;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('adConsentRequested', value);
-    notifyListeners();
-  }
-  
-  Future<void> setPersonalizedAdsEnabled(bool value) async {
-    _personalizedAdsEnabled = value;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('personalizedAdsEnabled', value);
-    notifyListeners();
-  }
-  
-  Future<void> setPremiumStatus(bool value) async {
-    _isPremium = value;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('isPremium', value);
+    _adFrequencyCap = prefs.getInt('adFrequencyCap') ?? 3;
+    _currentActionCount = prefs.getInt('currentActionCount') ?? 0;
     
-    // Dispose of ads if user becomes premium
-    if (value) {
-      _disposeAds();
+    notifyListeners();
+  }
+  
+  /// Save ad preferences to SharedPreferences
+  Future<void> _savePreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isPremium', _isPremium);
+    await prefs.setBool('adConsent', _hasConsent);
+    
+    if (_trialEndDate != null) {
+      await prefs.setInt('trialEndDate', _trialEndDate!.millisecondsSinceEpoch);
     } else {
-      // Reload ads if user is no longer premium
-      _loadBannerAd();
-      _loadInterstitialAd();
-      _loadRewardedAd();
+      await prefs.remove('trialEndDate');
     }
     
+    await prefs.setInt('adFrequencyCap', _adFrequencyCap);
+    await prefs.setInt('currentActionCount', _currentActionCount);
+  }
+  
+  /// Set user's premium status
+  void setPremiumStatus(bool isPremium) {
+    _isPremium = isPremium;
+    _savePreferences();
     notifyListeners();
   }
   
-  void initializeAds(bool personalizedAds) {
-    if (_isPremium) return;
-    
-    _loadBannerAd();
-    _loadInterstitialAd();
-    _loadRewardedAd();
+  /// Set user's consent for personalized ads
+  void setAdConsent(bool hasConsent) {
+    _hasConsent = hasConsent;
+    _savePreferences();
+    notifyListeners();
   }
   
-  void _loadBannerAd() {
-    if (_isPremium) return;
-    
-    _bannerAd = BannerAd(
-      adUnitId: AdService.bannerAdUnitId,
-      size: AdSize.banner,
-      request: AdRequest(nonPersonalizedAds: !_personalizedAdsEnabled),
-      listener: BannerAdListener(
-        onAdLoaded: (_) {
-          _isBannerAdLoaded = true;
-          notifyListeners();
-        },
-        onAdFailedToLoad: (ad, error) {
-          debugPrint('Banner ad failed to load: ${error.message}');
-          ad.dispose();
-          _isBannerAdLoaded = false;
-          notifyListeners();
-          
-          // Retry after a delay
-          Future.delayed(const Duration(minutes: 1), _loadBannerAd);
-        },
-      ),
-    );
-
-    _bannerAd!.load();
-  }
-
-  void _loadInterstitialAd() {
-    if (_isPremium) return;
-    
-    InterstitialAd.load(
-      adUnitId: AdService.interstitialAdUnitId,
-      request: AdRequest(nonPersonalizedAds: !_personalizedAdsEnabled),
-      adLoadCallback: InterstitialAdLoadCallback(
-        onAdLoaded: (ad) {
-          _interstitialAd = ad;
-          _isInterstitialAdLoaded = true;
-          
-          // Set full-screen callback
-          _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
-            onAdDismissedFullScreenContent: (ad) {
-              ad.dispose();
-              _isInterstitialAdLoaded = false;
-              _loadInterstitialAd(); // Reload for next time
-            },
-            onAdFailedToShowFullScreenContent: (ad, error) {
-              debugPrint('Interstitial ad failed to show: ${error.message}');
-              ad.dispose();
-              _isInterstitialAdLoaded = false;
-              _loadInterstitialAd(); // Retry
-            },
-          );
-          
-          notifyListeners();
-        },
-        onAdFailedToLoad: (error) {
-          debugPrint('Interstitial ad failed to load: ${error.message}');
-          _isInterstitialAdLoaded = false;
-          notifyListeners();
-          
-          // Retry after a delay
-          Future.delayed(const Duration(minutes: 5), _loadInterstitialAd);
-        },
-      ),
-    );
+  /// Start a free trial
+  void startFreeTrial(int durationInDays) {
+    if (!_isPremium) {
+      _trialEndDate = DateTime.now().add(Duration(days: durationInDays));
+      _savePreferences();
+      notifyListeners();
+    }
   }
   
-  void _loadRewardedAd() {
-    if (_isPremium) return;
-    
-    RewardedAd.load(
-      adUnitId: AdService.rewardedAdUnitId,
-      request: AdRequest(nonPersonalizedAds: !_personalizedAdsEnabled),
-      rewardedAdLoadCallback: RewardedAdLoadCallback(
-        onAdLoaded: (ad) {
-          _rewardedAd = ad;
-          _isRewardedAdLoaded = true;
-          notifyListeners();
-        },
-        onAdFailedToLoad: (error) {
-          debugPrint('Rewarded ad failed to load: ${error.message}');
-          _isRewardedAdLoaded = false;
-          notifyListeners();
-          
-          // Retry after a delay
-          Future.delayed(const Duration(minutes: 5), _loadRewardedAd);
-        },
-      ),
-    );
+  /// End the trial period
+  void endTrial() {
+    _trialEndDate = null;
+    _savePreferences();
+    notifyListeners();
   }
   
-  Future<bool> showInterstitialAd() async {
+  /// Track user action for frequency capping
+  bool shouldShowInterstitial() {
     if (_isPremium) return false;
     
-    // Implement frequency capping
-    if (_pageViewCount < 3) return false; // Don't show until user has visited at least 3 pages
+    _currentActionCount++;
+    _savePreferences();
     
-    if (_interstitialAd != null && _isInterstitialAdLoaded) {
-      await _interstitialAd!.show();
-      _pageViewCount = 0; // Reset page counter
-      _userActionCount = 0; // Reset action counter
-      _isInterstitialAdLoaded = false;
-      _loadInterstitialAd(); // Reload the ad for next time
+    if (_currentActionCount >= _adFrequencyCap) {
+      _currentActionCount = 0;
+      _savePreferences();
       return true;
-    } else {
-      // If ad isn't loaded, try to load it for next time
-      _loadInterstitialAd();
-      return false;
     }
+    
+    return false;
   }
   
-  Future<bool> showRewardedAd({required Function(RewardItem) onRewarded}) async {
-    if (_isPremium) return false;
-    
-    if (_rewardedAd != null && _isRewardedAdLoaded) {
-      await _rewardedAd!.show(onUserEarnedReward: (_, reward) {
-        onRewarded(reward);
-      });
-      
-      _isRewardedAdLoaded = false;
-      _loadRewardedAd(); // Reload the ad
-      return true;
-    } else {
-      // If ad isn't loaded, try to load it for next time
-      _loadRewardedAd();
-      return false;
-    }
-  }
-  
-  Future<void> trackPageView() async {
-    if (_isPremium) return;
-    
-    _pageViewCount++;
+  /// Initialize ads (would connect with real AdMob in production)
+  void initializeAds() {
+    // In a real app, this would initialize AdMob SDK
+    _adsInitialized = true;
     notifyListeners();
   }
   
-  Future<void> trackAction() async {
-    if (_isPremium) return;
-    
-    _userActionCount++;
-    notifyListeners();
+  /// Reset action counter
+  void resetActionCounter() {
+    _currentActionCount = 0;
+    _savePreferences();
   }
   
-  void _disposeAds() {
-    _bannerAd?.dispose();
-    _interstitialAd?.dispose();
-    _rewardedAd?.dispose();
-    _bannerAd = null;
-    _interstitialAd = null;
-    _rewardedAd = null;
-    _isBannerAdLoaded = false;
-    _isInterstitialAdLoaded = false;
-    _isRewardedAdLoaded = false;
+  /// Update ad frequency capping
+  void setAdFrequencyCap(int cap) {
+    _adFrequencyCap = cap;
+    _savePreferences();
     notifyListeners();
-  }
-  
-  @override
-  void dispose() {
-    _disposeAds();
-    super.dispose();
   }
 }
