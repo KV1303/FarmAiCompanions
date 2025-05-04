@@ -1977,20 +1977,11 @@ async function displayFieldDetails(field) {
     document.getElementById('diseases-content').classList.add('d-none');
     document.getElementById('recommendations-content').classList.remove('d-none');
     
-    // Ensure modal trigger buttons work properly when recommendations tab is shown
-    document.querySelectorAll('#recommendations-content [data-bs-toggle="modal"]').forEach(button => {
-      button.addEventListener('click', function() {
-        try {
-          const targetModal = document.querySelector(this.getAttribute('data-bs-target'));
-          if (targetModal) {
-            const bsModal = new bootstrap.Modal(targetModal);
-            bsModal.show();
-          }
-        } catch (error) {
-          console.error('Error showing modal:', error);
-        }
-      });
-    });
+    // Re-initialize all modal triggers when recommendations tab is shown
+    setTimeout(() => {
+      console.log('Re-initializing modal triggers in recommendations tab');
+      initializeModalTriggers();
+    }, 100);
   });
 }
 
@@ -2758,20 +2749,48 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   // Ensure bootstrap modals can be shown through JavaScript
-  document.querySelectorAll('[data-bs-toggle="modal"]').forEach(button => {
-    button.addEventListener('click', function() {
-      try {
-        const targetModalId = this.getAttribute('data-bs-target');
-        const targetModal = document.querySelector(targetModalId);
-        if (targetModal) {
-          const bsModal = new bootstrap.Modal(targetModal);
-          bsModal.show();
+  function initializeModalTriggers() {
+    console.log('Initializing modal triggers');
+    document.querySelectorAll('[data-bs-toggle="modal"]').forEach(button => {
+      button.addEventListener('click', function() {
+        try {
+          const targetModalId = this.getAttribute('data-bs-target');
+          console.log('Attempting to show modal:', targetModalId);
+          const targetModal = document.querySelector(targetModalId);
+          if (targetModal) {
+            // Make sure modal is visible and on top
+            targetModal.style.zIndex = '1060';
+            targetModal.style.display = 'block';
+            targetModal.classList.add('show');
+            document.body.classList.add('modal-open');
+            
+            // Create backdrop if it doesn't exist
+            if (!document.querySelector('.modal-backdrop')) {
+              const backdrop = document.createElement('div');
+              backdrop.classList.add('modal-backdrop', 'fade', 'show');
+              document.body.appendChild(backdrop);
+            }
+            
+            // Use Bootstrap's Modal API if available
+            try {
+              const bsModal = new bootstrap.Modal(targetModal);
+              bsModal.show();
+            } catch (modalError) {
+              console.warn('Bootstrap Modal API error:', modalError);
+              // The manual approach above should handle the display
+            }
+          } else {
+            console.error('Target modal not found:', targetModalId);
+          }
+        } catch (error) {
+          console.error('Error showing modal:', error);
         }
-      } catch (error) {
-        console.error('Error showing modal:', error);
-      }
+      });
     });
-  });
+  }
+  
+  // Initialize on page load and after content changes
+  initializeModalTriggers();
   
   // Login form
   document.getElementById('loginForm').addEventListener('submit', async function(e) {
