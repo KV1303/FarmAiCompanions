@@ -1,41 +1,62 @@
+/// Class holding app-wide constant values
 class AppConstants {
-  // Routes
+  // App information
+  static const String appName = 'FarmAssistAI';
+  static const String appVersion = '1.0.0';
+  
+  // Route names
   static const String routeSplash = '/splash';
   static const String routeOnboarding = '/onboarding';
   static const String routeLogin = '/login';
   static const String routeRegister = '/register';
-  static const String routeHome = '/home';
-  static const String routeFieldDashboard = '/field_dashboard';
-  static const String routeDiseaseDetection = '/disease_detection';
-  static const String routeMarketPrices = '/market_prices';
+  static const String routeHome = '/';
+  static const String routeFieldDashboard = '/field-dashboard';
+  static const String routeDiseaseDetection = '/disease-detection';
+  static const String routeMarketPrices = '/market-prices';
   static const String routeWeather = '/weather';
   static const String routeProfile = '/profile';
-
+  static const String routeSubscription = '/subscription';
+  static const String routePremiumArticles = '/premium-articles';
+  static const String routePremiumArticleDetail = '/premium-article-detail';
+  
+  // Default values
+  static const int fieldRefreshInterval = 60; // seconds
+  static const int weatherRefreshInterval = 1800; // seconds (30 minutes)
+  static const int marketPricesRefreshInterval = 3600; // seconds (1 hour)
+  
   // API endpoints
-  static const String baseUrl = 'https://api.farmonaut.com/v1';
-  static const String weatherApiUrl = 'https://api.visualcrossing.com/xt/weather/forecast';
-  static const String eNamApiUrl = 'https://api.enam.gov.in/v1';
+  static const String apiBaseUrl = 'https://api.farmassistai.com';
+  static const String weatherApiEndpoint = '/api/weather';
+  static const String marketPricesApiEndpoint = '/api/market-prices';
+  static const String diseaseDetectionApiEndpoint = '/api/disease-detection';
+  static const String fieldMonitoringApiEndpoint = '/api/field-monitoring';
   
-  // Shared preferences keys
-  static const String prefIsFirstTime = 'is_first_time';
-  static const String prefAuthToken = 'auth_token';
-  static const String prefUserId = 'user_id';
-  static const String prefLanguage = 'language';
+  // Marketplace Constants
+  static const double marketplaceCommissionRate = 0.05; // 5% commission
+  static const int minMarketplaceOrderAmount = 100; // Minimum order ₹100
   
-  // Hive box names
-  static const String userBox = 'user_box';
-  static const String fieldBox = 'field_box';
-  static const String cropBox = 'crop_box';
-  static const String weatherBox = 'weather_box';
-  static const String marketPriceBox = 'market_price_box';
-  static const String diseaseBox = 'disease_box';
+  // Storage keys
+  static const String storageKeyToken = 'auth_token';
+  static const String storageKeyUserId = 'user_id';
+  static const String storageKeyUserName = 'user_name';
+  static const String storageKeyLanguage = 'language_code';
+  static const String storageKeyOnboardingComplete = 'onboarding_complete';
+  static const String storageKeyTrialStartDate = 'trial_start_date';
+  static const String storageKeyTrialEndDate = 'trial_end_date';
   
-  // ML model
-  static const String modelPath = 'assets/model.tflite';
-  static const String labelsPath = 'assets/labels.txt';
+  // Trial period in days
+  static const int trialPeriodDays = 7;
   
-  // Common constants
-  static const int cacheDurationHours = 24;
-  static const double defaultLatitude = 20.5937; // Default location for India
-  static const double defaultLongitude = 78.9629; // Default location for India
+  // Subscription prices in INR
+  static const double monthlySubscriptionPrice = 59.0;
+  static const double yearlySubscriptionPrice = 99.0;
+  
+  // Timeout durations in seconds
+  static const int apiRequestTimeout = 30;
+  static const int uploadTimeout = 180;
+  
+  // Maximum limits
+  static const int maxFieldsPerUser = 10;
+  static const int maxImageSizeBytes = 5 * 1024 * 1024; // 5MB
+  static const int maxChatHistoryMessages = 50;
 }
