@@ -21,7 +21,35 @@ GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
 
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
-    gemini_model = genai.GenerativeModel('gemini-pro')
+    # Use the latest available Gemini model
+    try:
+        # List available models
+        available_models = [m.name for m in genai.list_models()]
+        print(f"Available Gemini models: {available_models}")
+        
+        # Try to use the latest Pro model if available
+        if 'models/gemini-1.5-pro-latest' in available_models:
+            gemini_model = genai.GenerativeModel('models/gemini-1.5-pro-latest')
+            print("Using gemini-1.5-pro-latest model")
+        elif 'models/gemini-1.5-pro' in available_models:
+            gemini_model = genai.GenerativeModel('models/gemini-1.5-pro')
+            print("Using gemini-1.5-pro model")
+        else:
+            # Fallback to any available Gemini model
+            for model_name in available_models:
+                if 'gemini' in model_name and 'pro' in model_name:
+                    gemini_model = genai.GenerativeModel(model_name)
+                    print(f"Using fallback Gemini model: {model_name}")
+                    break
+            else:
+                print("No suitable Gemini model found, using first available model")
+                gemini_model = genai.GenerativeModel(available_models[0])
+    except Exception as e:
+        print(f"Error initializing Gemini model: {str(e)}")
+        # Set a dummy model that will be replaced on first use
+        gemini_model = None
+else:
+    print("No Gemini API key available")
 
 # ------ Helper Functions ------
 
@@ -517,41 +545,53 @@ def chat():
                 farmers who primarily speak Hindi. Even if the question is in English, always respond in Hindi.
                 """
                 
-                # Use a simpler direct generation approach instead of chat history
+                # Use the latest available Gemini model
                 try:
-                    # Try to use the gemini-pro model directly
-                    full_prompt = f"{system_prompt}\n\nFarmer's question: {user_message}\n\nYour expert response:"
-                    response = genai.generate_text(
-                        model="gemini-pro",
-                        prompt=full_prompt,
-                        temperature=0.7,
-                        max_output_tokens=800
-                    )
+                    # Configure generation parameters for more human-like responses
+                    generation_config = {
+                        "temperature": 0.8,  # Slightly higher temperature for more creative responses
+                        "top_p": 0.95,
+                        "top_k": 40,
+                        "max_output_tokens": 1024,  # Increased token limit for more comprehensive answers
+                    }
                     
-                    if response and response.result:
-                        return jsonify({'reply': response.result})
+                    # Construct a clear prompt for Hindi responses
+                    improved_prompt = f"""
+                    {system_prompt}
+                    
+                    किसान का प्रश्न: {user_message}
+                    
+                    कृपया हिंदी में विस्तृत और मददगार उत्तर दें:
+                    """
+                    
+                    # Use one of the available Gemini models - gemini-1.5-pro-latest
+                    model = genai.GenerativeModel('models/gemini-1.5-pro-latest')
+                    response = model.generate_content(improved_prompt)
+                    
+                    if response and response.text:
+                        print("Successfully generated Gemini response")
+                        return jsonify({'reply': response.text})
                     else:
-                        print("No valid response from Gemini API")
+                        print("No valid response from Gemini model")
                         return jsonify({'reply': default_response})
                         
                 except Exception as inner_e:
-                    print(f"Error with direct generation: {str(inner_e)}")
-                    # Fallback to the model defined at app startup
-                    generation_config = {
-                        "temperature": 0.7,
-                        "top_p": 0.95,
-                        "top_k": 40,
-                        "max_output_tokens": 800,
-                    }
-                    
-                    response = gemini_model.generate_content(
-                        f"{system_prompt}\n\nFarmer's question: {user_message}\n\nYour expert response:",
-                        generation_config=generation_config
-                    )
-                    
-                    if response and response.text:
-                        return jsonify({'reply': response.text})
-                    else:
+                    print(f"Error with primary model generation: {str(inner_e)}")
+                    # Try a different model as fallback
+                    try:
+                        # Try gemini-1.5-flash model as fallback
+                        fallback_model = genai.GenerativeModel('models/gemini-1.5-flash-latest')
+                        response = fallback_model.generate_content(
+                            f"{system_prompt}\n\nFarmer's question: {user_message}\n\nYour expert response in Hindi:",
+                            generation_config={"temperature": 0.7, "max_output_tokens": 800}
+                        )
+                        
+                        if response and response.text:
+                            return jsonify({'reply': response.text})
+                        else:
+                            return jsonify({'reply': default_response})
+                    except Exception as fallback_error:
+                        print(f"Final fallback error: {str(fallback_error)}")
                         return jsonify({'reply': default_response})
                     
             except Exception as e:
