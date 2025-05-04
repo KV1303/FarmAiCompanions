@@ -614,6 +614,38 @@ function showSection(sectionId) {
   if (sectionId === 'dashboardSection' && isLoggedIn()) {
     checkSubscriptionStatus();
   }
+  
+  // Update mobile navigation highlighting
+  updateMobileNavigation(sectionId);
+}
+
+// New function to update mobile navigation
+function updateMobileNavigation(sectionId) {
+  // Map section IDs to mobile navigation item IDs
+  const mobileNavMap = {
+    'homeSection': 'mobileHomeNav',
+    'dashboardSection': 'mobileDashboardNav',
+    'weatherSection': 'mobileWeatherNav',
+    'profileSection': 'mobileProfileNav',
+    'diseaseDetectionSection': 'mobileDashboardNav', // These will default to dashboard nav
+    'marketPricesSection': 'mobileDashboardNav',
+    'chatSection': 'mobileDashboardNav',
+    'farmGuidanceSection': 'mobileDashboardNav'
+  };
+  
+  // Remove active class from all mobile nav items
+  document.querySelectorAll('.mobile-nav .nav-item').forEach(item => {
+    item.classList.remove('active');
+  });
+  
+  // Add active class to the corresponding mobile nav item
+  const mobileNavId = mobileNavMap[sectionId];
+  if (mobileNavId) {
+    const mobileNavItem = document.getElementById(mobileNavId);
+    if (mobileNavItem) {
+      mobileNavItem.classList.add('active');
+    }
+  }
 }
 
 function showError(elementId, message) {
