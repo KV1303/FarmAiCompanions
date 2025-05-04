@@ -668,11 +668,7 @@
 </head>
 <body>
   <!-- No sidebar - completely removed -->
-  <!-- Free trial notification at the top -->
-  <div id="trialBanner" class="alert alert-info alert-dismissible fade show text-center" role="alert">
-    <strong>मुफ्त ट्रायल:</strong> <span id="trialDaysRemaining">7</span> दिन शेष हैं। आप ₹99/वर्ष के हिसाब से पूर्ण उपयोग जारी रख सकते हैं।
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-  </div>
+  <!-- Removed trial banner from the top as per requirement -->
   
   <!-- Mobile Bottom Navigation - Removed Salah button -->
   <div class="mobile-nav fixed-bottom d-flex justify-content-around align-items-center py-2">
@@ -1742,42 +1738,17 @@
   
   <!-- Google Translate API has been removed as per requirement -->
   
-  <!-- Sidebar and Navigation Script -->
+  <!-- Mobile-only Navigation Script (No Sidebar) -->
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      // Sidebar toggle functionality
-      const sidebar = document.querySelector('.sidebar');
+      // No sidebar in mobile-only interface
       const mainContent = document.querySelector('.main-content');
-      const sidebarToggle = document.getElementById('sidebarToggle');
       
-      if (sidebarToggle) {
-        sidebarToggle.addEventListener('click', function() {
-          sidebar.classList.toggle('sidebar-collapsed');
-          mainContent.classList.toggle('main-content-expanded');
-        });
+      // Make main content full width
+      if (mainContent) {
+        mainContent.style.width = '100%';
+        mainContent.style.marginLeft = '0';
       }
-      
-      // Set active menu item
-      const navLinks = document.querySelectorAll('.sidebar-menu .nav-link');
-      
-      navLinks.forEach(link => {
-        link.addEventListener('click', function() {
-          // Remove active class from all links
-          navLinks.forEach(item => item.classList.remove('active'));
-          
-          // Add active class to clicked link
-          this.classList.add('active');
-          
-          // Update page title
-          const pageTitle = document.getElementById('pageTitle');
-          if (pageTitle) {
-            pageTitle.textContent = this.innerText.trim();
-          }
-          
-          // Show the corresponding section
-          navigateToSection(this.id);
-        });
-      });
       
       // Mobile navigation handlers
       const mobileNavLinks = document.querySelectorAll('.mobile-nav .nav-item');
@@ -1798,7 +1769,7 @@
             'mobileDashboardNav': 'dashboardNav',
             'mobileWeatherNav': 'weatherNav',
             'mobileChatNav': 'chatNav',
-            'mobileProfileNav': 'loginNav'
+            'mobileProfileNav': 'profileNav'
           };
           
           const desktopNavId = sectionMap[this.id];
@@ -1822,7 +1793,7 @@
         // Hide all sections first
         const allSections = ['homeSection', 'dashboardSection', 'diseaseDetectionSection', 
                             'marketPricesSection', 'weatherSection', 'chatSection',
-                            'loginSection', 'registerSection'];
+                            'loginSection', 'registerSection', 'profileSection'];
         
         allSections.forEach(section => {
           const el = document.getElementById(section);
@@ -1857,6 +1828,9 @@
           case 'registerNav':
             sectionToShow = 'registerSection';
             break;
+          case 'profileNav':
+            sectionToShow = 'profileSection';
+            break;
         }
         
         if (sectionToShow) {
@@ -1865,16 +1839,17 @@
         }
       }
       
-      // Set home as default active on sidebar
-      const homeLink = document.getElementById('homeNav');
-      if (homeLink) {
-        homeLink.classList.add('active');
-      }
-      
+      // Only use mobile navigation - no sidebar
       // Set home as default active on mobile
       const mobileHomeLink = document.getElementById('mobileHomeNav');
       if (mobileHomeLink) {
         mobileHomeLink.classList.add('active');
+      }
+      
+      // Show the home section by default
+      const homeSection = document.getElementById('homeSection');
+      if (homeSection) {
+        homeSection.classList.remove('hidden');
       }
     });
   </script>
