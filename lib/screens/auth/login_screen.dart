@@ -1,15 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../../constants/app_colors.dart';
-import '../../constants/app_strings.dart';
-import '../../constants/app_images.dart';
+import '../../constants/app_constants.dart';
 import '../../providers/auth_provider.dart';
-import '../../widgets/common/custom_button.dart';
-import '../../widgets/common/custom_text_field.dart';
-import '../../widgets/common/loading_indicator.dart';
-import '../../utils/validators.dart';
-import '../../utils/localization.dart';
+import '../web_view_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -20,271 +14,290 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _passwordVisible = false;
+  bool _isPasswordVisible = false;
+  bool _isLoginInProgress = false;
+  String _errorMessage = '';
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
+  void _togglePasswordVisibility() {
+    setState(() {
+      _isPasswordVisible = !_isPasswordVisible;
+    });
+  }
+
   Future<void> _login() async {
-    if (_formKey.currentState!.validate()) {
-      // Hide keyboard
-      FocusScope.of(context).unfocus();
-      
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      
-      final success = await authProvider.login(
-        _emailController.text.trim(),
-        _passwordController.text,
-      );
-      
-      if (success && mounted) {
-        Navigator.of(context).pushReplacementNamed('/home');
-      } else if (mounted) {
-        // Show error message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(authProvider.error),
-            backgroundColor: AppColors.errorColor,
-          ),
-        );
-      }
-    }
-  }
-
-  void _navigateToRegister() {
-    Navigator.of(context).pushReplacementNamed('/register');
-  }
-
-  void _resetPassword() async {
-    if (_emailController.text.isEmpty || !Validators.isValidEmail(_emailController.text)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a valid email address'),
-          backgroundColor: AppColors.errorColor,
-        ),
-      );
+    if (!_formKey.currentState!.validate()) {
       return;
     }
-    
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    
+
+    setState(() {
+      _isLoginInProgress = true;
+      _errorMessage = '';
+    });
+
     try {
-      await authProvider.resetPassword(_emailController.text.trim());
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Password reset link sent to your email'),
-            backgroundColor: AppColors.successColor,
-          ),
-        );
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      await authProvider.login(
+        username: _usernameController.text.trim(),
+        password: _passwordController.text,
+      );
+
+      if (!authProvider.isAuthenticated) {
+        setState(() {
+          _errorMessage = authProvider.error ?? 'Login failed. Please try again.';
+          _isLoginInProgress = false;
+        });
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(authProvider.error),
-            backgroundColor: AppColors.errorColor,
-          ),
-        );
-      }
+      setState(() {
+        _errorMessage = e.toString();
+        _isLoginInProgress = false;
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
-    final localization = AppLocalizations.of(context);
-    
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            child: Padding(
+      body: Stack(
+        children: [
+          // Green background for top half
+          Container(
+            height: MediaQuery.of(context).size.height * 0.4,
+            decoration: const BoxDecoration(
+              color: AppColors.primaryColor,
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(30),
+                bottomRight: Radius.circular(30),
+              ),
+            ),
+          ),
+          
+          SafeArea(
+            child: SingleChildScrollView(
               padding: const EdgeInsets.all(24.0),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // App logo and title
-                    Center(
-                      child: Column(
-                        children: [
-                          Container(
-                            width: 80,
-                            height: 80,
-                            decoration: BoxDecoration(
-                              color: AppColors.primaryColor,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.primaryColor.withOpacity(0.3),
-                                  spreadRadius: 1,
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                            child: const Icon(
-                              Icons.eco,
-                              size: 40,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            localization?.translate(AppStrings.appName) ?? AppStrings.appName,
-                            style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textDarkColor,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            localization?.translate(AppStrings.login) ?? AppStrings.login,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: AppColors.textLightColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 48),
-                    
-                    // Email field
-                    CustomTextField(
-                      controller: _emailController,
-                      labelText: localization?.translate(AppStrings.email) ?? AppStrings.email,
-                      hintText: 'example@email.com',
-                      prefixIcon: const Icon(Icons.email_outlined),
-                      keyboardType: TextInputType.emailAddress,
-                      validator: (value) => Validators.validateEmail(value, localization),
-                    ),
-                    
-                    const SizedBox(height: 16),
-                    
-                    // Password field
-                    CustomTextField(
-                      controller: _passwordController,
-                      labelText: localization?.translate(AppStrings.password) ?? AppStrings.password,
-                      hintText: '••••••••',
-                      prefixIcon: const Icon(Icons.lock_outline),
-                      obscureText: !_passwordVisible,
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _passwordVisible ? Icons.visibility_off : Icons.visibility,
-                          color: AppColors.textLightColor,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _passwordVisible = !_passwordVisible;
-                          });
-                        },
-                      ),
-                      validator: (value) => Validators.validatePassword(value, localization),
-                    ),
-                    
-                    const SizedBox(height: 8),
-                    
-                    // Forgot password button
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: _resetPassword,
-                        child: Text(
-                          localization?.translate(AppStrings.forgotPassword) ?? AppStrings.forgotPassword,
-                          style: TextStyle(
-                            color: AppColors.primaryColor,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Login button
-                    authProvider.isLoading
-                        ? const Center(child: LoadingIndicator())
-                        : CustomButton(
-                            text: localization?.translate(AppStrings.signIn) ?? AppStrings.signIn,
-                            onPressed: _login,
-                          ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Sign up link
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 30),
+                  
+                  // Logo and App Name
+                  Center(
+                    child: Column(
                       children: [
-                        Text(
-                          localization?.translate(AppStrings.dontHaveAccount) ?? AppStrings.dontHaveAccount,
-                          style: const TextStyle(
-                            color: AppColors.textLightColor,
+                        Image.asset(
+                          'assets/images/app_logo.png',
+                          height: 100,
+                          width: 100,
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'FarmAssist AI',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
                           ),
                         ),
-                        TextButton(
-                          onPressed: _navigateToRegister,
-                          child: Text(
-                            localization?.translate(AppStrings.signUp) ?? AppStrings.signUp,
-                            style: TextStyle(
-                              color: AppColors.primaryColor,
-                              fontWeight: FontWeight.bold,
-                            ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'आपका डिजिटल कृषि सहायक',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.white,
                           ),
                         ),
                       ],
                     ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Demo credentials note
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            'Demo Credentials',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.primaryColor,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Email: demo@farmassist.com\nPassword: Farm@123',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: AppColors.textLightColor,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
+                  ),
+                  
+                  const SizedBox(height: 40),
+                  
+                  // Login Card
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 20,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Text(
+                          'लॉगिन',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textColor,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        const Text(
+                          'अपने खाते में प्रवेश करें',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        
+                        // Login Form
+                        Form(
+                          key: _formKey,
+                          child: Column(
+                            children: [
+                              // Username Field
+                              TextFormField(
+                                controller: _usernameController,
+                                decoration: const InputDecoration(
+                                  labelText: 'उपयोगकर्ता नाम',
+                                  prefixIcon: Icon(Icons.person),
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'कृपया उपयोगकर्ता नाम दर्ज करें';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 16),
+                              
+                              // Password Field
+                              TextFormField(
+                                controller: _passwordController,
+                                obscureText: !_isPasswordVisible,
+                                decoration: InputDecoration(
+                                  labelText: 'पासवर्ड',
+                                  prefixIcon: const Icon(Icons.lock),
+                                  suffixIcon: IconButton(
+                                    icon: Icon(
+                                      _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
+                                    ),
+                                    onPressed: _togglePasswordVisibility,
+                                  ),
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'कृपया पासवर्ड दर्ज करें';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              
+                              // Error Message
+                              if (_errorMessage.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 16),
+                                  child: Text(
+                                    _errorMessage,
+                                    style: const TextStyle(
+                                      color: Colors.red,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              
+                              const SizedBox(height: 24),
+                              
+                              // Login Button
+                              SizedBox(
+                                width: double.infinity,
+                                height: 50,
+                                child: ElevatedButton(
+                                  onPressed: _isLoginInProgress ? null : _login,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.accentColor,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                  child: _isLoginInProgress
+                                      ? const CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 3,
+                                        )
+                                      : const Text(
+                                          'लॉगिन करें',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                ),
+                              ),
+                              
+                              const SizedBox(height: 16),
+                              
+                              // Register Link
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Text(
+                                    'खाता नहीं है?',
+                                    style: TextStyle(color: Colors.grey),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.pushNamed(context, AppConstants.routeRegister);
+                                    },
+                                    child: const Text(
+                                      'रजिस्टर करें',
+                                      style: TextStyle(
+                                        color: AppColors.accentColor,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              
+                              // Web App Login Option
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context, 
+                                    MaterialPageRoute(
+                                      builder: (context) => const WebViewScreen(
+                                        initialUrl: 'http://localhost:5000', // Update with actual URL
+                                        title: 'वेब लॉगिन',
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: const Text(
+                                  'वेब एप्लिकेशन पर लॉगिन करें',
+                                  style: TextStyle(
+                                    color: AppColors.primaryColor,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
