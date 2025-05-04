@@ -2434,6 +2434,10 @@ document.addEventListener('DOMContentLoaded', function() {
   if (!isLoggedIn()) {
     showSection('loginSection');
   } else {
+    // Update profile information
+    updateProfileInfo(localStorage.getItem('username'));
+    
+    // Show dashboard
     showSection('dashboardSection');
     loadFields();
   }
