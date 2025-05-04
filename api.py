@@ -490,8 +490,8 @@ def chat():
         if not user_message:
             return jsonify({'error': 'No message provided'}), 400
         
-        # Default response in case AI is not available
-        default_response = "I'm AI Kisan, your farming assistant. I can help with crop advice, disease detection, weather interpretations, and more. Please provide specific details about your farming query for better assistance."
+        # Default response in case AI is not available - in Hindi
+        default_response = "मैं AI किसान, आपका कृषि सहायक हूँ। मैं फसल की सलाह, रोग पहचान, मौसम की व्याख्या, और अधिक में आपकी मदद कर सकता हूँ। बेहतर सहायता के लिए कृपया अपने कृषि प्रश्न के बारे में विशिष्ट विवरण प्रदान करें।"
         
         # If Gemini API key is available, use AI for chat
         if GEMINI_API_KEY:
@@ -559,6 +559,24 @@ def chat():
                 return jsonify({'reply': default_response})
         else:
             print("No Gemini API key available")
+            # Creating a hardcoded Hindi response since API key is not available
+            hindi_responses = {
+                "hello": "नमस्ते! मैं आपका AI किसान सहायक हूँ। मैं आपकी कैसे मदद कर सकता हूँ?",
+                "hi": "नमस्ते! आज आप किस प्रकार की कृषि जानकारी के बारे में पूछना चाहेंगे?",
+                "how are you": "मैं एक AI सहायक हूँ और सदैव आपकी सेवा के लिए तैयार हूँ। आपको खेती से संबंधित क्या जानकारी चाहिए?",
+                "help": "मैं फसल चुनाव, रोग निदान, मौसम सलाह, और उर्वरक सिफारिशों जैसे विषयों पर मदद कर सकता हूँ। कृपया विशेष प्रश्न पूछें।",
+                "weather": "आपके क्षेत्र के मौसम की जानकारी के लिए, कृपया अपना स्थान बताएं। मैं वहां के मौसम पूर्वानुमान प्रदान करूंगा।",
+                "crops": "भारत में मुख्य फसलें चावल, गेहूं, मक्का, ज्वार, बाजरा, दालें, तिलहन, गन्ना और कपास हैं। किस फसल के बारे में जानकारी चाहिए?",
+                "fertilizer": "उर्वरक सिफारिशों के लिए, मुझे आपकी फसल, मिट्टी का प्रकार और फसल का चरण बताएं। उचित उर्वरक प्रबंधन फसल उत्पादन में महत्वपूर्ण है।"
+            }
+            
+            # Check if the user message contains any keywords, with case-insensitive matching
+            user_message_lower = user_message.lower()
+            for keyword, response in hindi_responses.items():
+                if keyword in user_message_lower:
+                    return jsonify({'reply': response})
+            
+            # Default response if no keywords match
             return jsonify({'reply': default_response})
             
     except Exception as e:
