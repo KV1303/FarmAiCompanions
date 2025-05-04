@@ -64,6 +64,27 @@
     
     .modal-backdrop {
       z-index: 1040 !important;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+    
+    /* Fix for modal close button */
+    .btn-close {
+      opacity: 1;
+    }
+    
+    /* Fix for modal dialog centering and positioning */
+    .modal.show .modal-dialog {
+      display: flex;
+      align-items: center;
+      height: calc(100% - var(--bottom-nav-height) - 3.5rem);
+      margin-top: auto;
+      margin-bottom: auto;
+      max-width: 90%;
     }
     
     /* Profile section styling */
@@ -2071,12 +2092,48 @@
       modals.forEach(function(modal) {
         // Create Bootstrap modal instance for each modal
         try {
+          // Add backdrop click handling to close modal
+          modal.addEventListener('click', function(event) {
+            // Only close if the click was directly on the modal background
+            if (event.target === modal) {
+              hideModal(modal);
+            }
+          });
+          
+          // Create Bootstrap Modal instance
           new bootstrap.Modal(modal);
         } catch (e) {
           console.warn('Modal initialization warning:', e);
         }
       });
     });
+    
+    // Global helper function for hiding modals (to be used in event listeners above and in main.js)
+    window.hideModal = function(modal) {
+      // First try using Bootstrap API
+      try {
+        const bsModalInstance = bootstrap.Modal.getInstance(modal);
+        if (bsModalInstance) {
+          bsModalInstance.hide();
+        }
+      } catch (error) {
+        console.warn('Bootstrap modal hide API error:', error);
+      }
+      
+      // Manual fallback approach
+      modal.style.display = 'none';
+      modal.classList.remove('show');
+      
+      // Remove backdrop and modal-open class if no other modals are open
+      const otherOpenModals = document.querySelectorAll('.modal.show');
+      if (otherOpenModals.length === 0) {
+        document.body.classList.remove('modal-open');
+        const backdrop = document.querySelector('.modal-backdrop');
+        if (backdrop) {
+          backdrop.remove();
+        }
+      }
+    }
   </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>

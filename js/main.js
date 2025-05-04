@@ -2745,9 +2745,22 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Added event listener to irrigation button');
   }
   
-  // Ensure bootstrap modals can be shown through JavaScript
+  // Ensure bootstrap modals can be shown and hidden properly through JavaScript
   function initializeModalTriggers() {
     console.log('Initializing modal triggers');
+    
+    // First, ensure all close buttons work properly
+    document.querySelectorAll('[data-bs-dismiss="modal"]').forEach(closeBtn => {
+      closeBtn.addEventListener('click', function() {
+        const modal = this.closest('.modal');
+        if (modal) {
+          console.log('Closing modal:', modal.id);
+          hideModal(modal);
+        }
+      });
+    });
+    
+    // Initialize modal open triggers
     document.querySelectorAll('[data-bs-toggle="modal"]').forEach(button => {
       button.addEventListener('click', function() {
         try {
@@ -2755,27 +2768,7 @@ document.addEventListener('DOMContentLoaded', function() {
           console.log('Attempting to show modal:', targetModalId);
           const targetModal = document.querySelector(targetModalId);
           if (targetModal) {
-            // Make sure modal is visible and on top
-            targetModal.style.zIndex = '1060';
-            targetModal.style.display = 'block';
-            targetModal.classList.add('show');
-            document.body.classList.add('modal-open');
-            
-            // Create backdrop if it doesn't exist
-            if (!document.querySelector('.modal-backdrop')) {
-              const backdrop = document.createElement('div');
-              backdrop.classList.add('modal-backdrop', 'fade', 'show');
-              document.body.appendChild(backdrop);
-            }
-            
-            // Use Bootstrap's Modal API if available
-            try {
-              const bsModal = new bootstrap.Modal(targetModal);
-              bsModal.show();
-            } catch (modalError) {
-              console.warn('Bootstrap Modal API error:', modalError);
-              // The manual approach above should handle the display
-            }
+            showModal(targetModal);
           } else {
             console.error('Target modal not found:', targetModalId);
           }
@@ -2784,6 +2777,83 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       });
     });
+    
+    // Initialize ESC key to close modals
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        const openModal = document.querySelector('.modal.show');
+        if (openModal) {
+          hideModal(openModal);
+        }
+      }
+    });
+    
+    // Initialize backdrop clicks to close modals
+    document.addEventListener('click', function(e) {
+      if (e.target.classList.contains('modal') && e.target.classList.contains('show')) {
+        hideModal(e.target);
+      }
+    });
+  }
+  
+  // Show modal helper function
+  function showModal(modal) {
+    // Make sure modal is visible and on top
+    modal.style.zIndex = '1060';
+    modal.style.display = 'block';
+    modal.classList.add('show');
+    document.body.classList.add('modal-open');
+    
+    // Create backdrop if it doesn't exist
+    if (!document.querySelector('.modal-backdrop')) {
+      const backdrop = document.createElement('div');
+      backdrop.classList.add('modal-backdrop', 'fade', 'show');
+      document.body.appendChild(backdrop);
+    }
+    
+    // Use Bootstrap's Modal API if available
+    try {
+      const bsModal = new bootstrap.Modal(modal);
+      bsModal.show();
+    } catch (modalError) {
+      console.warn('Bootstrap Modal API error:', modalError);
+      // The manual approach above should handle the display
+    }
+  }
+  
+  // Hide modal helper function
+  // This uses the global hideModal function defined in index.html
+  // or falls back to a similar implementation if it's not available
+  function hideModal(modal) {
+    // Check if the global hideModal function exists
+    if (typeof window.hideModal === 'function') {
+      window.hideModal(modal);
+    } else {
+      console.log('Using local hideModal implementation');
+      // First try using Bootstrap API
+      try {
+        const bsModalInstance = bootstrap.Modal.getInstance(modal);
+        if (bsModalInstance) {
+          bsModalInstance.hide();
+        }
+      } catch (error) {
+        console.warn('Bootstrap modal hide API error:', error);
+      }
+      
+      // Manual fallback approach
+      modal.style.display = 'none';
+      modal.classList.remove('show');
+      
+      // Remove backdrop and modal-open class if no other modals are open
+      const otherOpenModals = document.querySelectorAll('.modal.show');
+      if (otherOpenModals.length === 0) {
+        document.body.classList.remove('modal-open');
+        const backdrop = document.querySelector('.modal-backdrop');
+        if (backdrop) {
+          backdrop.remove();
+        }
+      }
+    }
   }
   
   // Initialize on page load and after content changes
