@@ -507,10 +507,14 @@ def chat():
                 3. Relevant to Indian farming conditions
                 4. Considerate of both traditional and modern farming approaches
                 5. Clear and easy to understand
+                6. ALWAYS IN HINDI LANGUAGE
                 
                 When responding to queries about crop problems, ask for specifics like symptoms, 
                 affected plant parts, and growth stage. For weather-related queries, explain implications 
                 for farming activities. Always suggest sustainable practices when appropriate.
+                
+                IMPORTANT: You MUST respond in Hindi language using Devanagari script. Your users are rural Indian 
+                farmers who primarily speak Hindi. Even if the question is in English, always respond in Hindi.
                 """
                 
                 # Use a simpler direct generation approach instead of chat history
