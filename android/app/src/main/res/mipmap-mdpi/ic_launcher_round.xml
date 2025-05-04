@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <!-- Background Circle -->
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M24,24m-24,0a24,24 0,1 1,48 0a24,24 0,1 1,-48 0" />
+
+    <!-- Stylized Farm Icon -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M24,8 L12,14 L12,36 L36,36 L36,14 L24,8 Z" />
+    
+    <!-- Field/Crop Rows -->
+    <path
+        android:fillColor="#8BC34A"
+        android:pathData="M16,22 L32,22 L32,32 L16,32 Z" />
+    
+    <!-- Farm Rows -->
+    <path
+        android:strokeColor="#4CAF50"
+        android:strokeWidth="1.5"
+        android:pathData="M16,24 L32,24 M16,26 L32,26 M16,28 L32,28 M16,30 L32,30" />
+        
+    <!-- Tractor/AI Symbol -->
+    <path
+        android:fillColor="#FF9800"
+        android:pathData="M22,16 C22,16 20,18 20,20 C20,22 22,24 24,24 C26,24 28,22 28,20 C28,18 26,16 26,16 Z" />
+</vector>
