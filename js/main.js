@@ -746,14 +746,8 @@ function updateProfileInfo(username) {
   // Set up profile image upload functionality
   setupProfileImageUpload();
   
-  // Update stats if available - we'll use hardcoded values for this demo
-  const fieldCountElem = document.getElementById('fieldCount');
-  const diseaseCountElem = document.getElementById('diseaseCount');
-  const guidanceCountElem = document.getElementById('guidanceCount');
-  
-  if (fieldCountElem) fieldCountElem.textContent = '2';
-  if (diseaseCountElem) diseaseCountElem.textContent = '3';
-  if (guidanceCountElem) guidanceCountElem.textContent = '5';
+  // Load and update usage statistics
+  updateUsageStats();
   
   // If we have subscription data, update the subscription section
   const subscriptionData = getSubscriptionData();
@@ -787,6 +781,7 @@ function updateProfileInfo(username) {
 function setupProfileImageUpload() {
   const imageUploadInput = document.getElementById('profileImageUpload');
   const profileImage = document.getElementById('profileImageDisplay');
+  const updateProfileBtn = document.getElementById('updateProfileBtn');
   
   if (imageUploadInput && profileImage) {
     // Check if we have a saved profile image in localStorage
@@ -796,17 +791,28 @@ function setupProfileImageUpload() {
     }
     
     // Add event listener for image upload
-    imageUploadInput.addEventListener('change', (e) => {
+    imageUploadInput.addEventListener('change', function(e) {
       const file = e.target.files[0];
       if (file) {
         if (file.type.startsWith('image/')) {
           const reader = new FileReader();
-          reader.onload = (e) => {
+          reader.onload = function(e) {
             const imageData = e.target.result;
             profileImage.src = imageData;
             
             // Save the image to localStorage
             localStorage.setItem('profile_image', imageData);
+            
+            // Show success alert
+            const alertsContainer = document.getElementById('alertsContainer');
+            if (alertsContainer) {
+              alertsContainer.innerHTML = `
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                  <i class="fas fa-check-circle me-2"></i>प्रोफाइल छवि सफलतापूर्वक अपडेट की गई
+                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+              `;
+            }
           };
           reader.readAsDataURL(file);
         } else {
@@ -814,6 +820,83 @@ function setupProfileImageUpload() {
         }
       }
     });
+  }
+  
+  // Add event listener for update profile button
+  if (updateProfileBtn) {
+    updateProfileBtn.addEventListener('click', function() {
+      // Show success message
+      const alertsContainer = document.getElementById('alertsContainer');
+      if (alertsContainer) {
+        alertsContainer.innerHTML = `
+          <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>प्रोफाइल सफलतापूर्वक अपडेट किया गया
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        `;
+      }
+    });
+  }
+}
+
+// Function to update usage statistics with real data
+async function updateUsageStats() {
+  const fieldCountElem = document.getElementById('fieldCount');
+  const diseaseCountElem = document.getElementById('diseaseCount');
+  const guidanceCountElem = document.getElementById('guidanceCount');
+  
+  if (!isLoggedIn()) return;
+  
+  const userId = getCurrentUserId();
+  
+  try {
+    // Display real field count from API
+    if (fieldCountElem) {
+      try {
+        const fieldsData = await fetchAPI(`fields?user_id=${userId}`, 'GET');
+        if (fieldsData && fieldsData.fields) {
+          fieldCountElem.textContent = fieldsData.fields.length.toString();
+        } else {
+          fieldCountElem.textContent = '0';
+        }
+      } catch (error) {
+        console.error('Error fetching fields count:', error);
+        fieldCountElem.textContent = '0';
+      }
+    }
+    
+    // Display real disease report count
+    if (diseaseCountElem) {
+      try {
+        const diseaseReportsData = await fetchAPI(`disease_reports?user_id=${userId}`, 'GET');
+        if (diseaseReportsData && diseaseReportsData.reports) {
+          diseaseCountElem.textContent = diseaseReportsData.reports.length.toString();
+        } else {
+          diseaseCountElem.textContent = '0';
+        }
+      } catch (error) {
+        console.error('Error fetching disease reports count:', error);
+        diseaseCountElem.textContent = '0';
+      }
+    }
+    
+    // Display real saved guidance count
+    if (guidanceCountElem) {
+      try {
+        // Get data from localStorage to avoid extra API calls
+        const savedGuidances = JSON.parse(localStorage.getItem(`saved_guidances_${userId}`) || '[]');
+        guidanceCountElem.textContent = savedGuidances.length.toString();
+      } catch (error) {
+        console.error('Error getting saved guidances count:', error);
+        guidanceCountElem.textContent = '0';
+      }
+    }
+  } catch (error) {
+    console.error('Error updating usage stats:', error);
+    // Set fallback values
+    if (fieldCountElem) fieldCountElem.textContent = '0';
+    if (diseaseCountElem) diseaseCountElem.textContent = '0';
+    if (guidanceCountElem) guidanceCountElem.textContent = '0';
   }
 }
 
