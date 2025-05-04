@@ -708,9 +708,15 @@ function getCurrentUserId() {
   return localStorage.getItem('user_id');
 }
 
-function login(userId, username) {
+function login(userId, username, email = null) {
   localStorage.setItem('user_id', userId);
   localStorage.setItem('username', username);
+  
+  // Store email if available
+  if (email) {
+    localStorage.setItem('user_email', email);
+  }
+  
   updateAuthUI();
   showSection('homeSection');
   
