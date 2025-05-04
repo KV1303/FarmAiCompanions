@@ -5,6 +5,7 @@ import 'constants/app_constants.dart';
 import 'constants/app_colors.dart';
 import 'providers/auth_provider.dart';
 import 'providers/language_provider.dart';
+import 'providers/ad_provider.dart';
 import 'screens/splash_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/auth/login_screen.dart';
@@ -16,6 +17,7 @@ import 'screens/market_prices/market_prices_screen.dart';
 import 'screens/weather/weather_screen.dart';
 import 'screens/profile/profile_screen.dart';
 import 'utils/localization.dart';
+import 'widgets/consent_dialog.dart';
 
 class FarmAssistApp extends StatelessWidget {
   const FarmAssistApp({Key? key}) : super(key: key);
@@ -24,6 +26,15 @@ class FarmAssistApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final languageProvider = Provider.of<LanguageProvider>(context);
+    final adProvider = Provider.of<AdProvider>(context);
+    
+    // Check if we need to show the consent dialog
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!adProvider.consentRequested && !authProvider.isLoading) {
+        // Show consent dialog on first app launch
+        _showConsentDialog(context);
+      }
+    });
 
     return MaterialApp(
       title: 'FarmAssist AI',
@@ -130,5 +141,25 @@ class FarmAssistApp extends StatelessWidget {
         AppConstants.routeProfile: (context) => const ProfileScreen(),
       },
     );
+  }
+  
+  Future<void> _showConsentDialog(BuildContext context) async {
+    final adProvider = Provider.of<AdProvider>(context, listen: false);
+    
+    // Show the consent dialog
+    final result = await ConsentDialog.show(context);
+    
+    // Set user preference for ads
+    if (result == true) {
+      // User accepted personalized ads
+      adProvider.setPersonalizedAdsEnabled(true);
+      // Initialize AdMob with personalized ads
+      adProvider.initializeAds(true);
+    } else {
+      // User declined personalized ads, but we still show non-personalized ads
+      adProvider.setPersonalizedAdsEnabled(false);
+      // Initialize AdMob with non-personalized ads
+      adProvider.initializeAds(false);
+    }
   }
 }
