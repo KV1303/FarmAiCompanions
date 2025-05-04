@@ -2178,6 +2178,90 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
   
+  <!-- Global modal management functions -->
+  <script>
+    // Global function to properly hide any modal
+    window.hideModal = function(modalEl) {
+      if (!modalEl) return;
+      
+      console.log('Global hideModal function called for:', modalEl.id);
+      
+      try {
+        // Try Bootstrap's built-in method first
+        const bsModal = bootstrap.Modal.getInstance(modalEl);
+        if (bsModal) {
+          bsModal.hide();
+          // Wait a bit and perform additional cleanup
+          setTimeout(() => {
+            cleanupModalEffects();
+          }, 150);
+          return;
+        }
+      } catch (e) {
+        console.warn('Bootstrap modal error:', e);
+      }
+      
+      // Manual fallback with multiple cleanup steps for guaranteed cleanup
+      try {
+        // 1. Direct DOM manipulation
+        modalEl.style.display = 'none';
+        modalEl.classList.remove('show');
+        document.body.classList.remove('modal-open');
+        
+        // 2. Remove backdrop
+        const backdrop = document.querySelector('.modal-backdrop');
+        if (backdrop) backdrop.remove();
+        
+        // 3. Additional cleanup
+        cleanupModalEffects();
+      } catch (e) {
+        console.error('Modal cleanup error:', e);
+      }
+    };
+    
+    // Helper function to clean up modal side effects
+    function cleanupModalEffects() {
+      // Remove any inline styles that Bootstrap might have added
+      document.body.style.removeProperty('overflow');
+      document.body.style.removeProperty('padding-right');
+      
+      // Explicitly re-enable scrolling
+      document.body.style.overflow = 'visible';
+      
+      // Remove any stray backdrops
+      const backdrops = document.querySelectorAll('.modal-backdrop');
+      backdrops.forEach(el => el.remove());
+      
+      // Force layout recalculation to apply changes
+      document.body.offsetHeight;
+    }
+
+    // Global function to safely show modals
+    window.showModal = function(modalEl) {
+      if (!modalEl) return;
+      
+      console.log('Global showModal function called for:', modalEl.id);
+      
+      try {
+        const bsModal = new bootstrap.Modal(modalEl);
+        bsModal.show();
+      } catch (e) {
+        console.warn('Error showing modal:', e);
+        // Manual fallback
+        modalEl.style.display = 'block';
+        modalEl.classList.add('show');
+        document.body.classList.add('modal-open');
+        
+        // Create backdrop
+        if (!document.querySelector('.modal-backdrop')) {
+          const backdrop = document.createElement('div');
+          backdrop.className = 'modal-backdrop fade show';
+          document.body.appendChild(backdrop);
+        }
+      }
+    };
+  </script>
+  
   <!-- Add JavaScript files -->
   <script src="js/direct-translate.js"></script>
   <script src="js/main.js"></script>
