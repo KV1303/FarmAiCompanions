@@ -1950,7 +1950,7 @@ async function displayFieldDetails(field) {
     showSection('diseaseDetectionSection');
   });
   
-  // Set up the tab navigation with simpler approach
+  // Set up the tab navigation with simpler approach and add modal support
   document.getElementById('monitoring-btn').addEventListener('click', function() {
     document.querySelectorAll('#fieldTabs .nav-link').forEach(t => t.classList.remove('active'));
     this.classList.add('active');
@@ -1976,6 +1976,21 @@ async function displayFieldDetails(field) {
     document.getElementById('monitoring-content').classList.add('d-none');
     document.getElementById('diseases-content').classList.add('d-none');
     document.getElementById('recommendations-content').classList.remove('d-none');
+    
+    // Ensure modal trigger buttons work properly when recommendations tab is shown
+    document.querySelectorAll('#recommendations-content [data-bs-toggle="modal"]').forEach(button => {
+      button.addEventListener('click', function() {
+        try {
+          const targetModal = document.querySelector(this.getAttribute('data-bs-target'));
+          if (targetModal) {
+            const bsModal = new bootstrap.Modal(targetModal);
+            bsModal.show();
+          }
+        } catch (error) {
+          console.error('Error showing modal:', error);
+        }
+      });
+    });
   });
 }
 
@@ -2546,7 +2561,23 @@ function displayRecommendations(data) {
   const recommendationsContent = document.getElementById('recommendations-content');
   
   if (!data || (!data.recommendations && !data.generated_by)) {
-    recommendationsContent.innerHTML = '<p>No recommendations available for this field</p>';
+    recommendationsContent.innerHTML = `
+      <div class="row">
+        <div class="col-12 mb-3">
+          <p>No recommendations available for this field</p>
+        </div>
+        <div class="col-md-6 mb-2">
+          <button type="button" class="btn btn-success w-100" data-bs-toggle="modal" data-bs-target="#fertilizerModal">
+            <i class="fas fa-leaf me-2"></i>Get Fertilizer Recommendations
+          </button>
+        </div>
+        <div class="col-md-6 mb-2">
+          <button type="button" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#irrigationModal">
+            <i class="fas fa-tint me-2"></i>Get Irrigation Advice
+          </button>
+        </div>
+      </div>
+    `;
     return;
   }
   
@@ -2585,7 +2616,32 @@ function displayRecommendations(data) {
     `;
   }
   
+  // Add action buttons below the recommendations
+  html += `
+    <div class="row">
+      <div class="col-md-6 mb-2">
+        <button type="button" class="btn btn-success w-100" data-bs-toggle="modal" data-bs-target="#fertilizerModal">
+          <i class="fas fa-leaf me-2"></i>Get New Fertilizer Recommendations
+        </button>
+      </div>
+      <div class="col-md-6 mb-2">
+        <button type="button" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#irrigationModal">
+          <i class="fas fa-tint me-2"></i>Get Irrigation Advice
+        </button>
+      </div>
+    </div>
+  `;
+  
   recommendationsContent.innerHTML = html;
+  
+  // Ensure Bootstrap modals work by initializing them properly
+  document.querySelectorAll('[data-bs-toggle="modal"]').forEach(button => {
+    button.addEventListener('click', function() {
+      const targetModal = document.querySelector(this.getAttribute('data-bs-target'));
+      const bsModal = new bootstrap.Modal(targetModal);
+      bsModal.show();
+    });
+  });
 }
 
 // Event listeners
@@ -2685,15 +2741,37 @@ document.addEventListener('DOMContentLoaded', function() {
   // Add event listeners with null checks for fertilizer and irrigation buttons
   const fertilizerBtn = document.getElementById('generateFertilizerBtn');
   if (fertilizerBtn) {
-    fertilizerBtn.addEventListener('click', getAdvancedFertilizerRecommendations);
+    fertilizerBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      getAdvancedFertilizerRecommendations();
+    });
     console.log('Added event listener to fertilizer button');
   }
   
   const irrigationBtn = document.getElementById('generateIrrigationBtn');
   if (irrigationBtn) {
-    irrigationBtn.addEventListener('click', getIrrigationRecommendations);
+    irrigationBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      getIrrigationRecommendations();
+    });
     console.log('Added event listener to irrigation button');
   }
+  
+  // Ensure bootstrap modals can be shown through JavaScript
+  document.querySelectorAll('[data-bs-toggle="modal"]').forEach(button => {
+    button.addEventListener('click', function() {
+      try {
+        const targetModalId = this.getAttribute('data-bs-target');
+        const targetModal = document.querySelector(targetModalId);
+        if (targetModal) {
+          const bsModal = new bootstrap.Modal(targetModal);
+          bsModal.show();
+        }
+      } catch (error) {
+        console.error('Error showing modal:', error);
+      }
+    });
+  });
   
   // Login form
   document.getElementById('loginForm').addEventListener('submit', async function(e) {
