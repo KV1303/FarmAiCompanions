@@ -7,17 +7,21 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import google.generativeai as genai
 
+# Import PostgreSQL database config (for backward compatibility during migration)
 from db_config import init_db
 from models import (
     db, User, Field, DiseaseReport, IrrigationRecord, FertilizerRecord, 
     MarketPrice, MarketFavorite, WeatherForecast, ChatHistory
 )
 
+# Import Firebase for new data storage
+from firebase_init import firebase
+
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)  # Enable CORS
 
-# Initialize database
+# Initialize databases - both PostgreSQL (legacy) and Firebase (new)
 db = init_db(app)
 
 # Configure Google Gemini API if API key is available

@@ -7,10 +7,12 @@ def initialize_firebase():
     """Initialize Firebase Admin SDK for server-side operations"""
     try:
         # Create a credential configuration dict
+        private_key = os.environ.get('FIREBASE_PRIVATE_KEY')
+        
         cred_config = {
             "type": "service_account",
             "project_id": os.environ.get('VITE_FIREBASE_PROJECT_ID'),
-            "private_key": os.environ.get('FIREBASE_PRIVATE_KEY').replace('\\n', '\n') if os.environ.get('FIREBASE_PRIVATE_KEY') else None,
+            "private_key": private_key.replace('\\n', '\n') if private_key else None,
             "client_email": os.environ.get('FIREBASE_CLIENT_EMAIL'),
             "client_id": os.environ.get('FIREBASE_CLIENT_ID'),
             "auth_uri": "https://accounts.google.com/o/oauth2/auth",
@@ -20,8 +22,9 @@ def initialize_firebase():
         }
         
         # Check if credentials are valid
-        if None in [cred_config["private_key"], cred_config["client_email"]]:
+        if not cred_config["private_key"] or not cred_config["client_email"]:
             print("Warning: Missing critical Firebase credentials. Some features may not work.")
+            return None
         
         # Initialize with Firebase credentials
         cred = credentials.Certificate(cred_config)
@@ -48,15 +51,20 @@ def initialize_firebase():
         
         # Try minimal initialization for development/testing
         try:
-            firebase_app = firebase_admin.initialize_app()
-            print("Firebase initialized with minimal configuration")
+            # Default app already exists? Try getting the current one
+            try:
+                firebase_app = firebase_admin.get_app()
+                print("Using existing Firebase app instance")
+            except ValueError:
+                firebase_app = firebase_admin.initialize_app()
+                print("Firebase initialized with minimal configuration")
+                
             db = firestore.client()
-            bucket = None
             
             return {
                 'app': firebase_app,
                 'db': db,
-                'bucket': bucket,
+                'bucket': None,
                 'auth': auth
             }
         except Exception as fallback_error:

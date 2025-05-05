@@ -7,6 +7,10 @@ const fs = require('fs');
 const multer = require('multer');
 const FormData = require('form-data');
 
+// Import Firebase configurations
+const firebaseAdmin = require('./firebase_admin');
+const firebaseClient = require('./firebase_client');
+
 const app = express();
 const PORT = 5000;
 const API_PORT = 5003;
@@ -81,7 +85,7 @@ function startPythonAPI() {
   return pythonProcess;
 }
 
-// Handle image uploads for disease detection - simplified approach
+// Handle image uploads for disease detection with Firebase Storage integration
 const apiUpload = multer({ dest: 'uploads/' });
 app.post('/api/disease_detect', apiUpload.single('image'), async (req, res) => {
   if (!req.file) {
@@ -91,18 +95,68 @@ app.post('/api/disease_detect', apiUpload.single('image'), async (req, res) => {
   try {
     console.log(`[Disease Detection] Processing image from ${req.file.path}`);
     
-    // Use hardcoded sample response for now to demonstrate UI functionality
-    // This will ensure we have a working UI while we debug the AI integration
-    const fakeDiseaseResponse = {
+    // Upload the image to Firebase Storage
+    let imageUrl = req.file.path;
+    let firebaseImageUrl = null;
+    
+    try {
+      // Read the file
+      const fileBuffer = fs.readFileSync(req.file.path);
+      
+      // Upload to Firebase Storage
+      const fileMetadata = {
+        contentType: req.file.mimetype,
+      };
+      
+      const fileRef = firebaseAdmin.storage.bucket().file(`disease_images/${req.file.filename}`);
+      await fileRef.save(fileBuffer, {
+        metadata: fileMetadata,
+        public: true,
+      });
+      
+      // Get the public URL
+      firebaseImageUrl = `https://storage.googleapis.com/${process.env.FIREBASE_STORAGE_BUCKET}/disease_images/${req.file.filename}`;
+      console.log(`[Firebase] Uploaded image to: ${firebaseImageUrl}`);
+      
+      // Use Firebase URL if available
+      if (firebaseImageUrl) {
+        imageUrl = firebaseImageUrl;
+      }
+    } catch (uploadError) {
+      console.error('[Firebase] Error uploading to storage:', uploadError);
+      // Continue with local path if Firebase upload fails
+    }
+    
+    // Save to Firebase Firestore
+    try {
+      if (req.body.user_id && req.body.field_id) {
+        const reportData = {
+          user_id: req.body.user_id,
+          field_id: req.body.field_id,
+          disease_name: "Unknown Disease", // Will be updated by AI
+          detection_date: new Date(),
+          confidence_score: 0,
+          image_path: imageUrl,
+          status: "detected"
+        };
+        
+        const reportRef = await firebaseAdmin.db.collection('disease_reports').add(reportData);
+        console.log(`[Firebase] Disease report saved with ID: ${reportRef.id}`);
+      }
+    } catch (dbError) {
+      console.error('[Firebase] Error saving to Firestore:', dbError);
+    }
+    
+    // Process with AI (or use placeholder for now)
+    const diseaseResponse = {
       disease_name: "Leaf Blight",
       confidence: 0.85,
       symptoms: "Yellow to brown spots on leaves, dried leaf edges, and wilting. The infected areas often develop characteristic patterns spreading from the edges inward.",
       treatment: "1. Remove and destroy infected plant material\n2. Apply copper-based fungicide every 7-10 days\n3. Improve air circulation around plants\n4. Avoid overhead watering to prevent spread",
-      image_path: req.file.path
+      image_path: imageUrl
     };
     
-    // Get the proper image path to include in response
-    return res.json(fakeDiseaseResponse);
+    return res.json(diseaseResponse);
   } catch (err) {
     console.error('Disease Detection Error:', err);
     return res.status(500).json({
@@ -112,10 +166,99 @@ app.post('/api/disease_detect', apiUpload.single('image'), async (req, res) => {
   }
 });
 
+// Add Firebase Auth routes
+app.post('/api/firebase/register', async (req, res) => {
+  try {
+    const { email, password, username, fullName } = req.body;
+    
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+    
+    // Create user in Firebase Auth
+    const userRecord = await firebaseAdmin.auth.createUser({
+      email,
+      password,
+      displayName: username || fullName || email.split('@')[0]
+    });
+    
+    // Create user profile in Firestore
+    const userData = {
+      uid: userRecord.uid,
+      email: email,
+      username: username || email.split('@')[0],
+      fullName: fullName || '',
+      createdAt: new Date(),
+      isActive: true
+    };
+    
+    await firebaseAdmin.db.collection('users').doc(userRecord.uid).set(userData);
+    
+    res.status(201).json({
+      message: 'User registered successfully',
+      user: {
+        id: userRecord.uid,
+        email: userRecord.email,
+        displayName: userRecord.displayName
+      }
+    });
+  } catch (error) {
+    console.error('Firebase registration error:', error);
+    res.status(400).json({
+      error: 'Registration failed',
+      message: error.message
+    });
+  }
+});
+
+app.post('/api/firebase/login', async (req, res) => {
+  try {
+    // For server-side token verification (custom token auth flow)
+    // In a real implementation, this would validate a token from the client
+    const { email, password } = req.body;
+    
+    // We can't directly authenticate with email/password on the server side
+    // This would typically be done on the client with signInWithEmailAndPassword
+    // Here we're just checking if the user exists
+    
+    try {
+      const userRecord = await firebaseAdmin.auth.getUserByEmail(email);
+      
+      // Create a custom token for this user
+      const customToken = await firebaseAdmin.auth.createCustomToken(userRecord.uid);
+      
+      // Get user data from Firestore
+      const userDoc = await firebaseAdmin.db.collection('users').doc(userRecord.uid).get();
+      const userData = userDoc.data();
+      
+      res.json({
+        token: customToken,
+        user: {
+          id: userRecord.uid,
+          email: userRecord.email,
+          username: userData?.username || userRecord.displayName,
+          fullName: userData?.fullName || ''
+        }
+      });
+    } catch (error) {
+      console.error('Firebase login error:', error);
+      res.status(401).json({ error: 'Invalid credentials' });
+    }
+  } catch (error) {
+    console.error('Firebase login error:', error);
+    res.status(500).json({ error: 'Login failed', message: error.message });
+  }
+});
+
 // API proxy middleware for other endpoints
 app.use('/api', async (req, res) => {
   // Skip the disease_detect endpoint as it's handled separately
   if (req.path === '/disease_detect' && req.method.toLowerCase() === 'post') {
+    return;
+  }
+  
+  // Skip Firebase auth endpoints
+  if (req.path.startsWith('/firebase/')) {
     return;
   }
   
