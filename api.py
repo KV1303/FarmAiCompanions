@@ -1162,15 +1162,11 @@ def get_market_prices():
         except Exception as e:
             print(f"Error generating market prices: {str(e)}")
     
-    # Group by crop type for easier UI handling
-    grouped_results = {}
-    for result in results:
-        crop = result['crop_type']
-        if crop not in grouped_results:
-            grouped_results[crop] = []
-        grouped_results[crop].append(result)
-    
-    return jsonify(grouped_results)
+    # Return results in the expected format for the frontend
+    # Frontend expects: { prices: [...] }
+    return jsonify({
+        'prices': results
+    })
 
 @app.route('/api/disease_detect', methods=['POST'])
 def detect_disease():
