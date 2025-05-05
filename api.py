@@ -1860,7 +1860,7 @@ def generate_fertilizer_recommendations_from_firebase_field(field_data):
 
 @app.route('/api/market_favorites', methods=['GET', 'POST'])
 def handle_market_favorites():
-    """Handle market price favorites/alerts"""
+    """Handle market price favorites/alerts - FIREBASE ONLY"""
     
     if request.method == 'POST':
         # Create new market favorite/alert
@@ -1873,34 +1873,36 @@ def handle_market_favorites():
             return jsonify({'error': 'Missing required fields: user_id and crop_type are required'}), 400
         
         try:
-            # Check if user exists
-            user = User.query.get(data['user_id'])
+            # Check if user exists using Firebase
+            user = User.get(data['user_id'])
             if not user:
                 return jsonify({'error': 'User not found'}), 404
                 
-            # Create new favorite
-            favorite = MarketFavorite(
-                user_id=data['user_id'],
-                crop_type=data['crop_type'],
-                market_name=data.get('market_name', ''),
-                price_alert_min=data.get('price_alert_min'),
-                price_alert_max=data.get('price_alert_max')
-            )
+            # Create favorite data for Firebase
+            favorite_data = {
+                'user_id': data['user_id'],
+                'crop_type': data['crop_type'],
+                'market_name': data.get('market_name', ''),
+                'price_alert_min': data.get('price_alert_min'),
+                'price_alert_max': data.get('price_alert_max'),
+                'created_at': datetime.utcnow().isoformat()
+            }
             
-            db.session.add(favorite)
-            db.session.commit()
+            # Save to Firebase
+            new_favorite = MarketFavorite.create(favorite_data)
             
+            # Return the saved data with the generated ID
             return jsonify({
-                'id': favorite.id,
-                'user_id': favorite.user_id,
-                'crop_type': favorite.crop_type,
-                'market_name': favorite.market_name,
-                'price_alert_min': favorite.price_alert_min,
-                'price_alert_max': favorite.price_alert_max
+                'id': new_favorite.get('id', ''),
+                'user_id': new_favorite.get('user_id', ''),
+                'crop_type': new_favorite.get('crop_type', ''),
+                'market_name': new_favorite.get('market_name', ''),
+                'price_alert_min': new_favorite.get('price_alert_min'),
+                'price_alert_max': new_favorite.get('price_alert_max')
             })
             
         except Exception as e:
-            print(f"Error creating market favorite: {str(e)}")
+            print(f"Error creating market favorite in Firebase: {str(e)}")
             return jsonify({'error': f'Failed to create market favorite: {str(e)}'}), 500
     
     else:
@@ -1911,25 +1913,24 @@ def handle_market_favorites():
             return jsonify({'error': 'User ID is required'}), 400
             
         try:
-            favorites = MarketFavorite.query.filter_by(user_id=user_id).all()
+            # Use Firebase to get favorites
+            favorites = MarketFavorite.get_by_user_id(user_id)
             
+            # Return the favorites list
+            if not favorites:
+                favorites = []
+                
             return jsonify({
-                'favorites': [{
-                    'id': f.id,
-                    'user_id': f.user_id,
-                    'crop_type': f.crop_type,
-                    'market_name': f.market_name,
-                    'price_alert_min': f.price_alert_min,
-                    'price_alert_max': f.price_alert_max
-                } for f in favorites]
+                'favorites': favorites
             })
             
         except Exception as e:
+            print(f"Error retrieving market favorites from Firebase: {str(e)}")
             return jsonify({'error': f'Failed to retrieve market favorites: {str(e)}'}), 500
 
 @app.route('/api/users/register', methods=['POST'])
 def register_user():
-    """Register a new user"""
+    """Register a new user - FIREBASE ONLY"""
     data = request.json
     
     if not data:
@@ -1940,74 +1941,86 @@ def register_user():
         if field not in data:
             return jsonify({'error': f'Missing required field: {field}'}), 400
     
-    # Check if user already exists
-    if User.query.filter_by(username=data['username']).first():
-        return jsonify({'error': 'Username already taken'}), 409
-        
-    if User.query.filter_by(email=data['email']).first():
+    # Check if user already exists by email
+    existing_by_email = User.get_by_email(data['email'])
+    if existing_by_email:
         return jsonify({'error': 'Email already registered'}), 409
+        
+    # Check if user already exists by username
+    existing_by_username = User.get_by_username(data['username'])
+    if existing_by_username:
+        return jsonify({'error': 'Username already taken'}), 409
     
     # Hash password (in a real app, use a proper password hashing library like bcrypt)
     import hashlib
     password_hash = hashlib.sha256(data['password'].encode()).hexdigest()
     
-    # Create user
+    # Create user data
     try:
-        user = User(
-            username=data['username'],
-            email=data['email'],
-            password_hash=password_hash,
-            full_name=data.get('full_name', ''),
-            phone=data.get('phone', ''),
-            profile_image=data.get('profile_image', '')
-        )
+        user_data = {
+            'username': data['username'],
+            'email': data['email'],
+            'password': password_hash,  # Store the hashed password
+            'full_name': data.get('full_name', ''),
+            'phone': data.get('phone', ''),
+            'profile_image': data.get('profile_image', ''),
+            'created_at': datetime.utcnow().isoformat(),
+            'is_active': True
+        }
         
-        db.session.add(user)
-        db.session.commit()
+        # Create user in Firebase
+        new_user = User.create(user_data)
         
         return jsonify({
-            'id': user.id,
-            'username': user.username,
-            'email': user.email,
+            'id': new_user.get('id', ''),
+            'username': new_user.get('username', ''),
+            'email': new_user.get('email', ''),
             'message': 'User registered successfully'
         }), 201
         
     except Exception as e:
-        db.session.rollback()
+        print(f"Firebase user registration error: {str(e)}")
         return jsonify({'error': f'Failed to register user: {str(e)}'}), 500
 
 @app.route('/api/users/login', methods=['POST'])
 def login_user():
-    """Log in a user"""
+    """Log in a user - FIREBASE ONLY"""
     data = request.json
     
     if not data or 'username' not in data or 'password' not in data:
         return jsonify({'error': 'Username and password required'}), 400
     
-    # Find user
-    user = User.query.filter_by(username=data['username']).first()
-    if not user:
-        return jsonify({'error': 'User not found'}), 404
-    
-    # Check password
-    import hashlib
-    password_hash = hashlib.sha256(data['password'].encode()).hexdigest()
-    
-    if user.password_hash != password_hash:
-        return jsonify({'error': 'Invalid password'}), 401
-    
-    # In a real app, generate a JWT token here
-    return jsonify({
-        'id': user.id,
-        'username': user.username,
-        'email': user.email,
-        'token': 'simulated_jwt_token',  # Placeholder - use a real JWT in production
-        'message': 'Login successful'
-    })
+    try:
+        # Find user by username
+        user = User.get_by_username(data['username'])
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        
+        # Check password
+        import hashlib
+        password_hash = hashlib.sha256(data['password'].encode()).hexdigest()
+        
+        if user.get('password') != password_hash:
+            return jsonify({'error': 'Invalid password'}), 401
+        
+        # Generate a simple session token (in a real app, use JWT)
+        session_token = hashlib.sha256(f"{user.get('id')}-{datetime.utcnow().isoformat()}".encode()).hexdigest()
+        
+        return jsonify({
+            'id': user.get('id', ''),
+            'username': user.get('username', ''),
+            'email': user.get('email', ''),
+            'token': session_token,
+            'message': 'Login successful'
+        })
+        
+    except Exception as e:
+        print(f"Firebase login error: {str(e)}")
+        return jsonify({'error': f'Login failed: {str(e)}'}), 500
 
 @app.route('/api/fields', methods=['GET', 'POST'])
 def handle_fields():
-    """Handle field operations"""
+    """Handle field operations - FIREBASE ONLY"""
     user_id = request.args.get('user_id') or (request.json or {}).get('user_id')
     
     if not user_id:
@@ -2015,41 +2028,13 @@ def handle_fields():
     
     # Get all fields for a user
     if request.method == 'GET':
-        # Try to get fields using Firebase model first
         try:
             print(f"Using Firebase to get fields for user {user_id}")
             fields_data = Field.get_by_user_id(user_id)
-            if fields_data:
-                return jsonify({'fields': fields_data})
+            return jsonify({'fields': fields_data or []})
         except Exception as e:
-            print(f"Firebase fields error: {e}, falling back to PostgreSQL")
-            
-        # Fallback to PostgreSQL
-        try:
-            # Convert string user_id to int if needed for PostgreSQL
-            if isinstance(user_id, str) and user_id.isdigit():
-                pg_user_id = int(user_id)
-            else:
-                pg_user_id = user_id
-                
-            # Use SQL model
-            from models import Field as SQLField
-            fields = SQLField.query.filter_by(user_id=pg_user_id).all()
-            return jsonify({
-                'fields': [{
-                    'id': f.id,
-                    'name': f.name,
-                    'location': f.location,
-                    'area': f.area,
-                    'crop_type': f.crop_type,
-                    'planting_date': f.planting_date.strftime('%Y-%m-%d') if f.planting_date else None,
-                    'soil_type': f.soil_type,
-                    'notes': f.notes
-                } for f in fields]
-            })
-        except Exception as pg_error:
-            print(f"PostgreSQL fields error: {pg_error}")
-            return jsonify({'fields': []})
+            print(f"Firebase fields error: {e}")
+            return jsonify({'error': f'Failed to retrieve fields: {str(e)}'}), 500
     
     # Create a new field
     elif request.method == 'POST':
@@ -2061,7 +2046,6 @@ def handle_fields():
         if 'name' not in data:
             return jsonify({'error': 'Field name is required'}), 400
         
-        # Try to create field using Firebase first
         try:
             print(f"Using Firebase to create field for user {user_id}")
             
@@ -2115,131 +2099,59 @@ def handle_fields():
                 return jsonify({
                     'id': firebase_field.get('id', ''),
                     'name': firebase_field.get('name', ''),
-                    'message': 'Field created successfully in Firebase',
+                    'message': 'Field created successfully',
                     'guidance': guidance
                 }), 201
                 
-        except Exception as firebase_error:
-            print(f"Firebase field creation error: {firebase_error}, falling back to PostgreSQL")
-            
-        # Fallback to PostgreSQL
-        try:
-            # Convert user_id to int if needed for PostgreSQL
-            if isinstance(user_id, str) and user_id.isdigit():
-                pg_user_id = int(user_id)
-            else:
-                pg_user_id = user_id
-                
-            # Parse planting date if provided
-            planting_date = None
-            if data.get('planting_date'):
-                planting_date = datetime.strptime(data['planting_date'], '%Y-%m-%d')
-            
-            # Use SQLField model from models
-            from models import Field as SQLField
-            field = SQLField(
-                user_id=pg_user_id,
-                name=data['name'],
-                location=data.get('location', ''),
-                area=data.get('area'),
-                crop_type=data.get('crop_type', ''),
-                planting_date=planting_date,
-                soil_type=data.get('soil_type', ''),
-                notes=data.get('notes', '')
-            )
-            
-            db.session.add(field)
-            db.session.commit()
-            
-            # Generate AI farming guidance
-            guidance = generate_farm_guidance(field)
-            
-            return jsonify({
-                'id': field.id,
-                'name': field.name,
-                'message': 'Field created successfully in PostgreSQL',
-                'guidance': guidance
-            }), 201
-            
-        except Exception as pg_error:
-            db.session.rollback()
-            return jsonify({'error': f'Failed to create field: {str(pg_error)}'}), 500
+        except Exception as e:
+            print(f"Firebase field creation error: {e}")
+            return jsonify({'error': f'Failed to create field: {str(e)}'}), 500
 
 @app.route('/api/farm_guidance/<field_id>', methods=['GET'])
 def get_farm_guidance(field_id):
-    """Get AI-powered farm management guidance for a specific field"""
+    """Get AI-powered farm management guidance for a specific field - FIREBASE ONLY"""
     
     try:
-        # Try to get field from Firebase first
-        try:
-            print(f"Using Firebase to get field {field_id}")
-            firebase_field = Field.get(field_id)
-            
-            if firebase_field:
-                # Create a Field-like object with the required attributes
-                class FieldObject:
-                    def __init__(self, data):
-                        self.id = data.get('id', '')
-                        self.name = data.get('name', '')
-                        self.location = data.get('location', '')
-                        self.area = data.get('area', 0)
-                        self.crop_type = data.get('crop_type', '')
-                        self.planting_date = None  # We'll parse this if available
-                        self.soil_type = data.get('soil_type', '')
-                        self.notes = data.get('notes', '')
-                        
-                        # Parse planting date if it exists
-                        if data.get('planting_date'):
-                            try:
-                                self.planting_date = datetime.fromisoformat(data['planting_date'])
-                            except:
-                                pass
-                
-                field = FieldObject(firebase_field)
-                
-                # Generate guidance
-                guidance = generate_farm_guidance(field)
-                
-                # Return structured guidance
-                return jsonify({
-                    'field_id': field.id,
-                    'field_name': field.name,
-                    'crop_type': field.crop_type,
-                    'guidance': guidance
-                })
-        except Exception as firebase_error:
-            print(f"Firebase field error: {firebase_error}, falling back to PostgreSQL")
+        print(f"Using Firebase to get field {field_id}")
+        firebase_field = Field.get(field_id)
         
-        # Fallback to PostgreSQL
-        try:
-            # Convert to int for PostgreSQL if it's a string
-            if isinstance(field_id, str) and field_id.isdigit():
-                pg_field_id = int(field_id)
-            else:
-                pg_field_id = field_id
-                
-            # Use SQL model
-            from models import Field as SQLField
-            field = SQLField.query.get(pg_field_id)
+        if not firebase_field:
+            return jsonify({'error': 'Field not found'}), 404
             
-            if not field:
-                return jsonify({'error': 'Field not found'}), 404
+        # Create a Field-like object with the required attributes
+        class FieldObject:
+            def __init__(self, data):
+                self.id = data.get('id', '')
+                self.name = data.get('name', '')
+                self.location = data.get('location', '')
+                self.area = data.get('area', 0)
+                self.crop_type = data.get('crop_type', '')
+                self.planting_date = None  # We'll parse this if available
+                self.soil_type = data.get('soil_type', '')
+                self.notes = data.get('notes', '')
                 
-            # Generate guidance
-            guidance = generate_farm_guidance(field)
-            
-            # Return structured guidance
-            return jsonify({
-                'field_id': field.id,
-                'field_name': field.name,
-                'crop_type': field.crop_type,
-                'guidance': guidance
-            })
-        except Exception as pg_error:
-            print(f"PostgreSQL field error: {pg_error}")
-            return jsonify({'error': 'Field not found or error generating guidance'}), 404
+                # Parse planting date if it exists
+                if data.get('planting_date'):
+                    try:
+                        self.planting_date = datetime.fromisoformat(data['planting_date'])
+                    except:
+                        pass
+        
+        field = FieldObject(firebase_field)
+        
+        # Generate guidance
+        guidance = generate_farm_guidance(field)
+        
+        # Return structured guidance
+        return jsonify({
+            'field_id': field.id,
+            'field_name': field.name,
+            'crop_type': field.crop_type,
+            'guidance': guidance
+        })
             
     except Exception as e:
+        print(f"Firebase farm guidance error: {str(e)}")
         return jsonify({'error': f'Failed to generate farm guidance: {str(e)}'}), 500
 
 # Quick guidance endpoint (no authentication required)
