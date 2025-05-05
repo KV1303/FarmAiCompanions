@@ -20,11 +20,6 @@ from models import (
 from firebase_init import firebase
 from firebase_models import (
     User, Field, DiseaseReport, IrrigationRecord, FertilizerRecord,
-    MarketPrice, MarketFavorite, WeatherForecast, ChatHistory
-)
-# Import Firebase data models
-from firebase_models import (
-    User, Field, DiseaseReport, IrrigationRecord, FertilizerRecord,
     MarketPrice, MarketFavorite, WeatherForecast, ChatHistory,
     migrate_from_postgres_to_firebase
 )
@@ -2509,29 +2504,53 @@ def get_disease_reports():
         
         if not user_id:
             return jsonify({'error': 'User ID is required'}), 400
-            
-        # Query the database for disease reports for this user
-        reports = DiseaseReport.query.filter_by(user_id=user_id).all()
         
-        # Convert reports to a list of dictionaries
-        reports_list = []
-        for report in reports:
-            reports_list.append({
-                'id': report.id,
-                'user_id': report.user_id,
-                'field_id': report.field_id,
-                'disease_name': report.disease_name,
-                'detection_date': report.detection_date.isoformat() if report.detection_date else None,
-                'confidence_score': report.confidence_score,
-                'image_path': report.image_path,
-                'symptoms': report.symptoms,
-                'treatment_recommendations': report.treatment_recommendations,
-                'status': report.status,
-                'notes': report.notes
-            })
+        # Try to get disease reports using Firebase model first
+        try:
+            print(f"Using Firebase to get disease reports for user {user_id}")
             
-        return jsonify({'reports': reports_list}), 200
+            # Get reports from Firebase model
+            firebase_reports = DiseaseReport.get_by_user_id(user_id)
+            
+            if firebase_reports:
+                return jsonify({'reports': firebase_reports}), 200
+        except Exception as firebase_error:
+            print(f"Firebase disease reports error: {firebase_error}, falling back to PostgreSQL")
         
+        # Fallback to PostgreSQL
+        try:
+            # Convert user_id to int if needed for PostgreSQL
+            if isinstance(user_id, str) and user_id.isdigit():
+                pg_user_id = int(user_id)
+            else:
+                pg_user_id = user_id
+                
+            # Use SQL model from models
+            from models import DiseaseReport as SQLDiseaseReport
+            reports = SQLDiseaseReport.query.filter_by(user_id=pg_user_id).all()
+            
+            # Convert reports to a list of dictionaries
+            reports_list = []
+            for report in reports:
+                reports_list.append({
+                    'id': report.id,
+                    'user_id': report.user_id,
+                    'field_id': report.field_id,
+                    'disease_name': report.disease_name,
+                    'detection_date': report.detection_date.isoformat() if report.detection_date else None,
+                    'confidence_score': report.confidence_score,
+                    'image_path': report.image_path,
+                    'symptoms': report.symptoms,
+                    'treatment_recommendations': report.treatment_recommendations,
+                    'status': report.status,
+                    'notes': report.notes
+                })
+                
+            return jsonify({'reports': reports_list}), 200
+        except Exception as pg_error:
+            print(f"PostgreSQL disease reports error: {pg_error}")
+            return jsonify({'reports': []}), 200
+    
     except Exception as e:
         print(f"Error in get_disease_reports endpoint: {str(e)}")
         # Return empty array instead of error to prevent UI issues
