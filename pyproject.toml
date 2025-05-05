@@ -13,4 +13,5 @@ dependencies = [
     "trafilatura>=2.0.0",
     "psycopg2-binary>=2.9.10",
     "anthropic>=0.50.0",
+    "firebase-admin>=6.8.0",
 ]
