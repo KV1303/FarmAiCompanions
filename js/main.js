@@ -1,5 +1,26 @@
 // FarmAssist AI - Main JavaScript File
 
+// Show interstitial ad and proceed with original function
+// This wrapper will be used to add ad display to existing functions
+function withInterstitialAd(originalFunction) {
+  return function(...args) {
+    // Check if adManager is available
+    if (window.adManager && typeof window.adManager.showInterstitial === 'function') {
+      // Show the ad
+      window.adManager.showInterstitial();
+      
+      // Short delay to let the ad process start
+      setTimeout(() => {
+        // Call the original function with all arguments
+        return originalFunction.apply(this, args);
+      }, 300);
+    } else {
+      // If ad manager not available, just call the original function
+      return originalFunction.apply(this, args);
+    }
+  };
+}
+
 // Advanced Fertilizer Recommendations functions
 async function getAdvancedFertilizerRecommendations() {
   const cropType = document.getElementById('fertCropType').value;
