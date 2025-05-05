@@ -1501,19 +1501,49 @@ def detect_disease():
     report = None
     if user_id and field_id:
         try:
-            report = DiseaseReport(
-                user_id=user_id,
-                field_id=field_id,
-                disease_name=disease_name,
-                confidence_score=confidence,
-                image_path=image_path,
-                symptoms=symptoms,
-                treatment_recommendations=treatment,
-                status='detected'
-            )
-            db.session.add(report)
-            db.session.commit()
+            # First try to save to Firebase
+            try:
+                print(f"Saving disease report to Firebase for user {user_id}, field {field_id}")
+                report_data = {
+                    'user_id': user_id,
+                    'field_id': field_id,
+                    'disease_name': disease_name,
+                    'confidence_score': confidence,
+                    'image_path': image_path,
+                    'symptoms': symptoms,
+                    'treatment_recommendations': treatment,
+                    'status': 'detected',
+                    'detection_date': datetime.utcnow().isoformat(),
+                }
+                
+                # Create report in Firebase
+                firebase_report = DiseaseReport.create(report_data)
+                if firebase_report:
+                    report = firebase_report
+                    print("Successfully saved disease report to Firebase")
+            except Exception as firebase_error:
+                print(f"Failed to save disease report to Firebase: {str(firebase_error)}")
+                print("Falling back to PostgreSQL for disease report storage")
+                
+                # Fallback to PostgreSQL if Firebase fails
+                from models import DiseaseReport as SQLDiseaseReport
+                sql_report = SQLDiseaseReport(
+                    user_id=user_id,
+                    field_id=field_id,
+                    disease_name=disease_name,
+                    confidence_score=confidence,
+                    image_path=image_path,
+                    symptoms=symptoms,
+                    treatment_recommendations=treatment,
+                    status='detected'
+                )
+                db.session.add(sql_report)
+                db.session.commit()
+                report = sql_report
+                print("Successfully saved disease report to PostgreSQL")
+                
         except Exception as e:
+            print(f"Failed to save disease report: {str(e)}")
             return jsonify({'error': f'Failed to save report: {str(e)}'}), 500
     
     # Return detection results
@@ -1538,17 +1568,51 @@ def get_field_monitoring():
     if not field_id:
         return jsonify({'error': 'Field ID is required'}), 400
     
-    # Get field from database
-    field = Field.query.get(field_id)
-    if not field:
-        return jsonify({'error': 'Field not found'}), 404
+    # Try to get field from Firebase first
+    field_data = None
+    try:
+        print(f"Using Firebase to get field monitoring data for field {field_id}")
+        field_data = Field.get(field_id)
+        
+        if not field_data:
+            # Fall back to PostgreSQL
+            raise Exception("Field not found in Firebase")
+            
+    except Exception as firebase_error:
+        print(f"Firebase field monitoring error: {firebase_error}, falling back to PostgreSQL")
+        
+        # Fallback to PostgreSQL
+        try:
+            from models import Field as SQLField
+            field = SQLField.query.get(field_id)
+            if not field:
+                return jsonify({'error': 'Field not found'}), 404
+                
+            # Convert to dict for consistent handling
+            field_data = {
+                'id': field.id,
+                'user_id': field.user_id,
+                'name': field.name,
+                'location': field.location,
+                'area': field.area,
+                'crop_type': field.crop_type,
+                'planting_date': field.planting_date.isoformat() if field.planting_date else None,
+                'soil_type': field.soil_type,
+                'satellite_data': field.satellite_data,
+                'last_updated': field.last_updated.isoformat() if field.last_updated else None
+            }
+        except Exception as pg_error:
+            print(f"PostgreSQL field monitoring error: {pg_error}")
+            return jsonify({'error': 'Field not found in either database'}), 404
     
-    # Check if we have cached satellite data
-    if field.satellite_data and (datetime.utcnow() - field.last_updated).days < 7:
-        return jsonify(field.satellite_data)
+    # Check if we have cached satellite data that's recent (within 7 days)
+    if field_data.get('satellite_data') and field_data.get('last_updated'):
+        last_updated = datetime.fromisoformat(field_data['last_updated']) if isinstance(field_data['last_updated'], str) else field_data['last_updated']
+        
+        if (datetime.utcnow() - last_updated).days < 7:
+            return jsonify(field_data['satellite_data'])
     
-    # In a real app, you would call the Farmonaut API here
-    # For now, we'll create simulated data
+    # No recent data, so generate new satellite data
     try:
         # Simulated satellite data
         current_day = datetime.utcnow().day
@@ -1578,14 +1642,37 @@ def get_field_monitoring():
                 'recommendation': 'Check for water stress or nutrient deficiency'
             })
         
-        # Update field in database
-        field.satellite_data = satellite_data
-        field.last_updated = datetime.utcnow()
-        db.session.commit()
+        # Update field in Firebase first
+        try:
+            updated_data = {
+                'satellite_data': satellite_data,
+                'last_updated': datetime.utcnow().isoformat()
+            }
+            
+            # Update in Firebase
+            Field.update(field_id, updated_data)
+            print(f"Updated satellite data in Firebase for field {field_id}")
+            
+        except Exception as firebase_update_error:
+            print(f"Firebase update error: {firebase_update_error}, falling back to PostgreSQL")
+            
+            # Fallback to PostgreSQL
+            try:
+                from models import Field as SQLField
+                field = SQLField.query.get(field_id)
+                if field:
+                    field.satellite_data = satellite_data
+                    field.last_updated = datetime.utcnow()
+                    db.session.commit()
+                    print(f"Updated satellite data in PostgreSQL for field {field_id}")
+            except Exception as pg_update_error:
+                print(f"PostgreSQL update error: {pg_update_error}")
+                # Continue anyway, we'll still return the generated data
         
         return jsonify(satellite_data)
         
     except Exception as e:
+        print(f"Error generating satellite data: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/fertilizer_recommendations', methods=['GET'])
@@ -1596,11 +1683,37 @@ def get_fertilizer_recommendations():
     if not field_id:
         return jsonify({'error': 'Field ID is required'}), 400
     
-    # Get field from database
-    field = Field.query.get(field_id)
-    if not field:
-        return jsonify({'error': 'Field not found'}), 404
+    # Try to get field from Firebase first
+    field_data = None
+    try:
+        print(f"Using Firebase to get field for fertilizer recommendations {field_id}")
+        field_data = Field.get(field_id)
+        
+        if not field_data:
+            # Fall back to PostgreSQL
+            raise Exception("Field not found in Firebase")
+            
+    except Exception as firebase_error:
+        print(f"Firebase field error: {firebase_error}, falling back to PostgreSQL")
+        
+        # Fallback to PostgreSQL
+        try:
+            from models import Field as SQLField
+            field = SQLField.query.get(field_id)
+            if not field:
+                return jsonify({'error': 'Field not found'}), 404
+                
+            # Use the PostgreSQL field object directly
+            return generate_fertilizer_recommendations_from_sql_field(field)
+        except Exception as pg_error:
+            print(f"PostgreSQL field error: {pg_error}")
+            return jsonify({'error': 'Field not found in either database'}), 404
     
+    # If we got here, we're using Firebase field data
+    return generate_fertilizer_recommendations_from_firebase_field(field_data)
+
+# Helper function to generate fertilizer recommendations from a SQL field object
+def generate_fertilizer_recommendations_from_sql_field(field):
     try:
         # Use Gemini if available for advanced recommendations
         if GEMINI_API_KEY:
@@ -1624,12 +1737,17 @@ def get_fertilizer_recommendations():
                 )
             
             # Add recent fertilizer applications if any
-            recent_applications = FertilizerRecord.query.filter_by(field_id=field.id).order_by(FertilizerRecord.date.desc()).limit(3).all()
-            if recent_applications:
-                context += "\nRecent Fertilizer Applications:\n"
-                for app in recent_applications:
-                    context += f"- {app.date.strftime('%Y-%m-%d')}: {app.fertilizer_type} at {app.application_rate} kg/ha\n"
-            
+            try:
+                from models import FertilizerRecord as SQLFertilizerRecord
+                recent_applications = SQLFertilizerRecord.query.filter_by(field_id=field.id).order_by(SQLFertilizerRecord.date.desc()).limit(3).all()
+                if recent_applications:
+                    context += "\nRecent Fertilizer Applications:\n"
+                    for app in recent_applications:
+                        context += f"- {app.date.strftime('%Y-%m-%d')}: {app.fertilizer_type} at {app.application_rate} kg/ha\n"
+            except Exception as e:
+                print(f"Error getting fertilizer records: {e}")
+                # Continue without fertilizer records
+                
             # Generate fertilizer recommendations
             prompt = (
                 f"{context}\n\n"
@@ -1653,10 +1771,83 @@ def get_fertilizer_recommendations():
             
         else:
             # Fallback basic recommendations based on crop type
+            crop_type = field.crop_type
+            soil_type = field.soil_type
+            return generate_rule_based_fertilizer_recommendations(crop_type, soil_type, "mid-season")
+            
+    except Exception as e:
+        print(f"Error generating fertilizer recommendations from SQL field: {e}")
+        return jsonify({'error': str(e)}), 500
+
+# Helper function to generate fertilizer recommendations from a Firebase field document
+def generate_fertilizer_recommendations_from_firebase_field(field_data):
+    try:
+        # Use Gemini if available for advanced recommendations
+        if GEMINI_API_KEY:
+            model = genai.GenerativeModel('gemini-pro')
+            
+            # Extract field data
+            crop_type = field_data.get('crop_type', 'Unknown')
+            soil_type = field_data.get('soil_type', 'Unknown')
+            planting_date = field_data.get('planting_date', 'Unknown')
+            area = field_data.get('area', 0)
+            
+            # Format planting date properly if it's available as a string
+            if isinstance(planting_date, str) and planting_date not in ('Unknown', ''):
+                try:
+                    planting_date = datetime.fromisoformat(planting_date.replace('Z', '+00:00')).strftime('%Y-%m-%d')
+                except:
+                    # If parsing fails, just use the string as is
+                    pass
+            
+            # Prepare context for the model
+            context = (
+                f"Field Information:\n"
+                f"- Crop Type: {crop_type}\n"
+                f"- Soil Type: {soil_type}\n"
+                f"- Planting Date: {planting_date}\n"
+                f"- Field Size: {area} hectares\n"
+            )
+            
+            # Add satellite data if available
+            satellite_data = field_data.get('satellite_data', {})
+            if satellite_data:
+                context += (
+                    f"- Current NDVI: {satellite_data.get('ndvi', 'Unknown')}\n"
+                    f"- Field Health: {satellite_data.get('field_health', 'Unknown')}\n"
+                    f"- Crop Stage: {satellite_data.get('crop_stage', 'Unknown')}\n"
+                )
+            
+            # Generate fertilizer recommendations
+            prompt = (
+                f"{context}\n\n"
+                "Based on the above information, provide fertilizer recommendations including:\n"
+                "1. Recommended fertilizer types\n"
+                "2. Application rates in kg/hectare\n"
+                "3. Timing of application\n"
+                "4. Application method\n"
+                "5. Special considerations for this crop and soil type"
+            )
+            
+            response = model.generate_content(prompt)
+            recommendations = response.text
+            
+            # Use the field_id from the Firebase document
+            field_id = field_data.get('id', 'unknown')
+            return jsonify({
+                'field_id': field_id,
+                'crop_type': crop_type,
+                'recommendations': recommendations,
+                'generated_by': 'Google Gemini AI'
+            })
+            
+        else:
+            # Fallback basic recommendations based on crop type
             recommendations = {}
             
-            if field.crop_type:
-                crop = field.crop_type.lower()
+            crop_type = field_data.get('crop_type', '')
+            if crop_type:
+                crop = crop_type.lower()
                 
                 if 'rice' in crop:
                     recommendations = {
@@ -1699,9 +1890,11 @@ def get_fertilizer_recommendations():
                     'notes': 'Please update field information with crop type for specific recommendations.'
                 }
                 
+            # Use the field_id from the Firebase document
+            field_id = field_data.get('id', 'unknown')
             return jsonify({
-                'field_id': field.id,
-                'crop_type': field.crop_type,
+                'field_id': field_id,
+                'crop_type': crop_type,
                 'recommendations': recommendations,
                 'generated_by': 'Basic recommendation system'
             })
