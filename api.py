@@ -1842,53 +1842,26 @@ def generate_fertilizer_recommendations_from_firebase_field(field_data):
             })
             
         else:
-            # Fallback basic recommendations based on crop type
-            recommendations = {}
-            
+            # Use the rule-based function for consistent recommendations
             crop_type = field_data.get('crop_type', '')
-            if crop_type:
-                crop = crop_type.lower()
-                
-                if 'rice' in crop:
-                    recommendations = {
-                        'npk_ratio': '14-14-14',
-                        'rate': '300-350 kg/ha',
-                        'timing': 'Apply 50% at planting, 25% during tillering, and 25% at panicle initiation',
-                        'method': 'Broadcast application before planting, followed by top dressing',
-                        'notes': 'Ensure good water management. Consider zinc supplements in deficient soils.'
-                    }
-                elif 'wheat' in crop:
-                    recommendations = {
-                        'npk_ratio': '12-32-16',
-                        'rate': '250-300 kg/ha',
-                        'timing': 'Apply 50% at sowing and 50% at first irrigation',
-                        'method': 'Incorporate into soil before sowing, top dress remainder',
-                        'notes': 'Additional nitrogen application may be needed at heading stage if crop shows deficiency.'
-                    }
-                elif 'cotton' in crop:
-                    recommendations = {
-                        'npk_ratio': '20-10-10',
-                        'rate': '200-250 kg/ha',
-                        'timing': 'Apply 30% at planting, 40% at square formation, 30% at flowering',
-                        'method': 'Side-dress or band application',
-                        'notes': 'Consider foliar application of micronutrients during peak growth.'
-                    }
-                else:
-                    recommendations = {
-                        'npk_ratio': '15-15-15',
-                        'rate': '300 kg/ha',
-                        'timing': 'Apply 50% at planting and 50% during vegetative growth',
-                        'method': 'Broadcast and incorporate into soil',
-                        'notes': 'Consult local extension service for specific recommendations for your crop and soil type.'
-                    }
-            else:
-                recommendations = {
-                    'npk_ratio': 'Unknown (crop type not specified)',
-                    'rate': 'Consult local agricultural extension',
-                    'timing': 'Depends on crop growth stage',
-                    'method': 'Depends on fertilizer type and crop',
-                    'notes': 'Please update field information with crop type for specific recommendations.'
-                }
+            soil_type = field_data.get('soil_type', 'Unknown')
+            growth_stage = "mid-season"  # Default to mid-season if unknown
+            
+            # Extract growth stage from satellite data if available
+            satellite_data = field_data.get('satellite_data', {})
+            if satellite_data and satellite_data.get('crop_stage'):
+                stage = satellite_data.get('crop_stage', '').lower()
+                if 'early' in stage or 'seedling' in stage:
+                    growth_stage = 'early'
+                elif 'flower' in stage or 'fruit' in stage or 'reproductive' in stage:
+                    growth_stage = 'late'
+            
+            # Get recommendations from rule-based system for consistency
+            recommendations = generate_rule_based_fertilizer_recommendations(
+                crop_type=crop_type,
+                soil_type=soil_type,
+                growth_stage=growth_stage
+            )
                 
             # Use the field_id from the Firebase document
             field_id = field_data.get('id', 'unknown')
