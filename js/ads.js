@@ -11,37 +11,58 @@ let interstitialAd = null;
 let isAdMobInitialized = false;
 let interstitialAdLoaded = false;
 let lastInterstitialShownTime = 0; // Timestamp of the last interstitial shown
-const INTERSTITIAL_COOLDOWN = 60000; // 60 seconds cooldown between interstitial ads
+const INTERSTITIAL_COOLDOWN = 30000; // 30 seconds cooldown between interstitial ads to increase ad views
+let bannerAdsCreated = false; // Track if banner ads have been created
+let adMobAvailable = false; // Track if AdMob is available
 
 // Initialize AdMob
 function initializeAdMob() {
   if (isAdMobInitialized) return;
   
+  // Check if running in Cordova environment with AdMob plugin
   if (typeof admob === 'undefined') {
-    console.log('AdMob not available, skipping initialization');
+    console.log('AdMob not available, using placeholder ads');
+    // Show placeholders instead of real ads
+    adMobAvailable = false;
+    showPlaceholderAds();
     return;
   }
   
-  console.log('Initializing AdMob...');
+  console.log('Initializing AdMob with units:', AD_UNITS);
+  adMobAvailable = true;
   
-  // Initialize with necessary options
-  admob.initialize({
-    // Optional options for better UX
-    bannerAtTop: false,
-    overlap: false,
-    offsetTopBar: false,
-    isTesting: false // Set to true during development
-  }).then(() => {
-    console.log('AdMob initialization complete');
-    isAdMobInitialized = true;
-    
-    // Start preloading interstitial
-    preloadInterstitial();
-    
-    // Create banner ads in designated containers
-    createBannerAds();
-  }).catch(error => {
-    console.error('AdMob initialization error:', error);
+  // Add device-ready event listener for Cordova
+  document.addEventListener('deviceready', function() {
+    // Initialize AdMob with necessary options
+    admob.initialize({
+      // Optional options for better UX
+      bannerAtTop: false,
+      overlap: false,
+      offsetTopBar: false,
+      isTesting: false // Set to true during development
+    }).then(() => {
+      console.log('AdMob initialization complete');
+      isAdMobInitialized = true;
+      
+      // Start preloading interstitial
+      preloadInterstitial();
+      
+      // Create banner ads in designated containers
+      createBannerAds();
+    }).catch(error => {
+      console.error('AdMob initialization error:', error);
+      // Show placeholders if AdMob fails to initialize
+      showPlaceholderAds();
+    });
+  }, false);
+}
+
+// Show placeholder ads when AdMob is not available
+function showPlaceholderAds() {
+  console.log('Showing placeholder ads');
+  document.querySelectorAll('.ad-banner-container .ad-placeholder').forEach(placeholder => {
+    placeholder.style.display = 'block';
+    placeholder.textContent = 'विज्ञापन स्थान'; // Advertisement space in Hindi
   });
 }
 
@@ -99,11 +120,19 @@ function createBannerAds() {
 
 // Show interstitial ad with rate limiting
 function showInterstitialAd() {
-  if (!isAdMobInitialized || !interstitialAdLoaded) {
+  // If AdMob isn't available or initialized, we just return without showing an ad
+  if (!adMobAvailable || !isAdMobInitialized) {
+    console.log('AdMob not available or not initialized, skipping interstitial ad');
+    return;
+  }
+  
+  // If an interstitial ad isn't loaded yet, skip showing
+  if (!interstitialAdLoaded) {
     console.log('Interstitial ad not ready to show');
     return;
   }
   
+  // Rate limiting to prevent too many ads from showing
   const now = Date.now();
   if (now - lastInterstitialShownTime < INTERSTITIAL_COOLDOWN) {
     console.log('Interstitial ad on cooldown, skipping');
@@ -112,6 +141,7 @@ function showInterstitialAd() {
   
   console.log('Showing interstitial ad...');
   
+  // Show the interstitial ad
   admob.showInterstitial().then(() => {
     console.log('Interstitial ad shown successfully');
     interstitialAdLoaded = false;
@@ -121,6 +151,8 @@ function showInterstitialAd() {
     setTimeout(preloadInterstitial, 1000);
   }).catch(error => {
     console.error('Error showing interstitial ad:', error);
+    // If showing fails, reset the cooldown to allow another attempt sooner
+    lastInterstitialShownTime = now - (INTERSTITIAL_COOLDOWN / 2);
   });
 }
 
@@ -128,12 +160,20 @@ function showInterstitialAd() {
 function setupAdClickHandlers() {
   // List of buttons that should trigger interstitial ads
   const adTriggerButtons = [
-    '.track-price-btn',  // Track price buttons
-    '#scanForDiseaseBtn',  // Scan for disease button
-    '#getWeatherBtn',     // Get weather button
-    '#applyFilterBtn',    // Apply filter button for market prices
-    '#btnGenerateGuidance', // Generate guidance button
-    '.card-link'          // Various card links throughout the app
+    '.track-price-btn',       // Track price buttons
+    '#scanForDiseaseBtn',     // Scan for disease button
+    '#getWeatherBtn',         // Get weather button
+    '#applyFilterBtn',        // Apply filter button for market prices
+    '#btnGenerateGuidance',   // Generate guidance button
+    '#analyzeImageBtn',       // Disease detection analyze button
+    '#btnAdvancedFertilizer', // Advanced fertilizer recommendations button
+    '#btnIrrigation',         // Irrigation recommendations button
+    '#featureChatbotBtn',     // Chatbot feature button
+    '#sendChatMessageBtn',    // Send chat message button
+    '#saveFieldBtn',          // Save field button
+    '#saveDiseaseReportBtn',  // Save disease report button
+    '.card-link',             // Various card links throughout the app
+    '.nav-link'               // Navigation links
   ];
   
   // Add event listeners to all buttons matching the selectors
@@ -177,24 +217,37 @@ function refreshAdClickHandlers() {
 function createAdContainers() {
   console.log('Creating ad banner containers...');
   
-  // Places to insert banner ad containers
+  // No need to programmatically create containers that are already in the HTML
+  // We now have banner ad containers for:
+  // - Market prices section (market-top-ad)
+  // - Weather section (weather-top-ad)
+  // - Disease detection section (disease-top-ad)
+  // - Testimonials section (testimonials-top-ad)
+  
+  // Add a few more strategic locations for banner ads
   const adLocations = [
-    { selector: '#dashboardSection .row', position: 'afterend' },
-    { selector: '#marketPricesSection .container', position: 'afterbegin' },
-    { selector: '#diseaseDetectionSection .container', position: 'beforeend' },
-    { selector: '#farmGuidanceSection .container', position: 'afterend' },
-    { selector: '#settingsSection .container', position: 'afterbegin' }
+    { selector: '#chatSection .container', position: 'afterbegin', id: 'chat-top-ad' },
+    { selector: '#farmManagementSection .container', position: 'afterbegin', id: 'farmmanagement-top-ad' }, 
+    { selector: '#dashboardSection .row', position: 'afterend', id: 'dashboard-bottom-ad' }
   ];
   
   adLocations.forEach((location, index) => {
     const targetElement = document.querySelector(location.selector);
-    if (!targetElement) return;
+    if (!targetElement) {
+      console.log(`Target element not found for ${location.selector}`);
+      return;
+    }
+    
+    // Check if this container already exists
+    if (document.getElementById(location.id)) {
+      console.log(`Ad container ${location.id} already exists, skipping`);
+      return;
+    }
     
     const adContainer = document.createElement('div');
-    adContainer.className = 'ad-banner-container';
-    adContainer.id = `ad-container-${index}`;
-    adContainer.style.cssText = 'width: 100%; height: 50px; margin: 15px 0; text-align: center; background-color: #f8f9fa; padding: 5px; border-radius: 5px;';
-    adContainer.innerHTML = '<p class="ad-placeholder">Advertisement</p>';
+    adContainer.className = 'ad-banner-container mb-3 text-center';
+    adContainer.id = location.id;
+    adContainer.innerHTML = '<p class="ad-placeholder">विज्ञापन</p>';
     
     if (location.position === 'afterend') {
       targetElement.insertAdjacentElement('afterend', adContainer);
@@ -208,12 +261,54 @@ function createAdContainers() {
   });
 }
 
+// Detect mobile platforms for AdMob integration
+function detectMobilePlatform() {
+  const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+  
+  // Check if it's an Android device
+  if (/android/i.test(userAgent)) {
+    console.log('Android device detected');
+    return 'android';
+  }
+  
+  // Check if it's an iOS device
+  if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+    console.log('iOS device detected');
+    return 'ios';
+  }
+  
+  // It's not a mobile device or not a recognized platform
+  console.log('Desktop or unrecognized mobile platform detected');
+  return 'web';
+}
+
+// Initialize platform-specific ad settings
+function initPlatformSpecificSettings() {
+  const platform = detectMobilePlatform();
+  
+  // Apply platform-specific settings
+  if (platform === 'android' || platform === 'ios') {
+    console.log(`Applying AdMob settings for ${platform}`);
+    // Mobile platforms will use the Cordova AdMob plugin
+    document.addEventListener('deviceready', function() {
+      initializeAdMob();
+    }, false);
+  } else {
+    // Web platform gets placeholder ads
+    showPlaceholderAds();
+  }
+}
+
 // Expose functions globally
 window.adManager = {
   showInterstitial: showInterstitialAd,
   refreshHandlers: refreshAdClickHandlers,
-  createAdContainers: createAdContainers
+  createAdContainers: createAdContainers,
+  initPlatform: initPlatformSpecificSettings
 };
 
 // Create ad containers when page loads
-document.addEventListener('DOMContentLoaded', createAdContainers);
+document.addEventListener('DOMContentLoaded', function() {
+  createAdContainers();
+  initPlatformSpecificSettings();
+});
