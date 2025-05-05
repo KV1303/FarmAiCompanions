@@ -18,6 +18,10 @@ from models import (
 
 # Import Firebase for primary data storage
 from firebase_init import firebase
+from firebase_models import (
+    User, Field, DiseaseReport, IrrigationRecord, FertilizerRecord,
+    MarketPrice, MarketFavorite, WeatherForecast, ChatHistory
+)
 # Import Firebase data models
 from firebase_models import (
     User, Field, DiseaseReport, IrrigationRecord, FertilizerRecord,
@@ -1867,19 +1871,41 @@ def handle_fields():
     
     # Get all fields for a user
     if request.method == 'GET':
-        fields = Field.query.filter_by(user_id=user_id).all()
-        return jsonify({
-            'fields': [{
-                'id': f.id,
-                'name': f.name,
-                'location': f.location,
-                'area': f.area,
-                'crop_type': f.crop_type,
-                'planting_date': f.planting_date.strftime('%Y-%m-%d') if f.planting_date else None,
-                'soil_type': f.soil_type,
-                'notes': f.notes
-            } for f in fields]
-        })
+        # Try to get fields using Firebase model first
+        try:
+            print(f"Using Firebase to get fields for user {user_id}")
+            fields_data = Field.get_by_user_id(user_id)
+            if fields_data:
+                return jsonify({'fields': fields_data})
+        except Exception as e:
+            print(f"Firebase fields error: {e}, falling back to PostgreSQL")
+            
+        # Fallback to PostgreSQL
+        try:
+            # Convert string user_id to int if needed for PostgreSQL
+            if isinstance(user_id, str) and user_id.isdigit():
+                pg_user_id = int(user_id)
+            else:
+                pg_user_id = user_id
+                
+            # Use SQL model
+            from models import Field as SQLField
+            fields = SQLField.query.filter_by(user_id=pg_user_id).all()
+            return jsonify({
+                'fields': [{
+                    'id': f.id,
+                    'name': f.name,
+                    'location': f.location,
+                    'area': f.area,
+                    'crop_type': f.crop_type,
+                    'planting_date': f.planting_date.strftime('%Y-%m-%d') if f.planting_date else None,
+                    'soil_type': f.soil_type,
+                    'notes': f.notes
+                } for f in fields]
+            })
+        except Exception as pg_error:
+            print(f"PostgreSQL fields error: {pg_error}")
+            return jsonify({'fields': []})
     
     # Create a new field
     elif request.method == 'POST':
@@ -1891,14 +1917,84 @@ def handle_fields():
         if 'name' not in data:
             return jsonify({'error': 'Field name is required'}), 400
         
+        # Try to create field using Firebase first
         try:
+            print(f"Using Firebase to create field for user {user_id}")
+            
+            # Parse planting date if provided
+            planting_date = None
+            if data.get('planting_date'):
+                planting_date = datetime.strptime(data['planting_date'], '%Y-%m-%d').isoformat()
+            
+            # Prepare the field data
+            field_data = {
+                'user_id': user_id,
+                'name': data['name'],
+                'location': data.get('location', ''),
+                'area': data.get('area'),
+                'crop_type': data.get('crop_type', ''),
+                'planting_date': planting_date,
+                'soil_type': data.get('soil_type', ''),
+                'notes': data.get('notes', ''),
+                'created_at': datetime.utcnow().isoformat(),
+                'last_updated': datetime.utcnow().isoformat()
+            }
+            
+            # Create the field in Firebase
+            firebase_field = Field.create(field_data)
+            
+            if firebase_field:
+                # Create a Field-like object for guidance generation
+                class FieldObject:
+                    def __init__(self, data):
+                        self.id = data.get('id', '')
+                        self.name = data.get('name', '')
+                        self.location = data.get('location', '')
+                        self.area = data.get('area', 0)
+                        self.crop_type = data.get('crop_type', '')
+                        self.planting_date = None  # We'll parse this if available
+                        self.soil_type = data.get('soil_type', '')
+                        self.notes = data.get('notes', '')
+                        
+                        # Parse planting date if it exists
+                        if data.get('planting_date'):
+                            try:
+                                self.planting_date = datetime.fromisoformat(data['planting_date'])
+                            except:
+                                pass
+                
+                field_obj = FieldObject(firebase_field)
+                
+                # Generate AI farming guidance
+                guidance = generate_farm_guidance(field_obj)
+                
+                return jsonify({
+                    'id': firebase_field.get('id', ''),
+                    'name': firebase_field.get('name', ''),
+                    'message': 'Field created successfully in Firebase',
+                    'guidance': guidance
+                }), 201
+                
+        except Exception as firebase_error:
+            print(f"Firebase field creation error: {firebase_error}, falling back to PostgreSQL")
+            
+        # Fallback to PostgreSQL
+        try:
+            # Convert user_id to int if needed for PostgreSQL
+            if isinstance(user_id, str) and user_id.isdigit():
+                pg_user_id = int(user_id)
+            else:
+                pg_user_id = user_id
+                
             # Parse planting date if provided
             planting_date = None
             if data.get('planting_date'):
                 planting_date = datetime.strptime(data['planting_date'], '%Y-%m-%d')
             
-            field = Field(
-                user_id=user_id,
+            # Use SQLField model from models
+            from models import Field as SQLField
+            field = SQLField(
+                user_id=pg_user_id,
                 name=data['name'],
                 location=data.get('location', ''),
                 area=data.get('area'),
@@ -1917,36 +2013,88 @@ def handle_fields():
             return jsonify({
                 'id': field.id,
                 'name': field.name,
-                'message': 'Field created successfully',
+                'message': 'Field created successfully in PostgreSQL',
                 'guidance': guidance
             }), 201
             
-        except Exception as e:
+        except Exception as pg_error:
             db.session.rollback()
-            return jsonify({'error': f'Failed to create field: {str(e)}'}), 500
+            return jsonify({'error': f'Failed to create field: {str(pg_error)}'}), 500
 
-@app.route('/api/farm_guidance/<int:field_id>', methods=['GET'])
+@app.route('/api/farm_guidance/<field_id>', methods=['GET'])
 def get_farm_guidance(field_id):
     """Get AI-powered farm management guidance for a specific field"""
     
     try:
-        # Get the field
-        field = Field.query.get(field_id)
-        
-        if not field:
-            return jsonify({'error': 'Field not found'}), 404
+        # Try to get field from Firebase first
+        try:
+            print(f"Using Firebase to get field {field_id}")
+            firebase_field = Field.get(field_id)
             
-        # Generate guidance
-        guidance = generate_farm_guidance(field)
+            if firebase_field:
+                # Create a Field-like object with the required attributes
+                class FieldObject:
+                    def __init__(self, data):
+                        self.id = data.get('id', '')
+                        self.name = data.get('name', '')
+                        self.location = data.get('location', '')
+                        self.area = data.get('area', 0)
+                        self.crop_type = data.get('crop_type', '')
+                        self.planting_date = None  # We'll parse this if available
+                        self.soil_type = data.get('soil_type', '')
+                        self.notes = data.get('notes', '')
+                        
+                        # Parse planting date if it exists
+                        if data.get('planting_date'):
+                            try:
+                                self.planting_date = datetime.fromisoformat(data['planting_date'])
+                            except:
+                                pass
+                
+                field = FieldObject(firebase_field)
+                
+                # Generate guidance
+                guidance = generate_farm_guidance(field)
+                
+                # Return structured guidance
+                return jsonify({
+                    'field_id': field.id,
+                    'field_name': field.name,
+                    'crop_type': field.crop_type,
+                    'guidance': guidance
+                })
+        except Exception as firebase_error:
+            print(f"Firebase field error: {firebase_error}, falling back to PostgreSQL")
         
-        # Return structured guidance
-        return jsonify({
-            'field_id': field.id,
-            'field_name': field.name,
-            'crop_type': field.crop_type,
-            'guidance': guidance
-        })
-        
+        # Fallback to PostgreSQL
+        try:
+            # Convert to int for PostgreSQL if it's a string
+            if isinstance(field_id, str) and field_id.isdigit():
+                pg_field_id = int(field_id)
+            else:
+                pg_field_id = field_id
+                
+            # Use SQL model
+            from models import Field as SQLField
+            field = SQLField.query.get(pg_field_id)
+            
+            if not field:
+                return jsonify({'error': 'Field not found'}), 404
+                
+            # Generate guidance
+            guidance = generate_farm_guidance(field)
+            
+            # Return structured guidance
+            return jsonify({
+                'field_id': field.id,
+                'field_name': field.name,
+                'crop_type': field.crop_type,
+                'guidance': guidance
+            })
+        except Exception as pg_error:
+            print(f"PostgreSQL field error: {pg_error}")
+            return jsonify({'error': 'Field not found or error generating guidance'}), 404
+            
     except Exception as e:
         return jsonify({'error': f'Failed to generate farm guidance: {str(e)}'}), 500
 
