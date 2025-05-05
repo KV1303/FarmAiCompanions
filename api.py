@@ -2223,15 +2223,36 @@ def get_advanced_fertilizer_recommendations():
             try:
                 # Use the best available model
                 try:
-                    model = genai.GenerativeModel('gemini-1.5-pro')
-                except:
-                    # Fallback model selection logic remains similar
-                    for m in genai.list_models():
-                        if 'gemini' in m.name and 'generateContent' in m.supported_generation_methods:
-                            model_name = m.name.replace('models/', '')
-                            print(f"Using fallback model: {model_name}")
-                            model = genai.GenerativeModel(model_name)
-                            break
+                    print("Initializing model for fertilizer recommendations...")
+                    model = genai.GenerativeModel('gemini-1.5-pro-latest')
+                    print("Successfully initialized gemini-1.5-pro-latest model for fertilizer recommendations")
+                except Exception as model_error:
+                    print(f"Error initializing gemini-1.5-pro-latest model: {str(model_error)}")
+                    # Fallback model selection logic
+                    try:
+                        # Get list of available models
+                        available_models = genai.list_models()
+                        gemini_models = [m for m in available_models if 'gemini' in m.name and 'generateContent' in m.supported_generation_methods]
+                        
+                        # Choose the latest gemini model
+                        if gemini_models:
+                            for preferred_model in ['gemini-1.5-pro', 'gemini-pro', 'gemini-1.0-pro']:
+                                matching_models = [m for m in gemini_models if preferred_model in m.name]
+                                if matching_models:
+                                    model_name = matching_models[0].name
+                                    print(f"Using fallback model: {model_name}")
+                                    model = genai.GenerativeModel(model_name)
+                                    break
+                            else:
+                                # If none of the preferred models are found, use the first available gemini model
+                                model_name = gemini_models[0].name
+                                print(f"Using alternative model: {model_name}")
+                                model = genai.GenerativeModel(model_name)
+                        else:
+                            raise Exception("No suitable Gemini models available")
+                    except Exception as fallback_error:
+                        print(f"Error selecting fallback model: {str(fallback_error)}")
+                        raise
                 
                 # Construct the prompt for fertilizer recommendations
                 prompt = f"""
@@ -2412,15 +2433,36 @@ def get_irrigation_recommendations():
             try:
                 # Use the best available model
                 try:
-                    model = genai.GenerativeModel('gemini-1.5-pro')
-                except:
-                    # Fallback model selection
-                    for m in genai.list_models():
-                        if 'gemini' in m.name and 'generateContent' in m.supported_generation_methods:
-                            model_name = m.name.replace('models/', '')
-                            print(f"Using fallback model: {model_name}")
-                            model = genai.GenerativeModel(model_name)
-                            break
+                    print("Initializing model for irrigation recommendations...")
+                    model = genai.GenerativeModel('gemini-1.5-pro-latest')
+                    print("Successfully initialized gemini-1.5-pro-latest model for irrigation recommendations")
+                except Exception as model_error:
+                    print(f"Error initializing gemini-1.5-pro-latest model: {str(model_error)}")
+                    # Fallback model selection logic
+                    try:
+                        # Get list of available models
+                        available_models = genai.list_models()
+                        gemini_models = [m for m in available_models if 'gemini' in m.name and 'generateContent' in m.supported_generation_methods]
+                        
+                        # Choose the latest gemini model
+                        if gemini_models:
+                            for preferred_model in ['gemini-1.5-pro', 'gemini-pro', 'gemini-1.0-pro']:
+                                matching_models = [m for m in gemini_models if preferred_model in m.name]
+                                if matching_models:
+                                    model_name = matching_models[0].name
+                                    print(f"Using fallback model: {model_name}")
+                                    model = genai.GenerativeModel(model_name)
+                                    break
+                            else:
+                                # If none of the preferred models are found, use the first available gemini model
+                                model_name = gemini_models[0].name
+                                print(f"Using alternative model: {model_name}")
+                                model = genai.GenerativeModel(model_name)
+                        else:
+                            raise Exception("No suitable Gemini models available")
+                    except Exception as fallback_error:
+                        print(f"Error selecting fallback model: {str(fallback_error)}")
+                        raise
                 
                 # Construct the prompt for irrigation recommendations
                 prompt = f"""
