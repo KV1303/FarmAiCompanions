@@ -1113,8 +1113,8 @@ def get_weather():
         WeatherForecast.forecast_date >= today
     ).order_by(WeatherForecast.forecast_date).all()
     
-    # If we have forecasts and they're recent, return them
-    if forecasts and (datetime.utcnow() - forecasts[0].updated_at).total_seconds() < 86400:  # 24 hours
+    # Check if we have fresh forecasts (within last 60 seconds)
+    if forecasts and (datetime.utcnow() - forecasts[0].updated_at).total_seconds() < 60:  # Very short cache time for testing
         return jsonify({
             'location': location,
             'forecasts': [{
@@ -1131,40 +1131,77 @@ def get_weather():
     # Otherwise, try to fetch from a weather API (placeholder for now)
     # In a real app, you would use OpenWeatherMap, Weather.gov, etc.
     try:
-        # Simulated API call response
-        forecasts_data = [
-            {
-                'date': (today + timedelta(days=i)).strftime('%Y-%m-%d'),
-                'temp_min': 20 + i,
-                'temp_max': 30 + i,
-                'humidity': 65 - i,
-                'precipitation': 0.1 * i,
-                'wind_speed': 10 + (i % 5),
-                'description': 'Partly cloudy'
-            } for i in range(7)
-        ]
+        # Generate location-specific weather data using location name as a seed
+        import hashlib
         
-        # Store in database
+        # Create a hash of the location name to get consistent but different values per location
+        location_hash = int(hashlib.md5(location.encode()).hexdigest(), 16) % 100
+        
+        # Base temperature varies by location
+        base_temp_min = 18 + (location_hash % 8)  # 18-25°C min temp
+        base_temp_max = 28 + (location_hash % 8)  # 28-35°C max temp
+        
+        # Get different weather types based on location
+        weather_types = ['Sunny', 'Partly cloudy', 'Cloudy', 'Light rain', 'Rain', 'Thunderstorm', 'Foggy', 'Clear']
+        primary_weather = weather_types[location_hash % len(weather_types)]
+        secondary_weather = weather_types[(location_hash + 3) % len(weather_types)]
+        
+        forecasts_data = []
+        for i in range(7):
+            # Day-to-day variations
+            daily_variation = (i * 7 + location_hash) % 5 - 2  # -2 to +2 degrees
+            rain_chance = (location_hash + i * 13) % 100  # 0-99%
+            
+            # Decide today's weather
+            if i == 0 or i == 1:
+                weather = primary_weather
+            elif i == 5 or i == 6:
+                weather = secondary_weather
+            else:
+                # Middle days rotate between the two
+                weather = primary_weather if ((i + location_hash) % 2 == 0) else secondary_weather
+            
+            # Precipitation depends on weather type
+            precip = 0
+            if 'rain' in weather.lower() or 'storm' in weather.lower():
+                precip = 0.1 + (rain_chance / 100) * 0.9  # 0.1-1.0
+            elif 'cloudy' in weather.lower():
+                precip = (rain_chance / 100) * 0.4  # 0-0.4
+                
+            # Create the forecast
+            forecasts_data.append({
+                'date': (today + timedelta(days=i)).strftime('%Y-%m-%d'),
+                'temp_min': base_temp_min + daily_variation,
+                'temp_max': base_temp_max + daily_variation,
+                'humidity': 50 + (rain_chance // 2),  # 50-99%
+                'precipitation': round(precip, 2),
+                'wind_speed': 5 + (location_hash + i * 11) % 20,  # 5-24 km/h
+                'description': weather
+            })
+        
+        
+        # First, clear old forecast data for this location to ensure fresh data
+        old_forecasts = WeatherForecast.query.filter_by(location=location).all()
+        for old_forecast in old_forecasts:
+            db.session.delete(old_forecast)
+        db.session.commit()
+        
+        # Store new forecast data in database
         for forecast in forecasts_data:
             forecast_date = datetime.strptime(forecast['date'], '%Y-%m-%d')
-            db_forecast = WeatherForecast.query.filter_by(
-                location=location, 
-                forecast_date=forecast_date
-            ).first()
             
-            if not db_forecast:
-                db_forecast = WeatherForecast(
-                    location=location,
-                    forecast_date=forecast_date
-                )
-                
-            db_forecast.temperature_min = forecast['temp_min']
-            db_forecast.temperature_max = forecast['temp_max']
-            db_forecast.humidity = forecast['humidity']
-            db_forecast.precipitation = forecast['precipitation']
-            db_forecast.wind_speed = forecast['wind_speed']
-            db_forecast.weather_description = forecast['description']
-            db_forecast.updated_at = datetime.utcnow()
+            # Create a new forecast entry
+            db_forecast = WeatherForecast(
+                location=location,
+                forecast_date=forecast_date,
+                temperature_min=forecast['temp_min'],
+                temperature_max=forecast['temp_max'],
+                humidity=forecast['humidity'],
+                precipitation=forecast['precipitation'],
+                wind_speed=forecast['wind_speed'],
+                weather_description=forecast['description'],
+                updated_at=datetime.utcnow()
+            )
             
             db.session.add(db_forecast)
         
