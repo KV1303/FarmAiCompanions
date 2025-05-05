@@ -30,6 +30,10 @@ print("No migration needed - fully operating on Firebase")
 # Configure Google Gemini API if API key is available
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
 
+# Rate limit tracker to avoid quota issues
+last_api_call_time = {}
+rate_limit_interval = 10  # Seconds between API calls to avoid quota issues
+
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
     # Use the latest available Gemini model
@@ -38,25 +42,35 @@ if GEMINI_API_KEY:
         available_models = [m.name for m in genai.list_models()]
         print(f"Available Gemini models: {available_models}")
         
-        # Try to use the latest Pro model if available
-        if 'models/gemini-1.5-pro-latest' in available_models:
+        # Try to use Flash models first as they have higher quotas
+        if 'models/gemini-1.5-flash-latest' in available_models:
+            gemini_model = genai.GenerativeModel('models/gemini-1.5-flash-latest')
+            print("Using gemini-1.5-flash-latest model to avoid quota issues")
+        elif 'models/gemini-1.5-flash' in available_models:
+            gemini_model = genai.GenerativeModel('models/gemini-1.5-flash')
+            print("Using gemini-1.5-flash model to avoid quota issues")
+        elif 'models/gemini-1.5-pro-latest' in available_models:
             gemini_model = genai.GenerativeModel('models/gemini-1.5-pro-latest')
             print("Using gemini-1.5-pro-latest model")
-        elif 'models/gemini-1.5-pro' in available_models:
-            gemini_model = genai.GenerativeModel('models/gemini-1.5-pro')
-            print("Using gemini-1.5-pro model")
         else:
             # Fallback to any available Gemini model
             for model_name in available_models:
-                if 'gemini' in model_name and 'pro' in model_name:
+                if 'gemini' in model_name and 'flash' in model_name:
                     gemini_model = genai.GenerativeModel(model_name)
-                    print(f"Using fallback Gemini model: {model_name}")
+                    print(f"Using fallback Gemini Flash model: {model_name}")
                     break
             else:
-                print("No suitable Gemini model found, using first available model")
-                gemini_model = genai.GenerativeModel(available_models[0])
+                for model_name in available_models:
+                    if 'gemini' in model_name:
+                        gemini_model = genai.GenerativeModel(model_name)
+                        print(f"Using fallback Gemini model: {model_name}")
+                        break
+                else:
+                    print("No suitable Gemini model found, using first available model")
+                    gemini_model = genai.GenerativeModel(available_models[0])
     except Exception as e:
         print(f"Error initializing Gemini model: {str(e)}")
+        gemini_model = None
         # Set a dummy model that will be replaced on first use
         gemini_model = None
 else:
@@ -760,18 +774,8 @@ def chat():
                 ChatHistory.create(ai_chat_data)
                 print(f"Saved default AI response to Firebase for user {user_id}")
             except Exception as e:
-                print(f"Firebase default AI response save error: {e}, falling back to PostgreSQL")
-                
-                # Fallback to PostgreSQL if Firebase fails
-                ai_chat_entry = SQLChatHistory(
-                    user_id=user_id,
-                    session_id=session_id,
-                    message=ai_response,
-                    sender='assistant',
-                    context_data=context_data
-                )
-                db.session.add(ai_chat_entry)
-                db.session.commit()
+                print(f"Error saving default AI response: {str(e)}")
+                # Continue anyway - the response is still valid even if we couldn't save it
             
             return jsonify({'reply': ai_response})
             
@@ -827,7 +831,7 @@ def get_chat_history():
     session_id = request.args.get('session_id')
     limit = request.args.get('limit', 50, type=int)
     
-    # Try to get chat history using Firebase models
+    # Get chat history using Firebase models
     try:
         print(f"Using Firebase to get chat history for user {user_id}, session {session_id}")
         
@@ -861,36 +865,10 @@ def get_chat_history():
                 } for entry in chat_history]
             })
     except Exception as e:
-        print(f"Firebase chat history error: {e}, falling back to PostgreSQL")
-    
-    # Fallback to PostgreSQL
-    try:
-        query = SQLChatHistory.query.filter_by(user_id=user_id)
+        print(f"Firebase chat history error: {e}")
         
-        if session_id:
-            query = query.filter_by(session_id=session_id)
-        
-        # Get the most recent conversations
-        chat_history = query.order_by(SQLChatHistory.timestamp.desc()).limit(limit).all()
-        
-        # Reverse to get chronological order
-        chat_history = chat_history[::-1]
-        
-        return jsonify({
-            'history': [{
-                'id': entry.id,
-                'user_id': entry.user_id,
-                'session_id': entry.session_id,
-                'message': entry.message,
-                'sender': entry.sender,
-                'timestamp': entry.timestamp.isoformat(),
-                'intents': entry.context_data.get('intents', []) if entry.context_data else []
-            } for entry in chat_history]
-        })
-    except Exception as e:
-        print(f"PostgreSQL chat history error: {e}")
-        # Return empty history on error
-        return jsonify({'history': []})
+    # Return empty history on error
+    return jsonify({'history': []})
 
 
 @app.route('/api/chat_sessions', methods=['GET'])
@@ -898,7 +876,7 @@ def get_chat_sessions():
     """Get unique chat sessions for a user"""
     user_id = request.args.get('user_id', 'anonymous')
     
-    # Try to get chat sessions using Firebase models
+    # Get chat sessions using Firebase models
     try:
         print(f"Using Firebase to get chat sessions for user {user_id}")
         
@@ -932,94 +910,58 @@ def get_chat_sessions():
             
             return jsonify({'sessions': result})
     except Exception as e:
-        print(f"Firebase chat sessions error: {e}, falling back to PostgreSQL")
+        print(f"Firebase chat sessions error: {e}")
     
-    # Fallback to PostgreSQL
-    try:
-        # Use SQLAlchemy to get distinct session_ids with their most recent timestamp
-        sessions = db.session.query(
-            SQLChatHistory.session_id,
-            db.func.max(SQLChatHistory.timestamp).label('last_message_time')
-        ).filter_by(user_id=user_id).group_by(SQLChatHistory.session_id).all()
-        
-        # For each session, get the first message to use as a title
-        result = []
-        for session_id, last_time in sessions:
-            # Get first message in the session (usually a user question that started the conversation)
-            first_message = SQLChatHistory.query.filter_by(
-                user_id=user_id, 
-                session_id=session_id,
-                sender='user'
-            ).order_by(SQLChatHistory.timestamp.asc()).first()
-            
-            # Get message count
-            message_count = SQLChatHistory.query.filter_by(
-                user_id=user_id, 
-                session_id=session_id
-            ).count()
-            
-            # Get primary intent for this session
-            intents = {}
-            for chat in SQLChatHistory.query.filter_by(user_id=user_id, session_id=session_id).all():
-                if chat.context_data and 'intents' in chat.context_data:
-                    for intent in chat.context_data['intents']:
-                        intents[intent] = intents.get(intent, 0) + 1
-            
-            # Sort intents by frequency
-            primary_intents = sorted(intents.items(), key=lambda x: x[1], reverse=True)
-            primary_intent = primary_intents[0][0] if primary_intents else 'general_query'
-            
-            session_info = {
-                'session_id': session_id,
-                'last_message_time': last_time.isoformat(),
-                'message_count': message_count,
-                'primary_intent': primary_intent,
-                'title': first_message.message[:50] + '...' if first_message and len(first_message.message) > 50 else 
-                        (first_message.message if first_message else 'New Conversation')
-            }
-            
-            result.append(session_info)
-        
-        # Sort by most recent sessions first
-        result.sort(key=lambda x: x['last_message_time'], reverse=True)
-        
-        return jsonify({
-            'sessions': result
-        })
-    except Exception as e:
-        print(f"PostgreSQL chat sessions error: {e}")
-        # Return empty sessions on error
-        return jsonify({'sessions': []})
+    # Return empty sessions on error
+    return jsonify({'sessions': []})
 
 @app.route('/api/weather', methods=['GET'])
 def get_weather():
     """Get weather forecast for a location"""
     location = request.args.get('location', 'New Delhi')
     
-    # Try to fetch from database first
-    today = datetime.utcnow().date()
-    forecasts = WeatherForecast.query.filter(
-        WeatherForecast.location == location,
-        WeatherForecast.forecast_date >= today
-    ).order_by(WeatherForecast.forecast_date).all()
+    # Try to fetch from Firebase first
+    try:
+        # Get any existing forecasts for this location
+        forecasts = WeatherForecast.get_by_location(location)
+        
+        # Check if we have fresh forecasts (within last 30 minutes)
+        today = datetime.utcnow().date()
+        recent_forecasts = []
+        
+        for forecast in forecasts:
+            # Check if the forecast is for today or future dates
+            forecast_date = datetime.fromisoformat(forecast.get('forecast_date', '')).date() \
+                if forecast.get('forecast_date', '') else None
+            
+            updated_at = datetime.fromisoformat(forecast.get('updated_at', '')) \
+                if forecast.get('updated_at', '') else None
+                
+            if forecast_date and forecast_date >= today and updated_at and \
+               (datetime.utcnow() - updated_at).total_seconds() < 1800:  # 30 minutes
+                recent_forecasts.append(forecast)
+        
+        if recent_forecasts:
+            # Sort by date
+            recent_forecasts.sort(key=lambda x: x.get('forecast_date', ''))
+            
+            return jsonify({
+                'location': location,
+                'forecasts': [{
+                    'date': datetime.fromisoformat(f.get('forecast_date', '')).strftime('%Y-%m-%d') \
+                        if f.get('forecast_date', '') else '',
+                    'temp_min': f.get('temperature_min', 0),
+                    'temp_max': f.get('temperature_max', 0),
+                    'humidity': f.get('humidity', 0),
+                    'precipitation': f.get('precipitation', 0),
+                    'wind_speed': f.get('wind_speed', 0),
+                    'description': f.get('weather_description', '')
+                } for f in recent_forecasts]
+            })
+    except Exception as e:
+        print(f"Error fetching weather from Firebase: {str(e)}")
     
-    # Check if we have fresh forecasts (within last 60 seconds)
-    if forecasts and (datetime.utcnow() - forecasts[0].updated_at).total_seconds() < 60:  # Very short cache time for testing
-        return jsonify({
-            'location': location,
-            'forecasts': [{
-                'date': f.forecast_date.strftime('%Y-%m-%d'),
-                'temp_min': f.temperature_min,
-                'temp_max': f.temperature_max,
-                'humidity': f.humidity,
-                'precipitation': f.precipitation,
-                'wind_speed': f.wind_speed,
-                'description': f.weather_description
-            } for f in forecasts]
-        })
-    
-    # Otherwise, try to fetch from a weather API (placeholder for now)
-    # In a real app, you would use OpenWeatherMap, Weather.gov, etc.
+    # Otherwise, generate location-specific weather data
     try:
         # Generate location-specific weather data using location name as a seed
         import hashlib
@@ -1036,6 +978,7 @@ def get_weather():
         primary_weather = weather_types[location_hash % len(weather_types)]
         secondary_weather = weather_types[(location_hash + 3) % len(weather_types)]
         
+        today = datetime.utcnow().date()
         forecasts_data = []
         for i in range(7):
             # Day-to-day variations
@@ -1069,33 +1012,33 @@ def get_weather():
                 'description': weather
             })
         
-        
-        # First, clear old forecast data for this location to ensure fresh data
-        old_forecasts = WeatherForecast.query.filter_by(location=location).all()
-        for old_forecast in old_forecasts:
-            db.session.delete(old_forecast)
-        db.session.commit()
-        
-        # Store new forecast data in database
-        for forecast in forecasts_data:
-            forecast_date = datetime.strptime(forecast['date'], '%Y-%m-%d')
+        # Save new forecasts to Firebase
+        try:
+            # First, try to delete the old forecasts
+            WeatherForecast.delete_by_location(location)
             
-            # Create a new forecast entry
-            db_forecast = WeatherForecast(
-                location=location,
-                forecast_date=forecast_date,
-                temperature_min=forecast['temp_min'],
-                temperature_max=forecast['temp_max'],
-                humidity=forecast['humidity'],
-                precipitation=forecast['precipitation'],
-                wind_speed=forecast['wind_speed'],
-                weather_description=forecast['description'],
-                updated_at=datetime.utcnow()
-            )
+            # Store new forecast data in database
+            for forecast in forecasts_data:
+                forecast_date = datetime.strptime(forecast['date'], '%Y-%m-%d')
+                
+                # Create a new forecast entry
+                forecast_data = {
+                    'location': location,
+                    'forecast_date': forecast_date.isoformat(),
+                    'temperature_min': forecast['temp_min'],
+                    'temperature_max': forecast['temp_max'],
+                    'humidity': forecast['humidity'],
+                    'precipitation': forecast['precipitation'],
+                    'wind_speed': forecast['wind_speed'],
+                    'weather_description': forecast['description'],
+                    'updated_at': datetime.utcnow().isoformat()
+                }
+                
+                WeatherForecast.create(forecast_data)
             
-            db.session.add(db_forecast)
-        
-        db.session.commit()
+            print(f"Successfully stored weather forecasts for {location} in Firebase")
+        except Exception as save_error:
+            print(f"Error saving weather forecasts to Firebase: {str(save_error)}")
         
         return jsonify({
             'location': location,
@@ -1110,20 +1053,13 @@ def get_market_prices():
     """Get market prices for crops"""
     crop_type = request.args.get('crop_type')
     
-    # Query from database
-    query = MarketPrice.query
-    if crop_type:
-        query = query.filter_by(crop_type=crop_type)
-    
-    # Get today's data, or latest if none today
-    today = datetime.utcnow().date()
-    prices = query.filter(MarketPrice.date >= today).all()
-    
-    if not prices:
-        # Get latest records
-        latest_date = db.session.query(db.func.max(MarketPrice.date)).scalar()
-        if latest_date:
-            prices = query.filter(MarketPrice.date == latest_date).all()
+    # Try to get prices from Firebase
+    try:
+        # Get latest market prices, optionally filtered by crop type
+        if crop_type:
+            prices = MarketPrice.get_by_crop_type(crop_type)
+        else:
+            prices = MarketPrice.get_latest()
     
     # If still no data, try to fetch from external API
     if not prices:
