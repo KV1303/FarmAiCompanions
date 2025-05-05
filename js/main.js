@@ -3969,3 +3969,97 @@ function printSavedGuidance(guidanceId) {
   `);
   printWindow.document.close();
 }
+
+// AdMob integration - add interstitial ads to buttons and actions
+document.addEventListener('DOMContentLoaded', function() {
+  console.log("Setting up ad-enabled button handlers");
+  
+  // Functions to wrap with interstitial ads
+  const functionsToWrap = [
+    { name: 'getAdvancedFertilizerRecommendations', original: getAdvancedFertilizerRecommendations },
+    { name: 'getIrrigationRecommendations', original: getIrrigationRecommendations },
+    { name: 'loadMarketPrices', original: loadMarketPrices },
+    { name: 'getQuickFarmGuidance', original: getQuickFarmGuidance },
+    { name: 'sendChatMessage', original: sendChatMessage },
+    { name: 'scanForDisease', original: scanForDisease },
+    { name: 'getWeatherForLocation', original: getWeatherForLocation }
+  ];
+  
+  // Wrap each function with ad display
+  functionsToWrap.forEach(func => {
+    if (typeof func.original === 'function') {
+      // Create a wrapped version that shows an ad
+      window[func.name] = withInterstitialAd(func.original);
+      console.log(`Added interstitial ad to ${func.name}`);
+    }
+  });
+  
+  // Button click handlers for various sections
+  const adButtons = [
+    '#btnAdvancedFertilizer',
+    '#btnIrrigation',
+    '#btnGenerateGuidance',
+    '#scanForDiseaseBtn',
+    '#getWeatherBtn',
+    '#sendChatMessageBtn',
+    '#applyFilterBtn',
+    '.track-price-btn',
+    '.save-guidance-btn',
+    '.print-guidance-btn',
+    '.view-details-btn'
+  ];
+  
+  // Add event listeners to buttons
+  adButtons.forEach(selector => {
+    document.querySelectorAll(selector).forEach(button => {
+      // Store original click handler
+      const originalOnClick = button.onclick;
+      
+      // Set new handler
+      button.onclick = function(event) {
+        // Check if adManager is available
+        if (window.adManager && typeof window.adManager.showInterstitial === 'function') {
+          console.log(`Showing interstitial ad from button ${selector}`);
+          window.adManager.showInterstitial();
+        }
+        
+        // If there was an original handler, call it after a slight delay
+        if (typeof originalOnClick === 'function') {
+          setTimeout(() => {
+            originalOnClick.call(this, event);
+          }, 300);
+        }
+      };
+      
+      console.log(`Added ad handler to ${selector}`);
+    });
+  });
+  
+  // Add event listeners to navigation items to show ads during section changes
+  document.querySelectorAll('.mobile-nav .nav-item').forEach(navItem => {
+    const originalOnClick = navItem.onclick;
+    
+    navItem.onclick = function(event) {
+      // Only show ads occasionally on navigation (1 in 3 chance)
+      if (Math.random() < 0.3 && window.adManager && typeof window.adManager.showInterstitial === 'function') {
+        console.log('Showing interstitial ad on navigation');
+        window.adManager.showInterstitial();
+      }
+      
+      // Call original handler
+      if (typeof originalOnClick === 'function') {
+        setTimeout(() => {
+          originalOnClick.call(this, event);
+        }, 300);
+      }
+    };
+  });
+  
+  // Setup banner ad containers
+  if (typeof window.adManager === 'object' && typeof window.adManager.createAdContainers === 'function') {
+    console.log('Creating ad containers');
+    window.adManager.createAdContainers();
+  }
+  
+  console.log('Ad integration setup complete');
+});
