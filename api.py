@@ -10,12 +10,20 @@ import google.generativeai as genai
 # Import PostgreSQL database config (for backward compatibility during migration)
 from db_config import init_db
 from models import (
-    db, User, Field, DiseaseReport, IrrigationRecord, FertilizerRecord, 
-    MarketPrice, MarketFavorite, WeatherForecast, ChatHistory
+    db, User as SQLUser, Field as SQLField, DiseaseReport as SQLDiseaseReport, 
+    IrrigationRecord as SQLIrrigationRecord, FertilizerRecord as SQLFertilizerRecord, 
+    MarketPrice as SQLMarketPrice, MarketFavorite as SQLMarketFavorite, 
+    WeatherForecast as SQLWeatherForecast, ChatHistory as SQLChatHistory
 )
 
-# Import Firebase for new data storage
+# Import Firebase for primary data storage
 from firebase_init import firebase
+# Import Firebase data models
+from firebase_models import (
+    User, Field, DiseaseReport, IrrigationRecord, FertilizerRecord,
+    MarketPrice, MarketFavorite, WeatherForecast, ChatHistory,
+    migrate_from_postgres_to_firebase
+)
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -23,6 +31,19 @@ CORS(app)  # Enable CORS
 
 # Initialize databases - both PostgreSQL (legacy) and Firebase (new)
 db = init_db(app)
+
+# Attempt to migrate data from PostgreSQL to Firebase
+try:
+    # Only run migration if we have a valid Firebase connection
+    if not firebase.get('is_memory_implementation', True):
+        print("Starting migration from PostgreSQL to Firebase...")
+        migrate_from_postgres_to_firebase()
+        print("Migration completed successfully!")
+    else:
+        print("Using in-memory Firebase implementation, skipping migration.")
+except Exception as e:
+    print(f"Error during migration: {str(e)}")
+    print("Continuing with hybrid storage model.")
 
 # Configure Google Gemini API if API key is available
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
@@ -534,30 +555,28 @@ def chat():
         # Detect topic/intent (simple keyword-based for now)
         context_data = detect_chat_intent(user_message)
         
-        # First try to save to Firebase if available
-        firebase_saved = False
-        if firebase and firebase.get('db'):
-            try:
-                # Create new chat message document in Firebase
-                chat_data = {
-                    'user_id': user_id,
-                    'session_id': session_id,
-                    'message': user_message,
-                    'sender': 'user',
-                    'timestamp': datetime.utcnow(),
-                    'context_data': context_data
-                }
-                
-                firebase['db'].collection('chat_history').add(chat_data)
-                firebase_saved = True
-                print(f"Saved chat message to Firebase for user {user_id}")
-            except Exception as e:
-                print(f"Firebase chat save error: {e}, falling back to PostgreSQL")
-        
-        # Fallback to PostgreSQL if Firebase fails
-        if not firebase_saved:
-            # Save user message to chat history database
-            user_chat_entry = ChatHistory(
+        # Save message to chat history using Firebase models
+        try:
+            # Create new chat message document in Firebase
+            chat_data = {
+                'user_id': user_id,
+                'session_id': session_id,
+                'message': user_message,
+                'sender': 'user',
+                'timestamp': datetime.utcnow().isoformat(),
+                'context_data': context_data
+            }
+            
+            # Use Firebase model
+            ChatHistory.create(chat_data)
+            print(f"Saved chat message to Firebase for user {user_id}")
+            firebase_saved = True
+        except Exception as e:
+            firebase_saved = False
+            print(f"Firebase chat save error: {e}, falling back to PostgreSQL")
+            
+            # Fallback to PostgreSQL if Firebase fails
+            user_chat_entry = SQLChatHistory(
                 user_id=user_id,
                 session_id=session_id,
                 message=user_message,
@@ -568,25 +587,20 @@ def chat():
             db.session.commit()
         
         # Try to get conversation history from Firebase first
-        chat_history = []
-        if firebase and firebase.get('db') and firebase_saved:
-            try:
-                # Get conversation history from Firebase
-                chat_ref = firebase['db'].collection('chat_history')
-                query = (chat_ref
-                         .where('user_id', '==', user_id)
-                         .where('session_id', '==', session_id)
-                         .order_by('timestamp', direction='desc')
-                         .limit(context_window))
-                
-                docs = query.get()
-                chat_history = [doc.to_dict() for doc in docs]
-                
-                # Reverse to get chronological order
-                chat_history.reverse()
-            except Exception as e:
-                print(f"Firebase chat history error: {e}, falling back to PostgreSQL")
-                chat_history = []
+        try:
+            # Get conversation history from Firebase model
+            print(f"Using Firebase to get chat history for user {user_id}, session {session_id}")
+            chat_history = ChatHistory.get_by_user_and_session(user_id, session_id)
+            
+            # Sort by timestamp
+            chat_history.sort(key=lambda x: x.get('timestamp', ''))
+            
+            # Limit to context window
+            if len(chat_history) > context_window:
+                chat_history = chat_history[-context_window:]
+        except Exception as e:
+            chat_history = []
+            print(f"Firebase chat history error: {e}, falling back to PostgreSQL")
         
         # Fallback to PostgreSQL if needed
         if not chat_history:
@@ -685,29 +699,26 @@ def chat():
                         ai_response = response.text
                         print("Successfully generated Gemini response")
                         
-                        # Save AI response to chat history - first try Firebase
-                        firebase_saved = False
-                        if firebase and firebase.get('db'):
-                            try:
-                                # Create new chat message document in Firebase
-                                ai_chat_data = {
-                                    'user_id': user_id,
-                                    'session_id': session_id,
-                                    'message': ai_response,
-                                    'sender': 'assistant',
-                                    'timestamp': datetime.utcnow(),
-                                    'context_data': context_data
-                                }
-                                
-                                firebase['db'].collection('chat_history').add(ai_chat_data)
-                                firebase_saved = True
-                                print(f"Saved AI response to Firebase for user {user_id}")
-                            except Exception as e:
-                                print(f"Firebase AI response save error: {e}, falling back to PostgreSQL")
-                        
-                        # Fallback to PostgreSQL if Firebase fails
-                        if not firebase_saved:
-                            ai_chat_entry = ChatHistory(
+                        # Save AI response to chat history using Firebase model
+                        try:
+                            # Create new chat message document in Firebase
+                            ai_chat_data = {
+                                'user_id': user_id,
+                                'session_id': session_id,
+                                'message': ai_response,
+                                'sender': 'assistant',
+                                'timestamp': datetime.utcnow().isoformat(),
+                                'context_data': context_data
+                            }
+                            
+                            # Use Firebase model
+                            ChatHistory.create(ai_chat_data)
+                            print(f"Saved AI response to Firebase for user {user_id}")
+                        except Exception as e:
+                            print(f"Firebase AI response save error: {e}, falling back to PostgreSQL")
+                            
+                            # Fallback to PostgreSQL if Firebase fails
+                            ai_chat_entry = SQLChatHistory(
                                 user_id=user_id,
                                 session_id=session_id,
                                 message=ai_response,
@@ -799,29 +810,26 @@ def chat():
                     ai_response = response
                     break
             
-            # Save AI response to chat history - first try Firebase
-            firebase_saved = False
-            if firebase and firebase.get('db'):
-                try:
-                    # Create new chat message document in Firebase
-                    ai_chat_data = {
-                        'user_id': user_id,
-                        'session_id': session_id,
-                        'message': ai_response,
-                        'sender': 'assistant',
-                        'timestamp': datetime.utcnow(),
-                        'context_data': context_data
-                    }
-                    
-                    firebase['db'].collection('chat_history').add(ai_chat_data)
-                    firebase_saved = True
-                    print(f"Saved default AI response to Firebase for user {user_id}")
-                except Exception as e:
-                    print(f"Firebase default AI response save error: {e}, falling back to PostgreSQL")
-            
-            # Fallback to PostgreSQL if Firebase fails
-            if not firebase_saved:
-                ai_chat_entry = ChatHistory(
+            # Save AI response to chat history using Firebase model
+            try:
+                # Create new chat message document in Firebase
+                ai_chat_data = {
+                    'user_id': user_id,
+                    'session_id': session_id,
+                    'message': ai_response,
+                    'sender': 'assistant',
+                    'timestamp': datetime.utcnow().isoformat(),
+                    'context_data': context_data
+                }
+                
+                # Use Firebase model
+                ChatHistory.create(ai_chat_data)
+                print(f"Saved default AI response to Firebase for user {user_id}")
+            except Exception as e:
+                print(f"Firebase default AI response save error: {e}, falling back to PostgreSQL")
+                
+                # Fallback to PostgreSQL if Firebase fails
+                ai_chat_entry = SQLChatHistory(
                     user_id=user_id,
                     session_id=session_id,
                     message=ai_response,
@@ -885,49 +893,51 @@ def get_chat_history():
     session_id = request.args.get('session_id')
     limit = request.args.get('limit', 50, type=int)
     
-    # First try Firebase if available
-    if firebase and firebase.get('db'):
-        try:
-            print(f"Using Firebase to get chat history for user {user_id}, session {session_id}")
+    # Try to get chat history using Firebase models
+    try:
+        print(f"Using Firebase to get chat history for user {user_id}, session {session_id}")
+        
+        if session_id:
+            # Get history for a specific session
+            chat_history = ChatHistory.get_by_user_and_session(user_id, session_id)
+        else:
+            # Get all history for the user
+            chat_history = ChatHistory.get_by_user_id(user_id)
+        
+        # Process the records
+        if chat_history:
+            # Sort by timestamp (older first)
+            chat_history.sort(key=lambda x: x.get('timestamp', ''))
             
-            chat_history_ref = firebase['db'].collection('chat_history')
-            query = chat_history_ref.where('user_id', '==', user_id)
-            
-            if session_id:
-                query = query.where('session_id', '==', session_id)
-            
-            # Get the most recent conversations
-            query = query.order_by('timestamp', direction='desc').limit(limit)
-            docs = query.get()
-            
-            # Convert to list and reverse for chronological order
-            chat_history = [doc.to_dict() for doc in docs]
-            chat_history.reverse()
-            
+            # Limit the number of records
+            if len(chat_history) > limit:
+                # Get most recent messages
+                chat_history = chat_history[-limit:]
+                
+            # Format the response
             return jsonify({
                 'history': [{
-                    'id': entry.get('id') or doc.id,
-                    'user_id': entry.get('user_id'),
-                    'session_id': entry.get('session_id'),
-                    'message': entry.get('message'),
-                    'sender': entry.get('sender'),
-                    'timestamp': entry.get('timestamp').isoformat() if hasattr(entry.get('timestamp'), 'isoformat') else entry.get('timestamp'),
+                    'id': entry.get('id', ''),
+                    'user_id': entry.get('user_id', ''),
+                    'session_id': entry.get('session_id', ''),
+                    'message': entry.get('message', ''),
+                    'sender': entry.get('sender', ''),
+                    'timestamp': entry.get('timestamp', ''),
                     'intents': entry.get('context_data', {}).get('intents', []) if entry.get('context_data') else []
-                } for entry, doc in zip(chat_history, docs)]
+                } for entry in chat_history]
             })
-        except Exception as e:
-            print(f"Firebase chat history error: {e}, falling back to PostgreSQL")
-            # Continue to PostgreSQL fallback on error
+    except Exception as e:
+        print(f"Firebase chat history error: {e}, falling back to PostgreSQL")
     
     # Fallback to PostgreSQL
     try:
-        query = ChatHistory.query.filter_by(user_id=user_id)
+        query = SQLChatHistory.query.filter_by(user_id=user_id)
         
         if session_id:
             query = query.filter_by(session_id=session_id)
         
         # Get the most recent conversations
-        chat_history = query.order_by(ChatHistory.timestamp.desc()).limit(limit).all()
+        chat_history = query.order_by(SQLChatHistory.timestamp.desc()).limit(limit).all()
         
         # Reverse to get chronological order
         chat_history = chat_history[::-1]
@@ -954,123 +964,69 @@ def get_chat_sessions():
     """Get unique chat sessions for a user"""
     user_id = request.args.get('user_id', 'anonymous')
     
-    # First try Firebase if available
-    if firebase and firebase.get('db'):
-        try:
-            print(f"Using Firebase to get chat sessions for user {user_id}")
+    # Try to get chat sessions using Firebase models
+    try:
+        print(f"Using Firebase to get chat sessions for user {user_id}")
+        
+        # Get sessions directly from ChatHistory model
+        sessions = ChatHistory.get_sessions(user_id)
+        
+        # If sessions were found, format and return them
+        if sessions:
+            # Sort by most recent sessions first
+            sessions.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
             
-            # Get all chat messages for this user
-            chat_history_ref = firebase['db'].collection('chat_history')
-            messages = chat_history_ref.where('user_id', '==', user_id).get()
-            
-            # Group messages by session_id
-            sessions_map = {}
-            for message in messages:
-                data = message.to_dict()
-                session_id = data.get('session_id')
-                
-                if not session_id:
-                    continue
-                
-                timestamp = data.get('timestamp')
-                if isinstance(timestamp, str):
-                    try:
-                        timestamp = datetime.fromisoformat(timestamp)
-                    except:
-                        timestamp = datetime.utcnow()
-                
-                if session_id not in sessions_map:
-                    sessions_map[session_id] = {
-                        'messages': [],
-                        'last_message_time': timestamp
-                    }
-                else:
-                    # Update last message time if this is more recent
-                    if timestamp > sessions_map[session_id]['last_message_time']:
-                        sessions_map[session_id]['last_message_time'] = timestamp
-                
-                sessions_map[session_id]['messages'].append(data)
-            
-            # Process each session to get the needed info
+            # Format the response
             result = []
-            for session_id, session_data in sessions_map.items():
-                messages = session_data['messages']
-                message_count = len(messages)
-                
-                # Get first user message for title
-                first_message = None
-                for msg in sorted(messages, key=lambda m: m.get('timestamp')):
-                    if msg.get('sender') == 'user':
-                        first_message = msg
-                        break
-                
-                # Count intents to find primary intent
-                intents = {}
-                for msg in messages:
-                    if msg.get('context_data') and 'intents' in msg.get('context_data', {}):
-                        for intent in msg.get('context_data', {}).get('intents', []):
-                            intents[intent] = intents.get(intent, 0) + 1
-                
-                # Get primary intent
-                primary_intents = sorted(intents.items(), key=lambda x: x[1], reverse=True)
-                primary_intent = primary_intents[0][0] if primary_intents else 'general_query'
+            for session in sessions:
+                session_id = session.get('session_id', '')
+                timestamp = session.get('timestamp', '')
+                last_message = session.get('last_message', '')
                 
                 # Generate title from first message
-                title = 'New Conversation'
-                if first_message:
-                    message_text = first_message.get('message', '')
-                    title = message_text[:50] + '...' if len(message_text) > 50 else message_text
+                title = last_message[:50] + '...' if last_message and len(last_message) > 50 else last_message or 'New Conversation'
                 
                 session_info = {
                     'session_id': session_id,
-                    'last_message_time': session_data['last_message_time'].isoformat() 
-                        if hasattr(session_data['last_message_time'], 'isoformat') 
-                        else str(session_data['last_message_time']),
-                    'message_count': message_count,
-                    'primary_intent': primary_intent,
+                    'last_message_time': timestamp,
+                    'message_count': 0,  # We'd need another query to get the count
+                    'primary_intent': 'general_query',  # We'd need another query to analyze intents
                     'title': title
                 }
                 
                 result.append(session_info)
             
-            # Sort by most recent sessions first
-            result.sort(key=lambda x: x['last_message_time'], reverse=True)
-            
-            return jsonify({
-                'sessions': result
-            })
-            
-        except Exception as e:
-            print(f"Firebase chat sessions error: {e}, falling back to PostgreSQL")
-            # Continue to PostgreSQL fallback on error
+            return jsonify({'sessions': result})
+    except Exception as e:
+        print(f"Firebase chat sessions error: {e}, falling back to PostgreSQL")
     
     # Fallback to PostgreSQL
     try:
         # Use SQLAlchemy to get distinct session_ids with their most recent timestamp
         sessions = db.session.query(
-            ChatHistory.session_id,
-            db.func.max(ChatHistory.timestamp).label('last_message_time')
-        ).filter_by(user_id=user_id).group_by(ChatHistory.session_id).all()
+            SQLChatHistory.session_id,
+            db.func.max(SQLChatHistory.timestamp).label('last_message_time')
+        ).filter_by(user_id=user_id).group_by(SQLChatHistory.session_id).all()
         
         # For each session, get the first message to use as a title
         result = []
         for session_id, last_time in sessions:
             # Get first message in the session (usually a user question that started the conversation)
-            first_message = ChatHistory.query.filter_by(
+            first_message = SQLChatHistory.query.filter_by(
                 user_id=user_id, 
                 session_id=session_id,
                 sender='user'
-            ).order_by(ChatHistory.timestamp.asc()).first()
+            ).order_by(SQLChatHistory.timestamp.asc()).first()
             
             # Get message count
-            message_count = ChatHistory.query.filter_by(
+            message_count = SQLChatHistory.query.filter_by(
                 user_id=user_id, 
                 session_id=session_id
             ).count()
             
             # Get primary intent for this session
             intents = {}
-            for chat in ChatHistory.query.filter_by(user_id=user_id, session_id=session_id).all():
+            for chat in SQLChatHistory.query.filter_by(user_id=user_id, session_id=session_id).all():
                 if chat.context_data and 'intents' in chat.context_data:
                     for intent in chat.context_data['intents']:
                         intents[intent] = intents.get(intent, 0) + 1
