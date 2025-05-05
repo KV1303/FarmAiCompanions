@@ -113,12 +113,13 @@ class InMemoryDocumentSnapshot:
     def __init__(self, data):
         self.data = data
         self.id = data.get('id', 'unknown')
+        self.reference = None  # This will be set by the caller if needed
     
     def to_dict(self):
         return self.data
     
     def exists(self):
-        return True
+        return self.data is not None
 
 class InMemoryFirebaseDB:
     def __init__(self):
