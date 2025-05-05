@@ -7,42 +7,25 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import google.generativeai as genai
 
-# Import PostgreSQL database config (for backward compatibility during migration)
-from db_config import init_db
-from models import (
-    db, User as SQLUser, Field as SQLField, DiseaseReport as SQLDiseaseReport, 
-    IrrigationRecord as SQLIrrigationRecord, FertilizerRecord as SQLFertilizerRecord, 
-    MarketPrice as SQLMarketPrice, MarketFavorite as SQLMarketFavorite, 
-    WeatherForecast as SQLWeatherForecast, ChatHistory as SQLChatHistory
-)
-
-# Import Firebase for primary data storage
+# FIREBASE ONLY: Import Firebase for complete data storage
 from firebase_init import firebase
 from firebase_models import (
     User, Field, DiseaseReport, IrrigationRecord, FertilizerRecord,
-    MarketPrice, MarketFavorite, WeatherForecast, ChatHistory,
-    migrate_from_postgres_to_firebase
+    MarketPrice, MarketFavorite, WeatherForecast, ChatHistory
 )
 
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)  # Enable CORS
 
-# Initialize databases - both PostgreSQL (legacy) and Firebase (new)
-db = init_db(app)
+# FIREBASE ONLY: We've fully migrated to Firebase, no longer using PostgreSQL
+print("FIREBASE MIGRATION COMPLETE: Using Firebase exclusively for all data storage")
 
-# Attempt to migrate data from PostgreSQL to Firebase
-try:
-    # Only run migration if we have a valid Firebase connection
-    if not firebase.get('is_memory_implementation', True):
-        print("Starting migration from PostgreSQL to Firebase...")
-        migrate_from_postgres_to_firebase()
-        print("Migration completed successfully!")
-    else:
-        print("Using in-memory Firebase implementation, skipping migration.")
-except Exception as e:
-    print(f"Error during migration: {str(e)}")
-    print("Continuing with hybrid storage model.")
+# Skip PostgreSQL initialization
+print("PostgreSQL database integration has been removed")
+
+# No migration needed as we're fully on Firebase now
+print("No migration needed - fully operating on Firebase")
 
 # Configure Google Gemini API if API key is available
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
