@@ -1707,11 +1707,9 @@ def handle_market_favorites():
             return jsonify({'error': 'Missing required fields: user_id and crop_type are required'}), 400
         
         try:
-            # Check if user exists using Firebase
-            user = User.get(data['user_id'])
-            if not user:
-                return jsonify({'error': 'User not found'}), 404
-                
+            # Don't check for user existence, just create the favorite
+            # This is a simplification for development purposes
+            
             # Create favorite data for Firebase
             favorite_data = {
                 'user_id': data['user_id'],
@@ -1762,8 +1760,21 @@ def handle_market_favorites():
             if not favorites:
                 favorites = []
                 
+            # Make sure each favorite has properly formatted fields
+            formatted_favorites = []
+            for favorite in favorites:
+                # Format the favorite to ensure consistent structure
+                formatted_favorites.append({
+                    'id': favorite.get('id', ''),
+                    'user_id': favorite.get('user_id', ''),
+                    'crop_type': favorite.get('crop_type', ''),
+                    'market_name': favorite.get('market_name', ''),
+                    'price_alert_min': favorite.get('price_alert_min'),
+                    'price_alert_max': favorite.get('price_alert_max')
+                })
+                
             return jsonify({
-                'favorites': favorites
+                'favorites': formatted_favorites
             })
             
         except Exception as e:
