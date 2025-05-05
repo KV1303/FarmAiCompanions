@@ -1052,6 +1052,7 @@ def get_weather():
 def get_market_prices():
     """Get market prices for crops"""
     crop_type = request.args.get('crop_type')
+    results = []
     
     # Try to get prices from Firebase
     try:
@@ -1060,167 +1061,116 @@ def get_market_prices():
             prices = MarketPrice.get_by_crop_type(crop_type)
         else:
             prices = MarketPrice.get_latest()
+            
+        if prices:
+            # Format the results for API response
+            for price in prices:
+                results.append({
+                    'crop_type': price.get('crop_type', ''),
+                    'market_name': price.get('market_name', ''),
+                    'price': price.get('price', 0),
+                    'min_price': price.get('min_price', 0),
+                    'max_price': price.get('max_price', 0),
+                    'date': datetime.fromisoformat(price.get('date', '')).strftime('%Y-%m-%d') if price.get('date', '') else '',
+                    'source': price.get('source', '')
+                })
+    except Exception as e:
+        print(f"Error fetching market prices from Firebase: {str(e)}")
     
-    # If still no data, try to fetch from external API
-    if not prices:
+    # If no data in Firebase or there was an error, generate new data
+    if not results:
+        # Generate market price data
+        supported_crops = [
+            'Rice', 'Wheat', 'Cotton', 'Sugarcane', 'Maize', 
+            'Soybean', 'Potato', 'Tomato', 'Chickpea', 'Mustard',
+            'Groundnut', 'Chilli', 'Onion', 'Turmeric', 'Ginger',
+            'Millet', 'Barley', 'Jute', 'Sunflower'
+        ]
+        
+        markets = ['Delhi', 'Mumbai', 'Kolkata', 'Chennai', 'Lucknow', 'Bangalore', 'Hyderabad']
+        
+        # Generate data based on crop types
+        crops_to_process = [crop_type] if crop_type else supported_crops
+        
+        # Use realistic base prices for different crops (in ₹ per quintal)
+        base_prices = {
+            'Rice': 2200,
+            'Wheat': 2000,
+            'Cotton': 6000,
+            'Sugarcane': 300,
+            'Maize': 1800,
+            'Soybean': 4000,
+            'Potato': 1500,
+            'Tomato': 2000,
+            'Chickpea': 5000,
+            'Mustard': 5500,
+            'Groundnut': 5800,
+            'Chilli': 8000,
+            'Onion': 1200,
+            'Turmeric': 7500,
+            'Ginger': 6500,
+            'Millet': 2800,
+            'Barley': 2200,
+            'Jute': 4500,
+            'Sunflower': 5600
+        }
+        
         try:
-            # Try to fetch data from Agmarknet
-            try:
-                # List of crops we support
-                supported_crops = [
-                    'Rice', 'Wheat', 'Cotton', 'Sugarcane', 'Maize', 
-                    'Soybean', 'Potato', 'Tomato', 'Chickpea', 'Mustard',
-                    'Groundnut', 'Chilli', 'Onion', 'Turmeric', 'Ginger',
-                    'Millet', 'Barley', 'Jute', 'Sunflower'
-                ]
+            # Add realistic variation
+            import random
+            
+            for crop in crops_to_process:
+                base_price = base_prices.get(crop, 2000)
+                variation_pct = random.uniform(-0.1, 0.1)
                 
-                markets = ['Delhi', 'Mumbai', 'Kolkata', 'Chennai', 'Lucknow', 'Bangalore', 'Hyderabad']
-                
-                # Get today's date for the API
-                today = datetime.utcnow().strftime('%d/%m/%Y')
-                
-                print(f"Fetching Agmarknet data for date: {today}")
-                
-                # Try to scrape data from Agmarknet or similar websites
-                try:
-                    # Import the web scraping library
-                    import trafilatura
-                    import requests
-                    from bs4 import BeautifulSoup
+                for market in markets:
+                    # Add market-specific variation
+                    market_variation = random.uniform(-0.05, 0.05)
+                    final_price = base_price * (1 + variation_pct + market_variation)
+                    final_price = round(final_price, 0)
                     
-                    # We can try to get data from the Farmers Portal which has open data
-                    # This is just an example of how we would implement real data fetching
-                    base_url = "https://farmer.gov.in/market_main.aspx"
+                    min_price = round(final_price * 0.95, 0)
+                    max_price = round(final_price * 1.1, 0)
                     
-                    # We would parse this data in a production app
-                    response = requests.get(base_url, timeout=5)
-                    
-                    if response.status_code == 200:
-                        # Parse with BeautifulSoup
-                        soup = BeautifulSoup(response.text, 'html.parser')
-                        
-                        # In a real implementation, we would extract price data from the HTML
-                        # This is complex and would require detailed parsing logic
-                        # For now we'll use a placeholder and realistic data
-                        
-                        print("Successfully connected to Farmers Portal")
-                        
-                        # Instead of actual parsing (which would be complex), we'll use realistic data
-                        # with the acknowledgment that it's from a real source but manually processed
-                        print("Using realistic data based on typical market rates from Farmers Portal")
-                    else:
-                        # If we can't connect, we'll use the realistic data
-                        print(f"Could not connect to Farmers Portal (Status: {response.status_code})")
-                        raise Exception("Failed to connect to data source")
-                
-                except Exception as e:
-                    print(f"Error scraping agricultural data: {str(e)}")
-                    print("Using realistic market price data based on typical rates")
-                
-                crops_to_process = [crop_type] if crop_type else supported_crops
-                
-                for crop in crops_to_process:
-                    # Use realistic base prices for different crops (in ₹ per quintal)
-                    base_prices = {
-                        'Rice': 2200,
-                        'Wheat': 2000,
-                        'Cotton': 6000,
-                        'Sugarcane': 300,
-                        'Maize': 1800,
-                        'Soybean': 4000,
-                        'Potato': 1500,
-                        'Tomato': 2000,
-                        'Chickpea': 5000,
-                        'Mustard': 5500,
-                        'Groundnut': 5800,
-                        'Chilli': 8000,
-                        'Onion': 1200,
-                        'Turmeric': 7500,
-                        'Ginger': 6500,
-                        'Millet': 2800,
-                        'Barley': 2200,
-                        'Jute': 4500,
-                        'Sunflower': 5600
+                    # Create price data dictionary
+                    price_data = {
+                        'crop_type': crop,
+                        'market_name': market,
+                        'price': final_price,
+                        'min_price': min_price,
+                        'max_price': max_price,
+                        'date': datetime.utcnow().isoformat(),
+                        'source': 'Generated Data'
                     }
                     
-                    base_price = base_prices.get(crop, 2000)
+                    # Save to Firebase for future use
+                    try:
+                        MarketPrice.create(price_data)
+                    except Exception as save_error:
+                        print(f"Error saving market price to Firebase: {str(save_error)}")
                     
-                    # Add realistic daily variation (±10%)
-                    import random
-                    variation_pct = random.uniform(-0.1, 0.1)
-                    
-                    for market in markets:
-                        # Add slight market-to-market variation
-                        market_variation = random.uniform(-0.05, 0.05)
-                        final_price = base_price * (1 + variation_pct + market_variation)
-                        final_price = round(final_price, 0)
-                        
-                        min_price = round(final_price * 0.95, 0)
-                        max_price = round(final_price * 1.1, 0)
-                        
-                        price = MarketPrice(
-                            crop_type=crop,
-                            market_name=market,
-                            price=final_price,
-                            min_price=min_price,
-                            max_price=max_price,
-                            date=datetime.utcnow(),
-                            source='Agmarknet'
-                        )
-                        db.session.add(price)
-                        prices.append(price)
-                
-                db.session.commit()
-                print(f"Added {len(prices)} market prices from Agmarknet")
-                
-            except Exception as e:
-                print(f"Error fetching Agmarknet data: {str(e)}")
-                # Fallback to basic simulated data
-                dummy_crops = [
-                    'Rice', 'Wheat', 'Cotton', 'Sugarcane', 'Maize', 
-                    'Soybean', 'Potato', 'Tomato', 'Chickpea', 'Mustard',
-                    'Groundnut', 'Chilli', 'Onion', 'Turmeric', 'Ginger',
-                    'Millet', 'Barley', 'Jute', 'Sunflower'
-                ]
-                dummy_markets = ['Delhi', 'Mumbai', 'Kolkata', 'Chennai', 'Lucknow', 'Bangalore', 'Hyderabad']
-                
-                crops_to_process = [crop_type] if crop_type else dummy_crops
-                
-                for crop in crops_to_process:
-                    for market in dummy_markets:
-                        base_price = 1500 + (hash(crop) % 1000)  # Simulate different base prices
-                        price = MarketPrice(
-                            crop_type=crop,
-                            market_name=market,
-                            price=base_price + (hash(market) % 200),
-                            min_price=base_price - 100,
-                            max_price=base_price + 300,
-                            date=datetime.utcnow(),
-                            source='Agmarknet (simulated)'
-                        )
-                        db.session.add(price)
-                        prices.append(price)
-                
-                db.session.commit()
-            
-            db.session.commit()
-            
+                    # Add to results
+                    results.append({
+                        'crop_type': crop,
+                        'market_name': market,
+                        'price': final_price,
+                        'min_price': min_price,
+                        'max_price': max_price,
+                        'date': datetime.utcnow().strftime('%Y-%m-%d'),
+                        'source': 'Generated Data'
+                    })
         except Exception as e:
-            return jsonify({'error': str(e)}), 500
+            print(f"Error generating market prices: {str(e)}")
     
-    # Return JSON response
-    return jsonify({
-        'prices': [{
-            'id': p.id,
-            'crop_type': p.crop_type,
-            'market_name': p.market_name,
-            'price': p.price,
-            'min_price': p.min_price,
-            'max_price': p.max_price,
-            'date': p.date.strftime('%Y-%m-%d'),
-            'source': p.source
-        } for p in prices]
-    })
+    # Group by crop type for easier UI handling
+    grouped_results = {}
+    for result in results:
+        crop = result['crop_type']
+        if crop not in grouped_results:
+            grouped_results[crop] = []
+        grouped_results[crop].append(result)
+    
+    return jsonify(grouped_results)
 
 @app.route('/api/disease_detect', methods=['POST'])
 def detect_disease():
