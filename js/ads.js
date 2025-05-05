@@ -103,33 +103,67 @@ function defineAdSlots() {
     googletag.cmd.push(function() {
       console.log('Defining ad slots');
       
+      // First enable services and pubads configurations
+      googletag.pubads().enableSingleRequest();
+      googletag.pubads().disableInitialLoad(); // Wait to load ads until refresh is called
+      googletag.pubads().collapseEmptyDivs();
+      googletag.enableServices();
+      
       // Convert banner ad containers to GPT ad slots
       document.querySelectorAll('.ad-banner-container').forEach((container, index) => {
-        const slotId = container.id || `ad-container-${index}`;
+        if (!container.id) return; // Skip containers without IDs
+        
+        const slotId = container.id;
+        const gptDivId = `gpt-${slotId}`;
+        const gptDiv = container.querySelector(`#${gptDivId}`);
+        
+        // Skip if the slot already exists or the gptDiv doesn't exist
+        if (!gptDiv || googletag.pubads().getSlots().some(s => s.getSlotElementId() === gptDivId)) {
+          return;
+        }
+        
         console.log(`Creating GPT ad slot for ${slotId}`);
         
         // Clear placeholder text
         const placeholder = container.querySelector('.ad-placeholder');
         if (placeholder) placeholder.style.display = 'none';
         
-        // Define the ad slot
-        const adSlot = googletag.defineSlot(
-          AD_UNITS.BANNER,
-          [[320, 50], [300, 50], [300, 250]],
-          slotId
-        )
-        .addService(googletag.pubads());
-        
-        // Display the ad
-        googletag.display(slotId);
+        try {
+          // Define the ad slot with safer sizes that work in more environments
+          const adSlot = googletag.defineSlot(
+            AD_UNITS.BANNER,
+            [[300, 250], [320, 50], [300, 50]],
+            gptDivId
+          );
+          
+          if (adSlot) {
+            adSlot.addService(googletag.pubads());
+            
+            // Set responsive size mapping
+            const mapping = googletag.sizeMapping()
+              .addSize([0, 0], [[300, 50], [320, 50]])
+              .addSize([768, 0], [[300, 250]])
+              .build();
+            
+            adSlot.defineSizeMapping(mapping);
+            
+            // Display the ad immediately for this slot
+            googletag.display(gptDivId);
+            googletag.pubads().refresh([adSlot]);
+          } else {
+            console.warn(`Failed to create slot for ${gptDivId}`);
+            if (placeholder) placeholder.style.display = 'block';
+          }
+        } catch (slotError) {
+          console.error(`Error creating slot for ${gptDivId}:`, slotError);
+          if (placeholder) placeholder.style.display = 'block';
+        }
       });
-      
-      // Enable features
-      googletag.pubads().enableSingleRequest();
-      googletag.enableServices();
     });
   } catch (error) {
     console.error('Error defining ad slots:', error);
+    // Show placeholders if GPT fails
+    showPlaceholderAds();
   }
 }
 
@@ -139,6 +173,16 @@ function showPlaceholderAds() {
   document.querySelectorAll('.ad-banner-container .ad-placeholder').forEach(placeholder => {
     placeholder.style.display = 'block';
     placeholder.textContent = 'विज्ञापन स्थान'; // Advertisement space in Hindi
+    
+    // Add styling to make placeholder more visible
+    placeholder.style.background = 'rgba(0,0,0,0.05)';
+    placeholder.style.padding = '15px';
+    placeholder.style.border = '1px dashed #ccc';
+    placeholder.style.borderRadius = '4px';
+    placeholder.style.margin = '0 auto';
+    placeholder.style.maxWidth = '300px';
+    placeholder.style.fontSize = '14px';
+    placeholder.style.color = '#666';
   });
 }
 
@@ -248,6 +292,12 @@ function showWebInterstitialAd() {
   // If Google Publisher Tags is available
   if (window.googletag) {
     try {
+      // Check for existing interstitials and remove them
+      const existingInterstitial = document.getElementById('interstitial-ad-div');
+      if (existingInterstitial) {
+        document.body.removeChild(existingInterstitial);
+      }
+      
       // Create a div for the interstitial
       const interstitialDiv = document.createElement('div');
       interstitialDiv.id = 'interstitial-ad-div';
@@ -258,45 +308,111 @@ function showWebInterstitialAd() {
       adContainer.style.cssText = 'width: 300px; height: 250px; background-color: #fff; position: relative; padding: 10px;';
       adContainer.id = 'interstitial-ad-container';
       
+      // Create a Hindi placeholder message
+      const placeholderMessage = document.createElement('div');
+      placeholderMessage.innerHTML = '<p style="text-align: center; margin-top: 80px;">विज्ञापन स्थान</p>';
+      placeholderMessage.style.cssText = 'width: 100%; height: calc(100% - 40px); background: rgba(0,0,0,0.05); border: 1px dashed #ccc; border-radius: 4px;';
+      adContainer.appendChild(placeholderMessage);
+      
       // Add a close button
       const closeButton = document.createElement('button');
       closeButton.textContent = 'X';
       closeButton.style.cssText = 'position: absolute; top: 5px; right: 5px; cursor: pointer; background: red; color: white; border: none; border-radius: 50%; width: 25px; height: 25px;';
       closeButton.onclick = function() {
-        document.body.removeChild(interstitialDiv);
+        try {
+          document.body.removeChild(interstitialDiv);
+        } catch (e) {
+          console.warn('Error removing interstitial div:', e);
+        }
       };
       
       adContainer.appendChild(closeButton);
       interstitialDiv.appendChild(adContainer);
       document.body.appendChild(interstitialDiv);
       
-      // Load an ad into the container
-      googletag.cmd.push(function() {
-        const slot = googletag.defineSlot(
-          AD_UNITS.INTERSTITIAL,
-          [[300, 250]],
-          'interstitial-ad-container'
-        )
-        .addService(googletag.pubads());
-        
-        googletag.pubads().refresh([slot]);
-        googletag.display('interstitial-ad-container');
-        
-        // Auto-close after 10 seconds if user doesn't close it
-        setTimeout(function() {
-          if (document.getElementById('interstitial-ad-div')) {
-            document.body.removeChild(interstitialDiv);
+      try {
+        // Load an ad into the container with proper error handling
+        googletag.cmd.push(function() {
+          try {
+            // First check if the slot is already defined
+            let slot;
+            const existingSlots = googletag.pubads().getSlots();
+            const existingSlot = existingSlots.find(s => s.getSlotElementId() === 'interstitial-ad-container');
+            
+            if (existingSlot) {
+              // Use existing slot
+              slot = existingSlot;
+              console.log('Using existing interstitial slot');
+            } else {
+              // Define new slot
+              console.log('Creating new interstitial slot');
+              slot = googletag.defineSlot(
+                AD_UNITS.INTERSTITIAL,
+                [[300, 250]],
+                'interstitial-ad-container'
+              );
+              
+              if (slot) {
+                slot.addService(googletag.pubads());
+              } else {
+                console.warn('Failed to create interstitial slot');
+              }
+            }
+            
+            if (slot) {
+              // Hide placeholder when ad loads
+              googletag.pubads().addEventListener('slotRenderEnded', function(event) {
+                if (event.slot === slot) {
+                  if (!event.isEmpty) {
+                    // Ad was loaded, hide placeholder
+                    placeholderMessage.style.display = 'none';
+                  }
+                }
+              });
+              
+              // Refresh the slot to load new ad
+              googletag.pubads().refresh([slot]);
+              googletag.display('interstitial-ad-container');
+            }
+          } catch (slotError) {
+            console.error('Error creating interstitial slot:', slotError);
           }
-        }, 10000);
-      });
+          
+          // Auto-close after 8 seconds
+          setTimeout(function() {
+            try {
+              const divToRemove = document.getElementById('interstitial-ad-div');
+              if (divToRemove) {
+                document.body.removeChild(divToRemove);
+              }
+            } catch (closeError) {
+              console.warn('Error auto-closing interstitial:', closeError);
+            }
+          }, 8000);
+        });
+      } catch (gptError) {
+        console.error('Error executing GPT commands:', gptError);
+        try {
+          const divToRemove = document.getElementById('interstitial-ad-div');
+          if (divToRemove) {
+            document.body.removeChild(divToRemove);
+          }
+        } catch (e) {
+          console.warn('Error removing div after GPT error:', e);
+        }
+      }
       
       console.log('Web interstitial ad displayed');
     } catch (error) {
       console.error('Error showing web interstitial:', error);
       // Clean up if error occurs
-      const existingInterstitial = document.getElementById('interstitial-ad-div');
-      if (existingInterstitial) {
-        document.body.removeChild(existingInterstitial);
+      try {
+        const divToRemove = document.getElementById('interstitial-ad-div');
+        if (divToRemove) {
+          document.body.removeChild(divToRemove);
+        }
+      } catch (e) {
+        console.warn('Error cleaning up after interstitial error:', e);
       }
     }
   } else {
@@ -395,7 +511,7 @@ function createAdContainers() {
     const adContainer = document.createElement('div');
     adContainer.className = 'ad-banner-container mb-3 text-center';
     adContainer.id = location.id;
-    adContainer.innerHTML = '<p class="ad-placeholder">विज्ञापन</p>';
+    adContainer.innerHTML = '<p class="ad-placeholder">विज्ञापन स्थान</p><div id="gpt-' + location.id + '"></div>';
     
     if (location.position === 'afterend') {
       targetElement.insertAdjacentElement('afterend', adContainer);
