@@ -19,20 +19,16 @@ let adMobAvailable = false; // Track if AdMob is available
 function initializeAdMob() {
   if (isAdMobInitialized) return;
   
-  // Check if running in Cordova environment with AdMob plugin
-  if (typeof admob === 'undefined') {
-    console.log('AdMob not available, using placeholder ads');
-    // Show placeholders instead of real ads
-    adMobAvailable = false;
-    showPlaceholderAds();
-    return;
-  }
+  console.log('Trying to initialize AdMob...');
   
-  console.log('Initializing AdMob with units:', AD_UNITS);
-  adMobAvailable = true;
+  // For web testing, ensure we show ads in all environments by attempting to load
+  // the Cordova AdMob plugin or falling back to web placeholders
   
-  // Add device-ready event listener for Cordova
-  document.addEventListener('deviceready', function() {
+  // First, check if we're in a compiled app with AdMob plugin
+  if (window.cordova && typeof admob !== 'undefined') {
+    console.log('Native AdMob plugin detected');
+    adMobAvailable = true;
+    
     // Initialize AdMob with necessary options
     admob.initialize({
       // Optional options for better UX
@@ -54,7 +50,87 @@ function initializeAdMob() {
       // Show placeholders if AdMob fails to initialize
       showPlaceholderAds();
     });
-  }, false);
+  } 
+  // Alternative approach: Try loading web-based AdMob implementation
+  else if (window.googletag || typeof googletag !== 'undefined') {
+    console.log('Web AdMob/Google Publisher Tags detected');
+    adMobAvailable = true;
+    initializeWebAds();
+  }
+  // If no AdMob implementation is available, show placeholders
+  else {
+    console.log('No AdMob implementation available, using Hindi placeholders');
+    adMobAvailable = false;
+    showPlaceholderAds();
+  }
+}
+
+// Initialize web-based ads using Google Publisher Tags
+function initializeWebAds() {
+  console.log('Initializing web-based ads');
+  
+  // Only initialize once
+  if (isAdMobInitialized) return;
+  
+  try {
+    // Create script tag for Google Publisher Tags if it doesn't exist
+    if (!document.getElementById('gpt-script')) {
+      const gptScript = document.createElement('script');
+      gptScript.id = 'gpt-script';
+      gptScript.async = true;
+      gptScript.src = 'https://securepubads.g.doubleclick.net/tag/js/gpt.js';
+      document.head.appendChild(gptScript);
+      
+      gptScript.onload = function() {
+        console.log('Google Publisher Tags loaded');
+        defineAdSlots();
+      };
+    } else {
+      defineAdSlots();
+    }
+    
+    isAdMobInitialized = true;
+  } catch (error) {
+    console.error('Error initializing web ads:', error);
+    showPlaceholderAds();
+  }
+}
+
+// Define ad slots for Google Publisher Tags
+function defineAdSlots() {
+  try {
+    window.googletag = window.googletag || {cmd: []};
+    googletag.cmd.push(function() {
+      console.log('Defining ad slots');
+      
+      // Convert banner ad containers to GPT ad slots
+      document.querySelectorAll('.ad-banner-container').forEach((container, index) => {
+        const slotId = container.id || `ad-container-${index}`;
+        console.log(`Creating GPT ad slot for ${slotId}`);
+        
+        // Clear placeholder text
+        const placeholder = container.querySelector('.ad-placeholder');
+        if (placeholder) placeholder.style.display = 'none';
+        
+        // Define the ad slot
+        const adSlot = googletag.defineSlot(
+          AD_UNITS.BANNER,
+          [[320, 50], [300, 50], [300, 250]],
+          slotId
+        )
+        .addService(googletag.pubads());
+        
+        // Display the ad
+        googletag.display(slotId);
+      });
+      
+      // Enable features
+      googletag.pubads().enableSingleRequest();
+      googletag.enableServices();
+    });
+  } catch (error) {
+    console.error('Error defining ad slots:', error);
+  }
 }
 
 // Show placeholder ads when AdMob is not available
@@ -120,40 +196,112 @@ function createBannerAds() {
 
 // Show interstitial ad with rate limiting
 function showInterstitialAd() {
-  // If AdMob isn't available or initialized, we just return without showing an ad
-  if (!adMobAvailable || !isAdMobInitialized) {
-    console.log('AdMob not available or not initialized, skipping interstitial ad');
-    return;
-  }
-  
-  // If an interstitial ad isn't loaded yet, skip showing
-  if (!interstitialAdLoaded) {
-    console.log('Interstitial ad not ready to show');
-    return;
-  }
-  
-  // Rate limiting to prevent too many ads from showing
+  // Always respect the cooldown regardless of implementation
   const now = Date.now();
   if (now - lastInterstitialShownTime < INTERSTITIAL_COOLDOWN) {
     console.log('Interstitial ad on cooldown, skipping');
     return;
   }
   
-  console.log('Showing interstitial ad...');
+  // Record this attempt regardless of success
+  lastInterstitialShownTime = now;
   
-  // Show the interstitial ad
-  admob.showInterstitial().then(() => {
-    console.log('Interstitial ad shown successfully');
-    interstitialAdLoaded = false;
-    lastInterstitialShownTime = now;
+  // If AdMob isn't available or initialized, try web based ads instead
+  if (!adMobAvailable || !isAdMobInitialized) {
+    console.log('Native AdMob not available, trying web-based interstitial');
+    showWebInterstitialAd();
+    return;
+  }
+  
+  // For native AdMob implementation
+  if (window.cordova && typeof admob !== 'undefined') {
+    // If an interstitial ad isn't loaded yet, skip showing
+    if (!interstitialAdLoaded) {
+      console.log('Interstitial ad not ready to show');
+      return;
+    }
     
-    // Preload the next interstitial
-    setTimeout(preloadInterstitial, 1000);
-  }).catch(error => {
-    console.error('Error showing interstitial ad:', error);
-    // If showing fails, reset the cooldown to allow another attempt sooner
-    lastInterstitialShownTime = now - (INTERSTITIAL_COOLDOWN / 2);
-  });
+    console.log('Showing native interstitial ad...');
+    
+    // Show the interstitial ad
+    admob.showInterstitial().then(() => {
+      console.log('Interstitial ad shown successfully');
+      interstitialAdLoaded = false;
+      
+      // Preload the next interstitial
+      setTimeout(preloadInterstitial, 1000);
+    }).catch(error => {
+      console.error('Error showing interstitial ad:', error);
+      // Try web-based ad as fallback
+      showWebInterstitialAd();
+    });
+  } else {
+    // For non-native environment, try web interstitial
+    showWebInterstitialAd();
+  }
+}
+
+// Show web-based interstitial ad using Google Publisher Tags
+function showWebInterstitialAd() {
+  console.log('Attempting to show web interstitial ad');
+  
+  // If Google Publisher Tags is available
+  if (window.googletag) {
+    try {
+      // Create a div for the interstitial
+      const interstitialDiv = document.createElement('div');
+      interstitialDiv.id = 'interstitial-ad-div';
+      interstitialDiv.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; background-color: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center;';
+      
+      // Create a container for the ad content
+      const adContainer = document.createElement('div');
+      adContainer.style.cssText = 'width: 300px; height: 250px; background-color: #fff; position: relative; padding: 10px;';
+      adContainer.id = 'interstitial-ad-container';
+      
+      // Add a close button
+      const closeButton = document.createElement('button');
+      closeButton.textContent = 'X';
+      closeButton.style.cssText = 'position: absolute; top: 5px; right: 5px; cursor: pointer; background: red; color: white; border: none; border-radius: 50%; width: 25px; height: 25px;';
+      closeButton.onclick = function() {
+        document.body.removeChild(interstitialDiv);
+      };
+      
+      adContainer.appendChild(closeButton);
+      interstitialDiv.appendChild(adContainer);
+      document.body.appendChild(interstitialDiv);
+      
+      // Load an ad into the container
+      googletag.cmd.push(function() {
+        const slot = googletag.defineSlot(
+          AD_UNITS.INTERSTITIAL,
+          [[300, 250]],
+          'interstitial-ad-container'
+        )
+        .addService(googletag.pubads());
+        
+        googletag.pubads().refresh([slot]);
+        googletag.display('interstitial-ad-container');
+        
+        // Auto-close after 10 seconds if user doesn't close it
+        setTimeout(function() {
+          if (document.getElementById('interstitial-ad-div')) {
+            document.body.removeChild(interstitialDiv);
+          }
+        }, 10000);
+      });
+      
+      console.log('Web interstitial ad displayed');
+    } catch (error) {
+      console.error('Error showing web interstitial:', error);
+      // Clean up if error occurs
+      const existingInterstitial = document.getElementById('interstitial-ad-div');
+      if (existingInterstitial) {
+        document.body.removeChild(existingInterstitial);
+      }
+    }
+  } else {
+    console.log('Google Publisher Tags not available for interstitial');
+  }
 }
 
 // Setup click handlers for showing interstitial ads

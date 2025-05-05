@@ -6,6 +6,17 @@
   <title>FarmAssist AI</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  
+  <!-- AdMob/GPT for web ads -->
+  <script async src="https://securepubads.g.doubleclick.net/tag/js/gpt.js"></script>
+  <script>
+    window.googletag = window.googletag || {cmd: []};
+    googletag.cmd.push(function() {
+      googletag.pubads().enableSingleRequest();
+      googletag.enableServices();
+    });
+  </script>
+  
   <style>
     :root {
       --primary-color: #2e7d32;
@@ -1583,7 +1594,8 @@
       <div class="container py-5">
         <!-- Banner Ad Container - Top of Market Prices -->
         <div class="ad-banner-container mb-3 text-center" id="market-top-ad">
-          <p class="ad-placeholder">विज्ञापन</p>
+          <p class="ad-placeholder">विज्ञापन स्थान</p>
+          <div id="gpt-market-top-ad"></div>
         </div>
         <h2 class="mb-4" data-i18n="market_prices_title">Market Prices</h2>
         
@@ -1715,7 +1727,8 @@
       <div class="container py-5">
         <!-- Banner Ad Container - Top of Weather Section -->
         <div class="ad-banner-container mb-3 text-center" id="weather-top-ad">
-          <p class="ad-placeholder">विज्ञापन</p>
+          <p class="ad-placeholder">विज्ञापन स्थान</p>
+          <div id="gpt-weather-top-ad"></div>
         </div>
         <h2 class="mb-4">Weather Forecast</h2>
         
