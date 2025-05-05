@@ -2868,4 +2868,4 @@ def generate_rule_based_irrigation_recommendations(crop_type, soil_type, growth_
 
 # Run the Flask app
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5003, debug=True)
+    app.run(host='0.0.0.0', port=5004, debug=True)

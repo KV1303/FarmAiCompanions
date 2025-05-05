@@ -13,7 +13,7 @@ const firebaseClient = require('./firebase_client');
 
 const app = express();
 const PORT = 5000;
-const API_PORT = 5003;
+const API_PORT = 5004;
 
 // Create uploads directory if it doesn't exist
 if (!fs.existsSync('uploads')) {
