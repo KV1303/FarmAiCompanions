@@ -110,11 +110,22 @@ def initialize_firebase():
             # First try to fix common encoding issues
             if '\\n' in private_key:
                 private_key = private_key.replace('\\n', '\n')
-            # Handle if the key is missing proper line breaks
-            if not private_key.startswith('-----BEGIN PRIVATE KEY-----'):
+            
+            # Make sure we have the BEGIN/END markers with proper formatting
+            if '-----BEGIN PRIVATE KEY-----' not in private_key:
                 private_key = "-----BEGIN PRIVATE KEY-----\n" + private_key
-            if not private_key.endswith("-----END PRIVATE KEY-----"):
+            
+            if '-----END PRIVATE KEY-----' not in private_key:
                 private_key = private_key + "\n-----END PRIVATE KEY-----\n"
+            
+            # Ensure proper line wrapping for PEM format
+            if '-\n' not in private_key:
+                # Add line breaks every 64 characters in the base64 part
+                parts = private_key.split('-----')
+                if len(parts) >= 3:
+                    base64_part = parts[2].strip()
+                    wrapped_base64 = '\n'.join([base64_part[i:i+64] for i in range(0, len(base64_part), 64)])
+                    private_key = "-----" + parts[1] + "-----\n" + wrapped_base64 + "\n-----" + parts[3] + "-----"
         
         print(f"Setting up Firebase with project ID: {project_id}")
         
