@@ -18,6 +18,15 @@ class InMemoryFirebaseCollection:
         print(f"Added document to {self.name} collection with ID: {doc_id}")
         return {'id': doc_id}
     
+    def document(self, doc_id=None):
+        # If no doc_id is provided, generate a new one
+        if doc_id is None:
+            doc_id = f"doc{self.doc_id_counter}"
+            self.doc_id_counter += 1
+        
+        # Create and return a document reference
+        return InMemoryDocumentReference(self, doc_id)
+    
     def where(self, field, op, value):
         # Simple filtering implementation
         if op == '==':
@@ -62,6 +71,44 @@ class InMemoryFirebaseQuery:
         # Return document snapshots
         return [InMemoryDocumentSnapshot(doc) for doc in self.documents]
 
+class InMemoryDocumentReference:
+    def __init__(self, collection, doc_id):
+        self.collection = collection
+        self.id = doc_id
+        self.data = None
+    
+    def set(self, data):
+        # Add ID to the data
+        data['id'] = self.id
+        
+        # Check if document already exists
+        for i, doc in enumerate(self.collection.documents):
+            if doc.get('id') == self.id:
+                # Update existing document
+                self.collection.documents[i] = data
+                self.data = data
+                return self
+        
+        # Add new document
+        self.collection.documents.append(data)
+        self.data = data
+        return self
+    
+    def get(self):
+        # Find document by ID
+        for doc in self.collection.documents:
+            if doc.get('id') == self.id:
+                return InMemoryDocumentSnapshot(doc)
+        return None
+    
+    def delete(self):
+        # Remove document by ID
+        self.collection.documents = [
+            doc for doc in self.collection.documents 
+            if doc.get('id') != self.id
+        ]
+        return True
+
 class InMemoryDocumentSnapshot:
     def __init__(self, data):
         self.data = data
@@ -69,6 +116,9 @@ class InMemoryDocumentSnapshot:
     
     def to_dict(self):
         return self.data
+    
+    def exists(self):
+        return True
 
 class InMemoryFirebaseDB:
     def __init__(self):

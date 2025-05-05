@@ -520,7 +520,7 @@ def get_soil_specific_guidance(soil_type, crop_type):
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
-    """Process chat message and return AI response with context awareness"""
+    """Process chat message and return AI response with context awareness - FIREBASE ONLY"""
     try:
         data = request.json
         user_message = data.get('message', '')
@@ -537,7 +537,7 @@ def chat():
         # Detect topic/intent (simple keyword-based for now)
         context_data = detect_chat_intent(user_message)
         
-        # Save message to chat history using Firebase models
+        # Save message to chat history using Firebase
         try:
             # Create new chat message document in Firebase
             chat_data = {
@@ -552,23 +552,11 @@ def chat():
             # Use Firebase model
             ChatHistory.create(chat_data)
             print(f"Saved chat message to Firebase for user {user_id}")
-            firebase_saved = True
         except Exception as e:
-            firebase_saved = False
-            print(f"Firebase chat save error: {e}, falling back to PostgreSQL")
-            
-            # Fallback to PostgreSQL if Firebase fails
-            user_chat_entry = SQLChatHistory(
-                user_id=user_id,
-                session_id=session_id,
-                message=user_message,
-                sender='user',
-                context_data=context_data
-            )
-            db.session.add(user_chat_entry)
-            db.session.commit()
+            print(f"Error in chat save: {str(e)}")
+            return jsonify({'error': f'Failed to save chat message: {str(e)}'}), 500
         
-        # Try to get conversation history from Firebase first
+        # Get conversation history from Firebase
         try:
             # Get conversation history from Firebase model
             print(f"Using Firebase to get chat history for user {user_id}, session {session_id}")
@@ -581,21 +569,8 @@ def chat():
             if len(chat_history) > context_window:
                 chat_history = chat_history[-context_window:]
         except Exception as e:
+            print(f"Error in chat history retrieval: {str(e)}")
             chat_history = []
-            print(f"Firebase chat history error: {e}, falling back to PostgreSQL")
-        
-        # Fallback to PostgreSQL if needed
-        if not chat_history:
-            # Get conversation history for context (limited to context_window most recent messages)
-            pg_chat_history = ChatHistory.query.filter_by(
-                user_id=user_id, 
-                session_id=session_id
-            ).order_by(
-                ChatHistory.timestamp.desc()
-            ).limit(context_window).all()
-            
-            # Reverse the list to get chronological order
-            chat_history = pg_chat_history[::-1]
         
         # Format chat history for AI context
         conversation_context = ""
@@ -697,18 +672,8 @@ def chat():
                             ChatHistory.create(ai_chat_data)
                             print(f"Saved AI response to Firebase for user {user_id}")
                         except Exception as e:
-                            print(f"Firebase AI response save error: {e}, falling back to PostgreSQL")
-                            
-                            # Fallback to PostgreSQL if Firebase fails
-                            ai_chat_entry = SQLChatHistory(
-                                user_id=user_id,
-                                session_id=session_id,
-                                message=ai_response,
-                                sender='assistant',
-                                context_data=context_data
-                            )
-                            db.session.add(ai_chat_entry)
-                            db.session.commit()
+                            print(f"Error saving AI response: {str(e)}")
+                            # Continue anyway - the response is still valid even if we couldn't save it
                         
                         return jsonify({'reply': ai_response})
                     else:
@@ -729,37 +694,24 @@ def chat():
                         if response and response.text:
                             ai_response = response.text
                             
-                            # Save AI response to chat history - first try Firebase
-                            firebase_saved = False
-                            if firebase and firebase.get('db'):
-                                try:
-                                    # Create new chat message document in Firebase
-                                    ai_chat_data = {
-                                        'user_id': user_id,
-                                        'session_id': session_id,
-                                        'message': ai_response,
-                                        'sender': 'assistant',
-                                        'timestamp': datetime.utcnow(),
-                                        'context_data': context_data
-                                    }
-                                    
-                                    firebase['db'].collection('chat_history').add(ai_chat_data)
-                                    firebase_saved = True
-                                    print(f"Saved fallback AI response to Firebase for user {user_id}")
-                                except Exception as e:
-                                    print(f"Firebase fallback AI response save error: {e}, falling back to PostgreSQL")
-                            
-                            # Fallback to PostgreSQL if Firebase fails
-                            if not firebase_saved:
-                                ai_chat_entry = ChatHistory(
-                                    user_id=user_id,
-                                    session_id=session_id,
-                                    message=ai_response,
-                                    sender='assistant',
-                                    context_data=context_data
-                                )
-                                db.session.add(ai_chat_entry)
-                                db.session.commit()
+                            # Save AI response to chat history
+                            try:
+                                # Create new chat message document in Firebase
+                                ai_chat_data = {
+                                    'user_id': user_id,
+                                    'session_id': session_id,
+                                    'message': ai_response,
+                                    'sender': 'assistant',
+                                    'timestamp': datetime.utcnow().isoformat(),
+                                    'context_data': context_data
+                                }
+                                
+                                # Use Firebase model
+                                ChatHistory.create(ai_chat_data)
+                                print(f"Saved fallback AI response to Firebase for user {user_id}")
+                            except Exception as e:
+                                print(f"Error saving fallback AI response: {str(e)}")
+                                # Continue anyway - the response is still valid even if we couldn't save it
                             
                             return jsonify({'reply': ai_response})
                         else:
