@@ -98,8 +98,13 @@ class InMemoryDocumentReference:
         # Find document by ID
         for doc in self.collection.documents:
             if doc.get('id') == self.id:
-                return InMemoryDocumentSnapshot(doc)
-        return None
+                snapshot = InMemoryDocumentSnapshot(doc)
+                snapshot.reference = self
+                return snapshot
+        # Return empty snapshot for non-existent documents
+        empty_snapshot = InMemoryDocumentSnapshot(None)
+        empty_snapshot.reference = self
+        return empty_snapshot
     
     def delete(self):
         # Remove document by ID
@@ -112,11 +117,11 @@ class InMemoryDocumentReference:
 class InMemoryDocumentSnapshot:
     def __init__(self, data):
         self.data = data
-        self.id = data.get('id', 'unknown')
+        self.id = data.get('id', 'unknown') if data else 'unknown'
         self.reference = None  # This will be set by the caller if needed
     
     def to_dict(self):
-        return self.data
+        return self.data if self.data else None
     
     def exists(self):
         return self.data is not None
