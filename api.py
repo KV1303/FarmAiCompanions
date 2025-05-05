@@ -591,8 +591,8 @@ def chat():
         if chat_history and len(chat_history) > 1:  # If there's more than just the current message
             conversation_context = "Previous conversation:\n"
             for entry in chat_history[:-1]:  # Exclude the current message which we just saved
-                role = "किसान" if entry.sender == "user" else "AI किसान"
-                conversation_context += f"{role}: {entry.message}\n"
+                role = "किसान" if entry.get('sender') == "user" else "AI किसान"
+                conversation_context += f"{role}: {entry.get('message', '')}\n"
         
         # If Gemini API key is available, use AI for chat
         if GEMINI_API_KEY:
@@ -1730,14 +1730,22 @@ def handle_market_favorites():
             new_favorite = MarketFavorite.create(favorite_data)
             
             # Return the saved data with the generated ID
-            return jsonify({
-                'id': new_favorite.get('id', ''),
-                'user_id': new_favorite.get('user_id', ''),
-                'crop_type': new_favorite.get('crop_type', ''),
-                'market_name': new_favorite.get('market_name', ''),
-                'price_alert_min': new_favorite.get('price_alert_min'),
-                'price_alert_max': new_favorite.get('price_alert_max')
-            })
+            if isinstance(new_favorite, dict):
+                return jsonify({
+                    'id': new_favorite.get('id', ''),
+                    'user_id': new_favorite.get('user_id', ''),
+                    'crop_type': new_favorite.get('crop_type', ''),
+                    'market_name': new_favorite.get('market_name', ''),
+                    'price_alert_min': new_favorite.get('price_alert_min'),
+                    'price_alert_max': new_favorite.get('price_alert_max')
+                })
+            else:
+                # If the response is not a dictionary, create a basic response
+                return jsonify({
+                    'message': 'Market favorite created successfully',
+                    'crop_type': favorite_data['crop_type'],
+                    'user_id': favorite_data['user_id']
+                })
             
         except Exception as e:
             print(f"Error creating market favorite in Firebase: {str(e)}")
