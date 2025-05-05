@@ -3980,9 +3980,8 @@ document.addEventListener('DOMContentLoaded', function() {
     { name: 'getIrrigationRecommendations', original: getIrrigationRecommendations },
     { name: 'loadMarketPrices', original: loadMarketPrices },
     { name: 'getQuickFarmGuidance', original: getQuickFarmGuidance },
-    { name: 'sendChatMessage', original: sendChatMessage },
-    { name: 'scanForDisease', original: scanForDisease },
-    { name: 'getWeatherForLocation', original: getWeatherForLocation }
+    { name: 'scanForDisease', original: typeof scanForDisease === 'function' ? scanForDisease : null },
+    { name: 'getWeatherForLocation', original: typeof getWeatherForLocation === 'function' ? getWeatherForLocation : null }
   ];
   
   // Wrap each function with ad display

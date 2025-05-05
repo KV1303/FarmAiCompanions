@@ -70,17 +70,29 @@ function createBannerAds() {
   const bannerContainers = document.querySelectorAll('.ad-banner-container');
   
   bannerContainers.forEach((container, index) => {
-    console.log(`Creating banner ad #${index + 1}`);
+    console.log(`Creating banner ad #${index + 1} in container ${container.id}`);
     
+    // Clear placeholder text when showing real ad
+    const placeholder = container.querySelector('.ad-placeholder');
+    if (placeholder) {
+      placeholder.style.display = 'none';
+    }
+    
+    // Create a banner ad for this container
     admob.createBannerView({
       adId: AD_UNITS.BANNER,
       adSize: 'SMART_BANNER',
-      position: 8, // BOTTOM_CENTER
+      position: container.id, // Use container ID as position
       autoShow: true
     }).then(() => {
-      console.log(`Banner ad #${index + 1} created successfully`);
+      console.log(`Banner ad #${index + 1} created successfully in ${container.id}`);
+      container.classList.add('ad-loaded');
     }).catch(error => {
-      console.error(`Error creating banner ad #${index + 1}:`, error);
+      console.error(`Error creating banner ad #${index + 1} in ${container.id}:`, error);
+      // Show placeholder again if ad fails to load
+      if (placeholder) {
+        placeholder.style.display = 'block';
+      }
     });
   });
 }
