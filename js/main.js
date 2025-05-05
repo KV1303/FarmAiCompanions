@@ -13,17 +13,9 @@ async function getAdvancedFertilizerRecommendations() {
   }
   
   try {
-    // Close the modal using our pure JavaScript implementation
-    const modal = document.getElementById('fertilizerModal');
-    if (modal) {
-      console.log('Closing fertilizer modal before processing');
-      hideModal(modal);
-    }
+    // Don't close the modal yet - we'll show results in it
     
-    // SHORT DELAY to ensure modal is fully closed before showing spinner
-    await new Promise(resolve => setTimeout(resolve, 100));
-  
-    // Show loading spinner
+    // Show loading spinner inside the modal
     document.getElementById('fertilizerResults').classList.remove('hidden');
     document.getElementById('fertilizerSpinner').style.display = 'block';
     document.getElementById('fertilizerRecommendationsContent').innerHTML = '';
@@ -187,10 +179,13 @@ async function getAdvancedFertilizerRecommendations() {
                <div class="alert alert-primary">₹${recommendations.cost_estimate} per hectare (approximately)</div>`;
       }
       
-      // Add print button
+      // Add print and close buttons
       html += `<div class="mt-4 text-center">
-                <button class="btn btn-outline-success" onclick="window.print()">
+                <button class="btn btn-outline-success me-2" onclick="window.print()">
                   <i class="fas fa-print me-2"></i>Print Recommendations
+                </button>
+                <button class="btn btn-outline-secondary" onclick="hideModal(document.getElementById('fertilizerModal'))">
+                  <i class="fas fa-times me-2"></i>Close
                 </button>
               </div>`;
       
@@ -227,17 +222,9 @@ async function getIrrigationRecommendations() {
   }
   
   try {
-    // Close the modal using our pure JavaScript implementation
-    const modal = document.getElementById('irrigationModal');
-    if (modal) {
-      console.log('Closing irrigation modal before processing');
-      hideModal(modal);
-    }
+    // Don't close the modal yet - we'll show results in it
     
-    // SHORT DELAY to ensure modal is fully closed before showing spinner
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    // Show loading spinner
+    // Show loading spinner inside the modal
     document.getElementById('irrigationResults').classList.remove('hidden');
     document.getElementById('irrigationSpinner').style.display = 'block';
     document.getElementById('irrigationRecommendationsContent').innerHTML = '';
@@ -368,10 +355,13 @@ async function getIrrigationRecommendations() {
         html += `</ul>`;
       }
       
-      // Add print button
+      // Add print and close buttons
       html += `<div class="mt-4 text-center">
-                <button class="btn btn-outline-primary" onclick="window.print()">
+                <button class="btn btn-outline-primary me-2" onclick="window.print()">
                   <i class="fas fa-print me-2"></i>Print Schedule
+                </button>
+                <button class="btn btn-outline-secondary" onclick="hideModal(document.getElementById('irrigationModal'))">
+                  <i class="fas fa-times me-2"></i>Close
                 </button>
               </div>`;
       
