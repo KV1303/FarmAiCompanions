@@ -11,9 +11,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: Set up JDK 17
+      - name: Set up Java
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
@@ -22,15 +23,15 @@ jobs:
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.13.0'  # Adjust to your Flutter version
+          flutter-version: '3.13.0'  # Change if needed
 
-      - name: Get Dependencies
+      - name: Get dependencies
         run: flutter pub get
 
       - name: Build APK
         run: flutter build apk --release
 
-      - name: Upload Artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v3
         with:
           name: release-apk
