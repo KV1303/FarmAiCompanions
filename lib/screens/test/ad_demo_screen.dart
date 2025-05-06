@@ -328,8 +328,6 @@ class _AdDemoScreenState extends State<AdDemoScreen> {
       onPressed: () {
         Navigator.of(context).pop();
         _showAdClickedMessage('इंटरस्टिशियल');
-      },
-      onClosed: () {
         _showAdClosedMessage('इंटरस्टिशियल');
       },
     );
@@ -356,8 +354,7 @@ class _AdDemoScreenState extends State<AdDemoScreen> {
             backgroundColor: Colors.green,
           ),
         );
-      },
-      onClosed: () {
+        
         _showAdClosedMessage('रिवॉर्ड');
       },
     );

@@ -243,7 +243,7 @@ class TestAdDisplay extends StatelessWidget {
   }
   
   /// Shows an interstitial ad dialog
-  static void showInterstitial(BuildContext context, {VoidCallback? onPressed, VoidCallback? onClosed}) {
+  static void showInterstitial(BuildContext context, {VoidCallback? onPressed}) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -286,7 +286,7 @@ class TestAdDisplay extends StatelessWidget {
                     constraints: const BoxConstraints(),
                     onPressed: () {
                       Navigator.of(context).pop();
-                      if (onClosed != null) onClosed();
+                      if (onPressed != null) onPressed();
                     },
                   ),
                 ],
@@ -344,7 +344,6 @@ class TestAdDisplay extends StatelessWidget {
                     onPressed: () {
                       Navigator.of(context).pop();
                       if (onPressed != null) onPressed();
-                      if (onClosed != null) onClosed();
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.orange,
@@ -368,7 +367,7 @@ class TestAdDisplay extends StatelessWidget {
   }
   
   /// Shows a rewarded ad dialog
-  static void showRewarded(BuildContext context, {VoidCallback? onPressed, VoidCallback? onClosed}) {
+  static void showRewarded(BuildContext context, {VoidCallback? onPressed}) {
     bool isWatched = false;
     
     showDialog(
@@ -428,7 +427,7 @@ class TestAdDisplay extends StatelessWidget {
                         constraints: const BoxConstraints(),
                         onPressed: () {
                           Navigator.of(context).pop();
-                          if (onClosed != null) onClosed();
+                          if (onPressed != null) onPressed();
                         },
                       ),
                     ],
@@ -532,7 +531,6 @@ class TestAdDisplay extends StatelessWidget {
                             ? () {
                                 Navigator.of(context).pop();
                                 if (onPressed != null) onPressed();
-                                if (onClosed != null) onClosed();
                               }
                             : null,
                         style: ElevatedButton.styleFrom(
