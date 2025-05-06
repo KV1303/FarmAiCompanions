@@ -163,25 +163,34 @@ def initialize_firebase():
         
         # Process private key - handle different formats
         if private_key:
-            # First try to fix common encoding issues
-            if '\\n' in private_key:
-                private_key = private_key.replace('\\n', '\n')
-            
-            # Make sure we have the BEGIN/END markers with proper formatting
-            if '-----BEGIN PRIVATE KEY-----' not in private_key:
-                private_key = "-----BEGIN PRIVATE KEY-----\n" + private_key
-            
-            if '-----END PRIVATE KEY-----' not in private_key:
-                private_key = private_key + "\n-----END PRIVATE KEY-----\n"
-            
-            # Ensure proper line wrapping for PEM format
-            if '-\n' not in private_key:
-                # Add line breaks every 64 characters in the base64 part
-                parts = private_key.split('-----')
-                if len(parts) >= 3:
-                    base64_part = parts[2].strip()
-                    wrapped_base64 = '\n'.join([base64_part[i:i+64] for i in range(0, len(base64_part), 64)])
-                    private_key = "-----" + parts[1] + "-----\n" + wrapped_base64 + "\n-----" + parts[3] + "-----"
+            try:
+                # Check if the key is JSON-encoded with quotes (common in some env platforms)
+                if private_key.startswith('"') and private_key.endswith('"'):
+                    private_key = private_key[1:-1]  # Remove enclosing quotes
+                
+                # First try to fix common encoding issues
+                if '\\n' in private_key:
+                    private_key = private_key.replace('\\n', '\n')
+                
+                # Make sure we have the BEGIN/END markers with proper formatting
+                if '-----BEGIN PRIVATE KEY-----' not in private_key:
+                    private_key = "-----BEGIN PRIVATE KEY-----\n" + private_key
+                
+                if '-----END PRIVATE KEY-----' not in private_key:
+                    private_key = private_key + "\n-----END PRIVATE KEY-----\n"
+                
+                # Ensure proper line wrapping for PEM format
+                if '-\n' not in private_key:
+                    # Add line breaks every 64 characters in the base64 part
+                    parts = private_key.split('-----')
+                    if len(parts) >= 3:
+                        base64_part = parts[2].strip()
+                        wrapped_base64 = '\n'.join([base64_part[i:i+64] for i in range(0, len(base64_part), 64)])
+                        private_key = "-----" + parts[1] + "-----\n" + wrapped_base64 + "\n-----" + parts[3] + "-----"
+            except Exception as e:
+                print(f"Error processing private key: {e}")
+                # If we can't process the key, provide a clearer error
+                print("Private key format may be incorrect. Please check your FIREBASE_PRIVATE_KEY environment variable.")
         
         print(f"Setting up Firebase with project ID: {project_id}")
         
