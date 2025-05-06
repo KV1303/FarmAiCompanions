@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../constants/app_colors.dart';
 import '../../constants/app_strings.dart';
+import '../../constants/app_constants.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
 import '../../widgets/common/custom_app_bar.dart';
@@ -198,7 +199,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 16),
               CustomButton(
                 text: 'Go to Login',
-                onPressed: () => Navigator.pushReplacementNamed(context, '/login'),
+                onPressed: () => Navigator.pushReplacementNamed(context, AppConstants.routeLogin),
               ),
             ],
           ),
@@ -426,7 +427,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 title: localization?.translate(AppStrings.privacyPolicy) ?? AppStrings.privacyPolicy,
                 subtitle: isHindi ? 'गोपनीयता नीति पढ़ें' : 'Read our privacy policy',
                 onTap: () {
-                  Navigator.pushNamed(context, '/privacy-policy');
+                  Navigator.pushNamed(context, AppConstants.routePrivacyPolicy);
                 },
               ),
               

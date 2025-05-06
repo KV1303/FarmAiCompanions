@@ -16,6 +16,7 @@ import 'screens/disease_detection/disease_detection_screen.dart';
 import 'screens/market_prices/market_prices_screen.dart';
 import 'screens/weather/weather_screen.dart';
 import 'screens/profile/profile_screen.dart';
+import 'screens/privacy_policy/privacy_policy_screen.dart';
 import 'utils/localization.dart';
 import 'widgets/consent_dialog.dart';
 
@@ -139,6 +140,7 @@ class FarmAssistApp extends StatelessWidget {
         AppConstants.routeMarketPrices: (context) => const MarketPricesScreen(),
         AppConstants.routeWeather: (context) => const WeatherScreen(),
         AppConstants.routeProfile: (context) => const ProfileScreen(),
+        AppConstants.routePrivacyPolicy: (context) => const PrivacyPolicyScreen(),
       },
     );
   }

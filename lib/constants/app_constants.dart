@@ -18,6 +18,7 @@ class AppConstants {
   static const String routeSubscription = '/subscription';
   static const String routePremiumArticles = '/premium-articles';
   static const String routePremiumArticleDetail = '/premium-article-detail';
+  static const String routePrivacyPolicy = '/privacy-policy';
   
   // Default values
   static const int fieldRefreshInterval = 60; // seconds
