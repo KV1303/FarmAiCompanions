@@ -1,0 +1,54 @@
+Run flutter pub get
+
+  ╔════════════════════════════════════════════════════════════════════════════╗
+  ║                 Welcome to Flutter! - https://flutter.dev                  ║
+  ║                                                                            ║
+  ║ The Flutter tool uses Google Analytics to anonymously report feature usage ║
+  ║ statistics and basic crash reports. This data is used to help improve      ║
+  ║ Flutter tools over time.                                                   ║
+  ║                                                                            ║
+  ║ Flutter tool analytics are not sent on the very first run. To disable      ║
+  ║ reporting, type 'flutter config --no-analytics'. To display the current    ║
+  ║ setting, type 'flutter config'. If you opt out of analytics, an opt-out    ║
+  ║ event will be sent, and then no further information will be sent by the    ║
+  ║ Flutter tool.                                                              ║
+  ║                                                                            ║
+  ║ By downloading the Flutter SDK, you agree to the Google Terms of Service.  ║
+  ║ Note: The Google Privacy Policy describes how data is handled in this      ║
+  ║ service.                                                                   ║
+  ║                                                                            ║
+  ║ Moreover, Flutter includes the Dart SDK, which may send usage metrics and  ║
+  ║ crash reports to Google.                                                   ║
+  ║                                                                            ║
+  ║ Read about data we send with crash reports:                                ║
+  ║ https://flutter.dev/docs/reference/crash-reporting                         ║
+  ║                                                                            ║
+  ║ See Google's privacy policy:                                               ║
+  ║ https://policies.google.com/privacy                                        ║
+  ╚════════════════════════════════════════════════════════════════════════════╝
+
+Resolving dependencies...
+Note: intl is pinned to version 0.18.1 by flutter_localizations from the flutter SDK.
+See https://dart.dev/go/sdk-version-pinning for details.
+
+
+Because farm_assist_ai depends on flutter_localizations from sdk which depends on intl 0.18.1, intl 0.18.1 is required.
+So, because farm_assist_ai depends on intl ^0.19.0, version solving failed.
+
+
+You can try the following suggestion to make the pubspec resolve:
+* Consider downgrading your constraint on intl: flutter pub add intl:^0.18.1
+The Flutter CLI developer tool uses Google Analytics to report usage and diagnostic data
+along with package dependencies, and crash reporting to send basic crash reports.
+This data is used to help improve the Dart platform, Flutter framework, and related tools.
+
+Telemetry is not sent on the very first run.
+To disable reporting of telemetry, run this terminal command:
+
+flutter --disable-telemetry.
+If you opt out of telemetry, an opt-out event will be sent,
+and then no further information will be sent.
+This data is collected in accordance with the
+Google Privacy Policy (https://policies.google.com/privacy).
+
+Error: Process completed with exit code 1.

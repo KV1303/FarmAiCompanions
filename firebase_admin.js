@@ -9,17 +9,27 @@ try {
   // Process private key - Fix common formatting issues
   let privateKey = process.env.FIREBASE_PRIVATE_KEY || '';
   
+  // Handle direct JSON environment variables (common in deployment platforms)
+  try {
+    if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+      // Remove enclosing quotes that might be added by some platforms
+      privateKey = privateKey.slice(1, -1);
+    }
+  } catch (e) {
+    console.log('Private key pre-processing error:', e.message);
+  }
+  
   // Replace escaped newlines with actual newlines
   if (privateKey.includes('\\n')) {
     privateKey = privateKey.replace(/\\n/g, '\n');
   }
   
   // Ensure key has proper PEM format
-  if (!privateKey.includes('-----BEGIN PRIVATE KEY-----')) {
+  if (privateKey && !privateKey.includes('-----BEGIN PRIVATE KEY-----')) {
     privateKey = '-----BEGIN PRIVATE KEY-----\n' + privateKey;
   }
   
-  if (!privateKey.includes('-----END PRIVATE KEY-----')) {
+  if (privateKey && !privateKey.includes('-----END PRIVATE KEY-----')) {
     privateKey = privateKey + '\n-----END PRIVATE KEY-----\n';
   }
   
