@@ -1,142 +1,41 @@
-# FarmAssist AI - Google Play Store Listing
+# FarmAssistAI - किसान का डिजिटल साथी
+## Google Play Store Listing
 
-This document outlines the required assets and information for submitting FarmAssist AI to the Google Play Store.
+### Short Description (लघु विवरण)
+किसानों के लिए AI आधारित खेती सहायक - मौसम, बाजार भाव, बीमारी पहचान, और व्यापक कृषि सलाह एक ही ऐप में!
 
-## App Information
+### Full Description (पूर्ण विवरण)
+**FarmAssistAI: किसान का डिजिटल साथी** एक व्यापक कृषि सलाहकार ऐप है जो किसानों को आधुनिक तकनीक से जोड़ता है। Google की Gemini AI के साथ एकीकृत, यह ऐप किसानों को उनकी जरूरतों के अनुसार स्मार्ट समाधान प्रदान करता है।
 
-### Basic Details
+#### मुख्य विशेषताएँ:
+- **AI आधारित फसल रोग पहचान**: फसल की छवि अपलोड करें और तुरंत रोग का निदान पाएं
+- **वास्तविक समय मौसम पूर्वानुमान**: खेती के लिए अनुकूलित मौसम की जानकारी और सलाह
+- **बाजार भाव निगरानी**: विभिन्न फसलों के वर्तमान और पिछले बाजार मूल्य देखें
+- **किसान से खरीददार तक सीधा संपर्क**: अपनी उपज को बिचौलियों के बिना बाजार में बेचें
+- **पूरी तरह हिंदी में**: स्थानीय भाषा में सरल और उपयोगकर्ता-अनुकूल इंटरफेस
+- **व्यापक खेत प्रबंधन**: अपने सभी खेतों, फसलों, और कृषि गतिविधियों का डिजिटल रिकॉर्ड रखें
+- **AI-संचालित सिंचाई और उर्वरक सिफारिशें**: अपनी फसल और मिट्टी के प्रकार के आधार पर अनुकूलित सिफारिशें पाएं
 
-- **App Name**: FarmAssist AI
-- **Short Description** (80 characters max):
-  AI-powered farming companion for Hindi-speaking farmers with personalized guidance.
+#### किसानों के लिए लाभ:
+- **अधिक उत्पादकता**: वैज्ञानिक दृष्टिकोण से कृषि प्रबंधन के माध्यम से फसल की पैदावार बढ़ाएं
+- **कम लागत**: सटीक सिंचाई और उर्वरक सिफारिशों से रासायनिक और पानी की खपत कम करें
+- **बेहतर आय**: सीधे बाजार पहुंच और रोग प्रबंधन के माध्यम से उपज की गुणवत्ता और मूल्य में सुधार
+- **आसान उपयोग**: तकनीकी ज्ञान की आवश्यकता नहीं, सिर्फ स्मार्टफोन और इंटरनेट कनेक्शन चाहिए
 
-- **Full Description** (4000 characters max):
-  FarmAssist AI is a comprehensive farming companion app designed specifically for Indian farmers. With its powerful AI capabilities and complete Hindi interface, it bridges the technology gap and provides accessible agricultural knowledge to every farmer.
-  
-  The app offers personalized recommendations for fertilizers and irrigation based on your specific crop type, soil conditions, and local weather. It helps you detect crop diseases early by simply uploading a photo, and provides detailed treatment advice.
-  
-  Key Features:
-  
-  🌱 AI-Powered Farming Recommendations
-  - Personalized fertilizer and irrigation schedules
-  - Crop-specific guidance tailored to your fields
-  - Sustainable farming practices to improve yield
-  
-  🌦️ Weather Forecasting
-  - Local weather predictions
-  - Weather-based farming recommendations
-  - Alerts for extreme weather conditions
-  
-  🦠 Disease Detection
-  - Identify crop diseases from photos
-  - Detailed treatment recommendations
-  - Disease tracking and monitoring tools
-  
-  💰 Market Price Monitoring
-  - Live crop price updates from local markets
-  - Price trend analysis and alerts
-  - Direct farmer-to-buyer marketplace
-  
-  🤖 AI Farming Assistant Chat
-  - 24/7 agricultural guidance in Hindi
-  - Ask any farming-related questions
-  - Save and access previous conversations
-  
-  FarmAssist AI is built on Google's Gemini API technology, ensuring accurate and up-to-date agricultural knowledge. The app works completely in Hindi, making advanced agricultural technology accessible to all farmers regardless of language barriers.
-  
-  Subscription Benefits:
-  - Remove all advertisements
-  - Access premium features and content
-  - Unlimited AI consultations
-  
-  Our mission is to empower farmers with technology that's both powerful and easy to use. Download FarmAssist AI today and transform your farming practices with the power of artificial intelligence!
+#### सदस्यता योजना:
+- **7 दिन का निःशुल्क परीक्षण**: सभी प्रीमियम सुविधाओं का अनुभव करें
+- **किफायती मूल्य**: उसके बाद सिर्फ ₹99/वर्ष
 
-### Categorization
+आज ही FarmAssistAI डाउनलोड करें और अपनी खेती को डिजिटल रूप से सशक्त बनाएं!
 
-- **Category**: Agriculture
-- **Tags**: Farming, AI Assistant, Crop Management, Agriculture, Hindi
+### Feature Bullets (विशेषताएं)
+- मौसम, बाजार भाव, रोग पहचान - सब एक ही ऐप में
+- पूरी तरह हिंदी में उपलब्ध, किसी भी स्मार्टफोन पर आसानी से उपयोग
+- Google की Gemini AI से संचालित स्मार्ट कृषि सलाह
+- फसल के प्रकार और मिट्टी के अनुसार अनुकूलित सिफारिशें
+- किसान से सीधे खरीददार तक का प्लेटफॉर्म
+- 7 दिन का मुफ्त परीक्षण, उसके बाद सिर्फ ₹99/वर्ष
+- ऑफलाइन मोड में भी बुनियादी सुविधाएं उपलब्ध
 
-## Content Rating
-
-- **Target Audience**: 12+ (General audience)
-- **Contains Ads**: Yes
-- **In-app Purchases**: Yes
-
-## Contact Information
-
-- **Email**: [Your contact email]
-- **Website**: [Your website URL]
-- **Privacy Policy URL**: [Your privacy policy URL]
-
-## Graphic Assets
-
-### Required Screenshots
-
-Prepare the following screenshots at 16:9 aspect ratio for various device sizes:
-- Phone: 1080x1920px (minimum 2 screenshots)
-  1. Home screen with bottom navigation
-  2. AI chat interface
-  3. Disease detection feature
-  4. Weather forecast screen
-  5. Field management screen
-  6. Market prices screen
-  7. Subscription page
-  8. Profile page
-
-### Feature Graphic
-
-- Dimensions: 1024x500px
-- Contents: Create a banner image representing FarmAssist AI with farming visuals and app logo
-
-### App Icon
-
-- Dimensions: 512x512px
-- Format: 32-bit PNG with alpha
-- No rounded corners (Play Store automatically masks the icon)
-
-## Store Listing Video (Optional but Recommended)
-
-- Format: YouTube URL
-- Content: 30-second demo showcasing key app features in action
-- Include Hindi voice narration highlighting benefits
-
-## Release Management
-
-### App Release
-
-- **Initial Release**: All countries, with focus on India
-- **Android Version**: Minimum Android 5.0 (API level 21) or higher
-- **Content Rating**: Complete the questionnaire accurately
-
-### Pricing & Distribution
-
-- **Free app with in-app purchases**
-- **Subscription Price**: ₹99/year after 7-day free trial
-
-## Google Play Store Requirements
-
-### Data Safety
-
-Complete the Data Safety form with information about:
-- What data is collected (user location, photos, etc.)
-- How data is used and shared
-- Security practices
-- Data deletion options
-
-### Developer ID Verification
-
-Ensure developer account is verified with:
-- Valid phone number
-- Credit card or debit card
-- Valid government ID
-
-## Pre-submission Checklist
-
-- [ ] Test app thoroughly on multiple Android devices
-- [ ] Verify all features are working as expected
-- [ ] Check for compliance with Google Play policies
-- [ ] Prepare privacy policy in accordance with GDPR/local regulations
-- [ ] Set up subscription pricing in Google Play Console
-- [ ] Configure AdMob with production ad units
-- [ ] Create compelling screenshots and feature graphic
-- [ ] Verify app doesn't crash or freeze during normal usage
+### Keywords (कीवर्ड)
+किसान ऐप, कृषि सलाह, मौसम पूर्वानुमान, बाजार भाव, फसल रोग पहचान, खेती AI, कृषि समाधान, हिंदी खेती ऐप, उर्वरक सलाह, सिंचाई सलाह, डिजिटल किसान, स्मार्ट फार्मिंग
