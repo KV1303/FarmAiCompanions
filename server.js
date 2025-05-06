@@ -33,6 +33,81 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// Create a downloads directory if it doesn't exist
+if (!fs.existsSync('releases')) {
+  fs.mkdirSync('releases');
+}
+
+// Serve the README for APK download information
+app.get('/download', (req, res) => {
+  res.sendFile(path.join(__dirname, 'releases', 'README.md'));
+});
+
+// Redirect to alternative APK download options
+app.get('/download/farmassist_webview.apk', (req, res) => {
+  // Create a helpful information page about the APK
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>FarmAssistAI APK Download</title>
+      <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.6; }
+        h1 { color: #2e7d32; }
+        .card { border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .btn { display: inline-block; background: #2e7d32; color: white; padding: 10px 20px; border-radius: 4px; text-decoration: none; margin-top: 10px; }
+        .info { background: #e8f5e9; padding: 15px; border-radius: 5px; }
+        ol { margin-left: 20px; }
+      </style>
+    </head>
+    <body>
+      <h1>FarmAssistAI APK Download</h1>
+      
+      <div class="card">
+        <h2>Download Options</h2>
+        <p>To download the FarmAssistAI app, you have several options:</p>
+        
+        <div class="info">
+          <p><strong>Note:</strong> Building a full Flutter APK directly in this Replit environment is not possible due to resource constraints. We recommend using one of the methods below:</p>
+        </div>
+        
+        <h3>Option 1: Use Flutter Build Locally</h3>
+        <ol>
+          <li>Clone the repository to your local machine</li>
+          <li>Install Flutter SDK if you don't have it</li>
+          <li>Run: <code>flutter pub get</code></li>
+          <li>Run: <code>flutter build apk --release</code></li>
+          <li>The APK will be in <code>build/app/outputs/flutter-apk/app-release.apk</code></li>
+        </ol>
+        
+        <h3>Option 2: Use the Web Application</h3>
+        <p>The app is fully functional as a web application:</p>
+        <a href="/" class="btn">Open FarmAssistAI Web App</a>
+        
+        <h3>Option 3: Coming Soon</h3>
+        <p>The app will be available on Google Play Store once published.</p>
+      </div>
+      
+      <div class="card">
+        <h2>Key Features</h2>
+        <ul>
+          <li>AI-powered crop disease detection</li>
+          <li>Market price monitoring and alerts</li>
+          <li>Weather forecasting and agricultural recommendations</li>
+          <li>Farm management dashboard</li>
+          <li>Complete Hindi language support</li>
+          <li>AI-driven chat assistance</li>
+        </ul>
+      </div>
+    </body>
+    </html>
+  `;
+  
+  res.send(html);
+});
+
 // Handle file uploads
 app.post('/upload', upload.single('image'), (req, res) => {
   if (!req.file) {
