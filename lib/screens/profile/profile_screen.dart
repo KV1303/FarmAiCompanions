@@ -420,6 +420,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 },
               ),
               
+              // Privacy Policy
+              _SettingsItem(
+                icon: Icons.privacy_tip_outlined,
+                title: localization?.translate(AppStrings.privacyPolicy) ?? AppStrings.privacyPolicy,
+                subtitle: isHindi ? 'गोपनीयता नीति पढ़ें' : 'Read our privacy policy',
+                onTap: () {
+                  Navigator.pushNamed(context, '/privacy-policy');
+                },
+              ),
+              
               const SizedBox(height: 32),
               
               // Logout button
