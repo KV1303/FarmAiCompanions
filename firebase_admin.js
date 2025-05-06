@@ -1,70 +1,58 @@
 const admin = require('firebase-admin');
+const { getServiceAccount, createServiceAccountFile } = require('./firebase_service_account');
 
 // Initialize Firebase Admin SDK
-// For security, we use environment variables instead of embedding the service account info
 let firebaseApp;
 
 // First try initialization using service account
 try {
-  // Process private key - Fix common formatting issues
-  let privateKey = process.env.FIREBASE_PRIVATE_KEY || '';
+  console.log('Initializing Firebase Admin SDK...');
+  const { serviceAccount, isValid } = getServiceAccount();
   
-  // Handle direct JSON environment variables (common in deployment platforms)
-  try {
-    if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
-      // Remove enclosing quotes that might be added by some platforms
-      privateKey = privateKey.slice(1, -1);
-    }
-  } catch (e) {
-    console.log('Private key pre-processing error:', e.message);
+  if (!isValid) {
+    throw new Error('Invalid service account credentials');
   }
-  
-  // Replace escaped newlines with actual newlines
-  if (privateKey.includes('\\n')) {
-    privateKey = privateKey.replace(/\\n/g, '\n');
-  }
-  
-  // Ensure key has proper PEM format
-  if (privateKey && !privateKey.includes('-----BEGIN PRIVATE KEY-----')) {
-    privateKey = '-----BEGIN PRIVATE KEY-----\n' + privateKey;
-  }
-  
-  if (privateKey && !privateKey.includes('-----END PRIVATE KEY-----')) {
-    privateKey = privateKey + '\n-----END PRIVATE KEY-----\n';
-  }
-  
-  const serviceAccount = {
-    "type": "service_account",
-    "project_id": process.env.VITE_FIREBASE_PROJECT_ID,
-    "private_key": privateKey,
-    "client_email": process.env.FIREBASE_CLIENT_EMAIL,
-    "client_id": process.env.FIREBASE_CLIENT_ID,
-    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-    "token_uri": "https://oauth2.googleapis.com/token",
-    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-    "client_x509_cert_url": process.env.FIREBASE_CLIENT_CERT_URL
-  };
 
   firebaseApp = admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
     databaseURL: process.env.FIREBASE_DATABASE_URL,
     storageBucket: process.env.FIREBASE_STORAGE_BUCKET
   });
-  console.log('Firebase Admin SDK initialized successfully with service account');
+  console.log('✅ Firebase Admin SDK initialized successfully with service account!');
 } catch (error) {
-  console.error('Error initializing Firebase Admin SDK with service account:', error);
+  console.error('❌ Error initializing Firebase Admin SDK with service account:', error.message);
   
-  // Try alternative initialization using application default credentials
+  // Try file-based initialization if environment variable approach failed
   try {
-    firebaseApp = admin.initializeApp({
-      projectId: process.env.VITE_FIREBASE_PROJECT_ID,
-      databaseURL: process.env.FIREBASE_DATABASE_URL,
-      storageBucket: process.env.FIREBASE_STORAGE_BUCKET
-    });
-    console.log('Firebase Admin SDK initialized with application default credentials');
-  } catch (fallbackError) {
-    console.error('Failed to initialize Firebase Admin with fallback method:', fallbackError);
-    console.log('Setting up in-memory Firebase implementation for development');
+    console.log('Attempting to create a service account file for initialization...');
+    const serviceAccountPath = createServiceAccountFile();
+    
+    if (serviceAccountPath) {
+      firebaseApp = admin.initializeApp({
+        credential: admin.credential.cert(serviceAccountPath),
+        databaseURL: process.env.FIREBASE_DATABASE_URL,
+        storageBucket: process.env.FIREBASE_STORAGE_BUCKET
+      });
+      console.log('✅ Firebase Admin SDK initialized with service account file!');
+    } else {
+      throw new Error('Failed to create service account file');
+    }
+  } catch (fileError) {
+    console.error('❌ File-based initialization failed:', fileError.message);
+    
+    // Try application default credentials
+    try {
+      console.log('Attempting to use application default credentials...');
+      firebaseApp = admin.initializeApp({
+        projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+        databaseURL: process.env.FIREBASE_DATABASE_URL,
+        storageBucket: process.env.FIREBASE_STORAGE_BUCKET
+      });
+      console.log('✅ Firebase Admin SDK initialized with application default credentials!');
+    } catch (fallbackError) {
+      console.error('❌ Failed to initialize Firebase Admin with all methods:', fallbackError.message);
+      console.log('⚠️ Setting up in-memory Firebase implementation for development');
+    }
   }
 }
 

@@ -1,6 +1,9 @@
 import os
 import json
 import datetime
+import subprocess
+import sys
+from pathlib import Path
 from collections import defaultdict
 
 # Create a simple in-memory implementation for development/testing
@@ -241,14 +244,83 @@ def initialize_firebase():
         except Exception as cred_error:
             print(f"Error initializing Firebase with credentials: {cred_error}")
             
-            # Fall back to in-memory implementation
-            print("Falling back to in-memory Firebase implementation")
-            return {
-                'app': None,
-                'db': InMemoryFirebaseDB(),
-                'bucket': None,
-                'auth': None,
-                'is_memory_implementation': True
+            # Try file-based approach by creating a service account file
+            try:
+                print("Attempting to create and use a service account file...")
+                
+                # Create temp directory if needed
+                tmp_dir = Path('tmp')
+                if not tmp_dir.exists():
+                    tmp_dir.mkdir(parents=True)
+                
+                # Generate the service account file using our helper script
+                credential_path = tmp_dir / 'firebase-service-account.json'
+                
+                # Check if our helper script exists and use it
+                helper_script = Path('create_firebase_credential.py')
+                if helper_script.exists():
+                    # Run the helper script to generate the credential file
+                    result = subprocess.run([sys.executable, str(helper_script)], 
+                                          capture_output=True, text=True)
+                    if result.returncode != 0:
+                        print(f"Error running credential helper: {result.stderr}")
+                        raise Exception("Failed to create service account file")
+                else:
+                    # Manually create the file
+                    with open(credential_path, 'w') as f:
+                        json.dump(cred_config, f, indent=2)
+                
+                # Set environment variable for the file path
+                os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = str(credential_path.absolute())
+                print(f"Set GOOGLE_APPLICATION_CREDENTIALS to {credential_path.absolute()}")
+                
+                # Try initializing with the file
+                firebase_app = firebase_admin.initialize_app()
+                print("Firebase Admin SDK initialized with service account file")
+                
+                # Initialize services
+                db = firestore.client()
+                bucket = storage.bucket()
+                
+                return {
+                    'app': firebase_app,
+                    'db': db,
+                    'bucket': bucket,
+                    'auth': auth,
+                    'is_memory_implementation': False
+                }
+            except Exception as file_error:
+                print(f"Service account file approach failed: {file_error}")
+                
+                # Final attempt with application default credentials
+                try:
+                    print("Attempting to use application default credentials...")
+                    firebase_app = firebase_admin.initialize_app()
+                    
+                    # Initialize services
+                    db = firestore.client()
+                    bucket = storage.bucket()
+                    
+                    print("Firebase Admin SDK initialized with application default credentials")
+                    return {
+                        'app': firebase_app,
+                        'db': db,
+                        'bucket': bucket,
+                        'auth': auth,
+                        'is_memory_implementation': False
+                    }
+                except Exception as adc_error:
+                    print(f"Application default credentials failed: {adc_error}")
+                    
+                    # Fall back to in-memory implementation
+                    print("Falling back to in-memory Firebase implementation")
+                    return {
+                        'app': None,
+                        'db': InMemoryFirebaseDB(),
+                        'bucket': None,
+                        'auth': None,
+                        'is_memory_implementation': True
+                    }
             }
     
     except Exception as e:
