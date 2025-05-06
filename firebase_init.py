@@ -295,7 +295,16 @@ def initialize_firebase():
                 # Final attempt with application default credentials
                 try:
                     print("Attempting to use application default credentials...")
-                    firebase_app = firebase_admin.initialize_app()
+                    # Use a unique name to avoid conflicts with multiple initializations
+                    firebase_app = firebase_admin.initialize_app(
+                        None,  # Use application default credentials 
+                        {
+                            'projectId': os.environ.get('VITE_FIREBASE_PROJECT_ID'),
+                            'storageBucket': os.environ.get('FIREBASE_STORAGE_BUCKET'),
+                            'databaseURL': os.environ.get('FIREBASE_DATABASE_URL')
+                        },
+                        name='farmassistai-prod'  # Use a unique name
+                    )
                     
                     # Initialize services
                     db = firestore.client()
@@ -321,7 +330,6 @@ def initialize_firebase():
                         'auth': None,
                         'is_memory_implementation': True
                     }
-            }
     
     except Exception as e:
         print(f"Error initializing Firebase: {e}")
