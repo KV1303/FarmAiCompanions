@@ -954,6 +954,10 @@
       <i class="fas fa-cloud-sun"></i>
       <div>मौसम</div>
     </a>
+    <a href="/download/farmassist_webview.apk" class="nav-item" id="mobileDownloadNav">
+      <i class="fas fa-download"></i>
+      <div>APK</div>
+    </a>
     <a href="#" class="nav-item" id="mobileProfileNav">
       <i class="fas fa-user"></i>
       <div>प्रोफाइल</div>
@@ -2409,6 +2413,11 @@
       
       mobileNavLinks.forEach(link => {
         link.addEventListener('click', function(e) {
+          // Special case for Download button - don't prevent default and let it navigate to APK download
+          if (this.id === 'mobileDownloadNav') {
+            return true; // Allow normal link behavior
+          }
+          
           e.preventDefault();
           
           // Remove active class from all mobile links
