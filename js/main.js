@@ -1061,7 +1061,7 @@ function setupFreeTrial() {
 }
 
 function showTrialBanner(daysRemaining) {
-  // Update both top banner and profile page with trial info
+  // Update only profile page with trial info
   
   // Update profile trial days remaining
   const profileTrialDays = document.getElementById('profileTrialDaysRemaining');
@@ -1084,35 +1084,10 @@ function showTrialBanner(daysRemaining) {
     profileTrialEndDate.textContent = formattedDate;
   }
   
-  // Update top banner with trial information
-  const topBanner = document.getElementById('subscriptionInfoBanner');
-  if (topBanner) {
-    // Set appropriate styles for trial status
-    topBanner.classList.remove('alert-success');
-    topBanner.classList.add('alert-info');
-    
-    // Update days remaining in top banner
-    const topTrialDays = document.getElementById('trialDaysRemaining');
-    if (topTrialDays) {
-      topTrialDays.textContent = daysRemaining;
-    }
-    
-    // Update end date in top banner
-    const topTrialEndDate = document.getElementById('trialEndDate');
-    if (topTrialEndDate) {
-      topTrialEndDate.textContent = formattedDate;
-    }
-    
-    // Show upgrade button and hide premium badge in top banner
-    const topUpgradeBtn = document.getElementById('topUpgradeBtn');
-    if (topUpgradeBtn) {
-      topUpgradeBtn.style.display = 'inline-block';
-    }
-    
-    const subscriptionBadge = document.getElementById('subscriptionBadge');
-    if (subscriptionBadge) {
-      subscriptionBadge.style.display = 'none';
-    }
+  // Hide premium badge in main navigation
+  const subscriptionBadge = document.getElementById('subscriptionBadge');
+  if (subscriptionBadge) {
+    subscriptionBadge.style.display = 'none';
   }
   
   // Make sure trial info is visible and subscription info is hidden in profile
@@ -1133,82 +1108,65 @@ function showTrialBanner(daysRemaining) {
 }
 
 function showTrialWelcomeBanner() {
-  // Check if banner container exists, otherwise create it
-  let bannerContainer = document.getElementById('subscription-banner');
-  if (!bannerContainer) {
-    bannerContainer = document.createElement('div');
-    bannerContainer.id = 'subscription-banner';
-    bannerContainer.className = 'alert alert-success alert-dismissible fade show subscription-banner';
-    document.body.insertBefore(bannerContainer, document.body.firstChild);
+  // Only update profile page with welcome message - no popup banner
+  
+  // Update welcome message in profile section if visible
+  const profileWelcomeMessage = document.getElementById('profileWelcomeMessage');
+  if (profileWelcomeMessage) {
+    profileWelcomeMessage.innerHTML = `<strong>FarmAssist AI में आपका स्वागत है!</strong> आपका 7-दिवसीय निःशुल्क परीक्षण शुरू हो गया है। सभी सुविधाओं का पूरा उपयोग करें।`;
   }
   
-  // Set banner content for trial welcome
-  bannerContainer.innerHTML = `
-    <strong>Welcome to FarmAssist AI!</strong> Your 7-day free trial has started. Enjoy full access to all features. 
-    <a href="#" class="subscribe-link">Subscribe now</a> for just ₹99/year after your trial.
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-  `;
-  
-  // Add event listener to subscribe link
-  document.querySelector('.subscribe-link')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    showSubscriptionModal();
-  });
+  // Add event listener to profile subscribe link if it exists
+  const profileSubscribeLink = document.getElementById('profileSubscribeLink');
+  if (profileSubscribeLink) {
+    profileSubscribeLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      showSubscriptionModal();
+    });
+  }
 }
 
 function showSubscriptionNeededBanner() {
-  // Update the top banner to show subscription needed state
-  const topBanner = document.getElementById('subscriptionInfoBanner');
-  if (topBanner) {
-    // Set appropriate styles for subscription needed
-    topBanner.classList.remove('alert-info', 'alert-success');
-    topBanner.classList.add('alert-warning');
-    
-    // Update message to show subscription needed
-    const statusMessage = document.getElementById('trialStatusMessage');
-    if (statusMessage) {
-      statusMessage.innerHTML = '<strong>सदस्यता आवश्यक:</strong> आपका मुफ्त ट्रायल समाप्त हो गया है';
-    }
-    
-    // Hide trial end date text
-    const trialEndDate = document.getElementById('trialEndDate');
-    if (trialEndDate) {
-      trialEndDate.parentElement.style.display = 'none';
-    }
-    
-    // Show upgrade button and hide premium badge
-    const topUpgradeBtn = document.getElementById('topUpgradeBtn');
-    if (topUpgradeBtn) {
-      topUpgradeBtn.style.display = 'inline-block';
-    }
-    
-    const subscriptionBadge = document.getElementById('subscriptionBadge');
-    if (subscriptionBadge) {
-      subscriptionBadge.style.display = 'none';
-    }
+  // Only update profile page with subscription needed message - no popup or top banner
+  
+  // Hide premium badge in main navigation
+  const subscriptionBadge = document.getElementById('subscriptionBadge');
+  if (subscriptionBadge) {
+    subscriptionBadge.style.display = 'none';
   }
   
-  // Legacy code for the old banner system
-  // Check if banner container exists, otherwise create it
-  let bannerContainer = document.getElementById('subscription-banner');
-  if (!bannerContainer) {
-    bannerContainer = document.createElement('div');
-    bannerContainer.id = 'subscription-banner';
-    bannerContainer.className = 'alert alert-warning alert-dismissible fade show subscription-banner';
-    document.body.insertBefore(bannerContainer, document.body.firstChild);
+  // Update the profile page section
+  const profileTrialStatus = document.getElementById('profileTrialStatus');
+  if (profileTrialStatus) {
+    profileTrialStatus.innerHTML = '<strong>सदस्यता आवश्यक:</strong> आपका मुफ्त ट्रायल समाप्त हो गया है';
   }
   
-  // Set banner content for subscription needed
-  bannerContainer.innerHTML = `
-    <strong>Subscription Required:</strong> Your free trial has ended. 
-    <a href="#" class="subscribe-link">Subscribe now</a> for just ₹99/year to continue using all features.
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-  `;
+  // Hide trial end date in profile if present
+  const profileTrialEndDate = document.getElementById('profileTrialEndDate');
+  if (profileTrialEndDate && profileTrialEndDate.parentElement) {
+    profileTrialEndDate.parentElement.style.display = 'none';
+  }
   
-  // Add event listener to subscribe link
-  document.querySelector('.subscribe-link')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    showSubscriptionModal();
+  // Show upgrade button in profile
+  const profileUpgradeBtn = document.getElementById('profileUpgradeBtn');
+  if (profileUpgradeBtn) {
+    profileUpgradeBtn.style.display = 'inline-block';
+  }
+  
+  // Make sure trial info is visible in profile
+  const trialInfo = document.getElementById('profileTrialInfo');
+  const subInfo = document.getElementById('profileActiveSubscription');
+  
+  if (trialInfo) trialInfo.classList.remove('hidden');
+  if (subInfo) subInfo.classList.add('hidden');
+  
+  // Add event listener to all upgrade buttons
+  const upgradeButtons = document.querySelectorAll('.upgrade-subscription-btn');
+  upgradeButtons.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      showSubscriptionModal();
+    });
   });
 }
 
