@@ -1157,6 +1157,38 @@ function showTrialWelcomeBanner() {
 }
 
 function showSubscriptionNeededBanner() {
+  // Update the top banner to show subscription needed state
+  const topBanner = document.getElementById('subscriptionInfoBanner');
+  if (topBanner) {
+    // Set appropriate styles for subscription needed
+    topBanner.classList.remove('alert-info', 'alert-success');
+    topBanner.classList.add('alert-warning');
+    
+    // Update message to show subscription needed
+    const statusMessage = document.getElementById('trialStatusMessage');
+    if (statusMessage) {
+      statusMessage.innerHTML = '<strong>सदस्यता आवश्यक:</strong> आपका मुफ्त ट्रायल समाप्त हो गया है';
+    }
+    
+    // Hide trial end date text
+    const trialEndDate = document.getElementById('trialEndDate');
+    if (trialEndDate) {
+      trialEndDate.parentElement.style.display = 'none';
+    }
+    
+    // Show upgrade button and hide premium badge
+    const topUpgradeBtn = document.getElementById('topUpgradeBtn');
+    if (topUpgradeBtn) {
+      topUpgradeBtn.style.display = 'inline-block';
+    }
+    
+    const subscriptionBadge = document.getElementById('subscriptionBadge');
+    if (subscriptionBadge) {
+      subscriptionBadge.style.display = 'none';
+    }
+  }
+  
+  // Legacy code for the old banner system
   // Check if banner container exists, otherwise create it
   let bannerContainer = document.getElementById('subscription-banner');
   if (!bannerContainer) {
@@ -1342,22 +1374,53 @@ function handleSubscriptionSuccess(paymentResponse) {
   showSubscriptionSuccessBanner();
 }
 
-// New function to update profile page subscription info
+// New function to update subscription info on both profile page and top banner
 function updateProfileSubscriptionInfo(subscriptionData) {
-  // Hide trial info and show subscription info
+  // Hide trial info and show subscription info on profile page
   const trialInfo = document.getElementById('profileTrialInfo');
   const subInfo = document.getElementById('profileActiveSubscription');
   
   if (trialInfo) trialInfo.classList.add('hidden');
   if (subInfo) subInfo.classList.remove('hidden');
   
-  // Update subscription end date
+  // Update subscription end date on profile page
   const endDateElement = document.getElementById('profileSubscriptionEndDate');
   if (endDateElement && subscriptionData.expiryDate) {
     const endDate = new Date(subscriptionData.expiryDate);
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
     const formattedDate = endDate.toLocaleDateString('hi-IN', options);
     endDateElement.textContent = formattedDate;
+    
+    // Update top banner with subscription information
+    const topBanner = document.getElementById('subscriptionInfoBanner');
+    if (topBanner) {
+      // Set appropriate styles for active subscription
+      topBanner.classList.remove('alert-info');
+      topBanner.classList.add('alert-success');
+      
+      // Update message to show active subscription
+      const statusMessage = document.getElementById('trialStatusMessage');
+      if (statusMessage) {
+        statusMessage.innerHTML = '<strong>सक्रिय सदस्यता</strong>';
+      }
+      
+      // Update end date in top banner
+      const topEndDate = document.getElementById('trialEndDate');
+      if (topEndDate) {
+        topEndDate.textContent = formattedDate + ' तक वैध';
+      }
+      
+      // Hide upgrade button and show premium badge in top banner
+      const topUpgradeBtn = document.getElementById('topUpgradeBtn');
+      if (topUpgradeBtn) {
+        topUpgradeBtn.style.display = 'none';
+      }
+      
+      const subscriptionBadge = document.getElementById('subscriptionBadge');
+      if (subscriptionBadge) {
+        subscriptionBadge.style.display = 'inline-block';
+      }
+    }
   }
   
   // Add payment to history table
