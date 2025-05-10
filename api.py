@@ -2046,23 +2046,42 @@ def get_quick_farm_guidance():
                 print("--- END AVAILABLE MODELS ---\n\n")
                 
                 # Use the newer model names that are available
+                # Use a more reliable approach to find an available model
+                available_model = None
+                
+                # First, try gemini-1.5-flash-latest which has higher quota limits
                 try:
-                    # Use the latest pro model for best results with long responses
-                    model = genai.GenerativeModel('gemini-1.5-pro')
+                    available_model = 'gemini-1.5-flash-latest'
+                    model = genai.GenerativeModel(available_model)
+                    print(f"Using model: {available_model}")
                 except Exception as e:
-                    print(f"Error with gemini-1.5-pro: {str(e)}")
-                    # Fallback to flash model which is more efficient
+                    print(f"Error with {available_model}: {str(e)}")
+                    available_model = None
+                
+                # If that fails, try gemini-1.5-flash
+                if available_model is None:
                     try:
-                        model = genai.GenerativeModel('gemini-1.5-flash')
-                    except Exception as e2:
-                        print(f"Error with gemini-1.5-flash: {str(e2)}")
-                        # Final fallback - use whatever comes first in available models
-                        for m in genai.list_models():
-                            if 'gemini' in m.name and 'generateContent' in m.supported_generation_methods:
-                                model_name = m.name.replace('models/', '')
-                                print(f"Using fallback model: {model_name}")
-                                model = genai.GenerativeModel(model_name)
+                        available_model = 'gemini-1.5-flash'
+                        model = genai.GenerativeModel(available_model)
+                        print(f"Using model: {available_model}")
+                    except Exception as e:
+                        print(f"Error with {available_model}: {str(e)}")
+                        available_model = None
+                
+                # Last resort - try to find any available model
+                if available_model is None:
+                    for m in genai.list_models():
+                        if 'gemini' in m.name and 'generateContent' in m.supported_generation_methods:
+                            try:
+                                available_model = m.name.replace('models/', '')
+                                print(f"Using fallback model: {available_model}")
+                                model = genai.GenerativeModel(available_model)
                                 break
+                            except Exception as e:
+                                print(f"Error with {available_model}: {str(e)}")
+                                continue
+                
+                # If we still don't have a model, we'll use our fallback data
                 
                 # Create a more comprehensive prompt for detailed guidance
                 prompt = f"""
@@ -2190,6 +2209,7 @@ def get_quick_farm_guidance():
                                     guidance[key] = parsed_guidance[key]
                     except:
                         # If JSON extraction fails, use basic guidance
+                        print("JSON extraction failed, using basic rule-based guidance")
                         from types import SimpleNamespace
                         temp_field = SimpleNamespace(
                             name="Quick Analysis",
