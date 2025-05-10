@@ -791,18 +791,32 @@ function updateProfileInfo(username) {
       const now = new Date();
       const daysRemaining = Math.max(0, Math.ceil((trialEnd - now) / (1000 * 60 * 60 * 24)));
       
-      // Update trial info
+      // Update trial info in profile page
       const profileTrialDays = document.getElementById('profileTrialDaysRemaining');
       if (profileTrialDays) {
         profileTrialDays.textContent = daysRemaining;
       }
       
-      // Update trial end date
+      // Update trial info in top banner
+      const topTrialDays = document.getElementById('trialDaysRemaining');
+      if (topTrialDays) {
+        topTrialDays.textContent = daysRemaining;
+      }
+      
+      // Update trial end date in profile page
       const profileTrialEndDate = document.getElementById('profileTrialEndDate');
       if (profileTrialEndDate) {
         const options = { year: 'numeric', month: 'long', day: 'numeric' };
         const formattedDate = trialEnd.toLocaleDateString('hi-IN', options);
         profileTrialEndDate.textContent = formattedDate;
+      }
+      
+      // Update trial end date in top banner
+      const topTrialEndDate = document.getElementById('trialEndDate');
+      if (topTrialEndDate) {
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        const formattedDate = trialEnd.toLocaleDateString('hi-IN', options);
+        topTrialEndDate.textContent = formattedDate;
       }
     }
   }
@@ -1047,7 +1061,7 @@ function setupFreeTrial() {
 }
 
 function showTrialBanner(daysRemaining) {
-  // Instead of showing a top banner, update the profile page with trial info
+  // Update both top banner and profile page with trial info
   
   // Update profile trial days remaining
   const profileTrialDays = document.getElementById('profileTrialDaysRemaining');
@@ -1064,12 +1078,44 @@ function showTrialBanner(daysRemaining) {
   const options = { year: 'numeric', month: 'long', day: 'numeric' };
   const formattedDate = trialEndDate.toLocaleDateString('hi-IN', options);
   
+  // Update profile page trial end date
   const profileTrialEndDate = document.getElementById('profileTrialEndDate');
   if (profileTrialEndDate) {
     profileTrialEndDate.textContent = formattedDate;
   }
   
-  // Make sure trial info is visible and subscription info is hidden
+  // Update top banner with trial information
+  const topBanner = document.getElementById('subscriptionInfoBanner');
+  if (topBanner) {
+    // Set appropriate styles for trial status
+    topBanner.classList.remove('alert-success');
+    topBanner.classList.add('alert-info');
+    
+    // Update days remaining in top banner
+    const topTrialDays = document.getElementById('trialDaysRemaining');
+    if (topTrialDays) {
+      topTrialDays.textContent = daysRemaining;
+    }
+    
+    // Update end date in top banner
+    const topTrialEndDate = document.getElementById('trialEndDate');
+    if (topTrialEndDate) {
+      topTrialEndDate.textContent = formattedDate;
+    }
+    
+    // Show upgrade button and hide premium badge in top banner
+    const topUpgradeBtn = document.getElementById('topUpgradeBtn');
+    if (topUpgradeBtn) {
+      topUpgradeBtn.style.display = 'inline-block';
+    }
+    
+    const subscriptionBadge = document.getElementById('subscriptionBadge');
+    if (subscriptionBadge) {
+      subscriptionBadge.style.display = 'none';
+    }
+  }
+  
+  // Make sure trial info is visible and subscription info is hidden in profile
   const trialInfo = document.getElementById('profileTrialInfo');
   const subInfo = document.getElementById('profileActiveSubscription');
   
