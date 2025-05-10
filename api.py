@@ -2007,6 +2007,170 @@ def get_farm_guidance(field_id):
         print(f"Firebase farm guidance error: {str(e)}")
         return jsonify({'error': f'Failed to generate farm guidance: {str(e)}'}), 500
 
+# Helper function for generating detailed crop articles
+def get_crop_specific_article(crop_type, soil_type):
+    """Generate a detailed article on crop cultivation based on crop type and soil type"""
+    # Default detailed content when API is unavailable
+    crop_articles = {
+        'Rice': f"""
+# Rice Cultivation Guide for {soil_type} Soil
+
+Rice is one of the most important food crops globally, providing nourishment to billions of people. Cultivating rice in {soil_type} soil requires specific techniques to maximize yield and quality.
+
+## Pre-planting Preparation
+- Prepare the field 30-45 days before planting
+- Level the field properly to ensure uniform water distribution
+- For {soil_type} soil, incorporate organic matter at 5-10 tons/hectare
+- Maintain proper drainage systems to prevent waterlogging
+
+## Planting and Cultivation
+- Use certified seeds of varieties suitable for your region
+- Seed rate: 60-80 kg/hectare for direct seeding, 40-50 kg/hectare for transplanting
+- Maintain water level at 2-5 cm during the vegetative stage
+- Apply fertilizers in split doses: 40% at planting, 30% at tillering, 30% at heading
+
+## Pest and Disease Management
+- Monitor regularly for leaf folder, stem borer, and brown planthopper
+- Implement integrated pest management practices
+- Use resistant varieties when available
+- Apply fungicides only when necessary and follow recommended dosages
+
+## Harvest and Post-harvest
+- Harvest when 80-85% of the grains turn golden yellow
+- Dry the harvested grain properly to moisture content of 12-14%
+- Store in clean, dry, and well-ventilated areas
+""",
+        'Wheat': f"""
+# Wheat Cultivation Guide for {soil_type} Soil
+
+Wheat is a major cereal crop grown worldwide. Cultivating wheat in {soil_type} soil requires specific approaches to ensure optimal growth and yield.
+
+## Field Preparation
+- Deep plowing to a depth of 20-25 cm is recommended
+- Apply 10-15 tons/hectare of well-decomposed farmyard manure
+- Ensure proper field leveling for uniform irrigation
+- For {soil_type} soil, consider adding gypsum if soil pH is high
+
+## Sowing and Crop Management
+- Sow at the optimal time for your region (usually early winter)
+- Seed rate: 100-125 kg/hectare
+- Row spacing: 20-22.5 cm
+- First irrigation: 20-25 days after sowing
+- Subsequent irrigations at critical growth stages: crown root initiation, tillering, jointing, flowering, and grain filling
+
+## Nutrient Management
+- Apply NPK at 120:60:40 kg/hectare
+- Apply nitrogen in split doses: 50% at sowing, 25% at first irrigation, 25% at second irrigation
+- Apply micronutrients based on soil test results
+
+## Harvesting and Storage
+- Harvest when grain moisture content is around 14-16%
+- Proper drying and storage is essential to maintain quality
+- Store in clean, dry, and well-ventilated spaces to prevent pest infestation
+""",
+        'Potato': f"""
+# Potato Cultivation Guide for {soil_type} Soil
+
+Potatoes are a versatile and nutritious crop that can be grown in various soil conditions. Growing potatoes in {soil_type} soil requires specific management practices.
+
+## Soil Preparation
+- Prepare well-drained, loose soil with pH 5.5-6.5
+- Apply farmyard manure at 20-25 tons/hectare
+- For {soil_type} soil, incorporate organic matter to improve soil structure
+- Deep plowing (30-35 cm) helps in better tuber development
+
+## Planting and Growth
+- Use certified seed potatoes cut into pieces with 2-3 eyes each
+- Seed rate: 2000-2500 kg/hectare
+- Spacing: 60 cm between rows and 20 cm between plants
+- Plant at a depth of 5-10 cm
+- Earthing up (hilling) should be done when plants reach 15-25 cm height
+
+## Water and Nutrient Management
+- Maintain consistent soil moisture, especially during tuber formation
+- Apply NPK at 150:100:120 kg/hectare
+- Apply 50% N and full P and K at planting and remaining N at earthing up
+- Avoid over-irrigation as it can lead to various diseases
+
+## Pest and Disease Management
+- Monitor for late blight, early blight, and Colorado potato beetle
+- Practice crop rotation to reduce soil-borne diseases
+- Use resistant varieties when available
+- Follow recommended fungicide and insecticide applications
+""",
+        'Sugarcane': f"""
+# Sugarcane Cultivation Guide for {soil_type} Soil
+
+Sugarcane is a perennial grass that thrives in tropical and subtropical regions. Cultivating sugarcane in {soil_type} soil requires specific management strategies.
+
+## Land Preparation
+- Deep plowing to a depth of 30-35 cm is recommended
+- Apply farmyard manure or compost at 10-15 tons/hectare
+- For {soil_type} soil, incorporate green manure crops if possible
+- Prepare ridges and furrows with spacing of 90-120 cm
+
+## Planting and Management
+- Use disease-free setts (stem cuttings) from 8-10 month old crop
+- Sett rate: 75,000-80,000 three-budded setts per hectare
+- Plant setts end-to-end in furrows at a depth of 5-7 cm
+- Apply irrigation immediately after planting
+- First earthing up at 5-6 weeks and final earthing up at 4-5 months
+
+## Nutrient Management
+- Apply NPK at 250:100:120 kg/hectare
+- Apply nitrogen in three splits: at planting, at tillering, and at grand growth stage
+- Micronutrients like zinc and iron may be applied based on soil tests
+
+## Harvesting and Ratoon Management
+- Harvest when the crop is mature (usually 12-14 months after planting)
+- Cut the cane close to the ground level
+- For ratoon crops, stubble shaving, gap filling, and proper fertilization are essential
+"""
+    }
+    
+    # Return default detailed article for common crops or a generic one if crop not found
+    return crop_articles.get(crop_type, f"""
+# {crop_type} Cultivation Guide for {soil_type} Soil
+
+{crop_type} cultivation in {soil_type} soil requires careful planning and management to achieve optimal yields. This guide provides comprehensive information on best practices tailored to your specific conditions.
+
+## Soil Preparation
+- Test soil pH and nutrient levels before planting
+- Incorporate organic matter to improve soil structure and fertility
+- Ensure proper drainage, especially for {soil_type} soil
+- Apply recommended soil amendments based on soil test results
+
+## Planting Guidelines
+- Select high-quality seeds or planting materials suitable for your region
+- Follow recommended spacing for optimal plant density
+- Plant at the appropriate depth for your crop
+- Consider row orientation for maximum sunlight exposure
+
+## Water Management
+- Develop an irrigation schedule based on crop requirements and soil moisture
+- Monitor soil moisture regularly using appropriate tools
+- Adjust irrigation based on weather conditions and crop growth stage
+- Implement water conservation techniques like mulching
+
+## Nutrient Management
+- Apply balanced fertilizers according to crop needs and soil test results
+- Consider split application of fertilizers for better efficiency
+- Include micronutrients if deficiencies are identified
+- Use organic fertilizers to improve long-term soil health
+
+## Pest and Disease Management
+- Regularly monitor crops for signs of pests and diseases
+- Implement integrated pest management strategies
+- Use resistant varieties when available
+- Apply pesticides judiciously and follow safety protocols
+
+## Harvesting and Post-harvest
+- Harvest at optimal maturity for best quality and yield
+- Handle produce carefully to minimize damage
+- Implement appropriate post-harvest treatments
+- Store properly to maintain quality and extend shelf life
+""")
+
 # Quick guidance endpoint (no authentication required)
 @app.route('/api/guidance/quick', methods=['POST'])
 def get_quick_farm_guidance():
@@ -2026,13 +2190,32 @@ def get_quick_farm_guidance():
         
         # Use a more detailed approach for quick guidance with narrative content
         guidance = {
-            'general_recommendations': [],
-            'crop_specific': [],
-            'fertilizer': [],
-            'pest_management': [],
-            'irrigation': [],
-            'sustainability': [],
-            'detailed_article': ''  # New field for detailed narrative content
+            'general_recommendations': [
+                "Schedule regular monitoring of your field",
+                "Keep detailed records of all farming activities",
+                "Consider soil testing to optimize fertility management"
+            ],
+            'crop_specific': [
+                "Research best practices specific to your crop variety",
+                "Consider crop rotation to improve soil health and reduce pest pressure"
+            ],
+            'fertilizer': [
+                "Apply balanced NPK fertilizer based on crop needs",
+                "Consider organic amendments to improve soil structure"
+            ],
+            'pest_management': [
+                "Regularly scout for pests and diseases",
+                "Consider integrated pest management (IPM) approaches"
+            ],
+            'irrigation': [
+                "Adjust irrigation based on crop growth stage",
+                "Consider water conservation techniques"
+            ],
+            'sustainability': [
+                "Minimize soil disturbance to reduce erosion",
+                "Consider cover crops to improve soil health"
+            ],
+            'detailed_article': get_crop_specific_article(crop_type, soil_type)  # Set default content
         }
         
         try:
