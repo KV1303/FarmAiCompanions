@@ -50,6 +50,10 @@ app.post('/upload', upload.single('image'), (req, res) => {
 function startPythonAPI() {
   console.log('Starting Python API server...');
   
+  // Get current environment (production or development)
+  const isProduction = process.env.NODE_ENV === 'production';
+  console.log(`Running in ${isProduction ? 'PRODUCTION' : 'DEVELOPMENT'} mode`);
+  
   // Check and update the API port in the Python file
   try {
     let apiContent = fs.readFileSync('api.py', 'utf8');
@@ -64,8 +68,13 @@ function startPythonAPI() {
     console.error('Failed to update API port:', err);
   }
   
-  // Start the Python process
-  const pythonProcess = spawn('python3', ['api.py']);
+  // Start the Python process with appropriate flags for the environment
+  const pythonArgs = isProduction 
+    ? ['api.py'] // In production mode, debug is already disabled via env var
+    : ['api.py', '--debug'];
+    
+  console.log(`Starting Python API with args: ${pythonArgs.join(' ')}`);
+  const pythonProcess = spawn('python3', pythonArgs);
   
   pythonProcess.stdout.on('data', (data) => {
     console.log(`Python API: ${data}`);
@@ -326,5 +335,19 @@ process.on('SIGINT', () => {
 
 // Start the server
 app.listen(PORT, '0.0.0.0', () => {
+  // Get environment mode
+  const isProduction = process.env.NODE_ENV === 'production';
+  
+  // Additional production checks
+  if (isProduction) {
+    console.log('=========================================');
+    console.log('🚀 PRODUCTION MODE ACTIVE');
+    console.log('Firebase Configuration:');
+    console.log(`- Project ID: ${process.env.VITE_FIREBASE_PROJECT_ID || 'Not set'}`);
+    console.log(`- Authentication Domain: ${process.env.FIREBASE_AUTH_DOMAIN || 'Not set'}`);
+    console.log(`- Storage Bucket: ${process.env.FIREBASE_STORAGE_BUCKET || 'Not set'}`);
+    console.log('=========================================');
+  }
+  
   console.log(`FarmAssist AI server running at http://0.0.0.0:${PORT}`);
 });
