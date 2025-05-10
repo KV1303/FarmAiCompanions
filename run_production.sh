@@ -26,19 +26,14 @@ export NODE_ENV=production
 export FLASK_ENV=production
 export FLASK_DEBUG=0
 
-# Validate that we can connect to Firebase in production mode
-echo "Validating Firebase connection..."
-python -c "
-import firebase_init
-import os
-os.environ['NODE_ENV'] = 'production'
-firebase = firebase_init.initialize_firebase()
-if firebase['is_memory_implementation']:
-    print('ERROR: Firebase is using in-memory implementation in production mode!')
-    exit(1)
-else:
-    print('Firebase connection validated successfully')
-"
+# Run comprehensive Firebase verification
+echo "Running Firebase production verification..."
+python verify_firebase_production.py
+if [ $? -ne 0 ]; then
+  echo "ERROR: Firebase verification failed!"
+  echo "Please check your Firebase credentials and try again."
+  exit 1
+fi
 
 # Verify JavaScript Firebase integration
 echo "Verifying Firebase JavaScript integration..."
