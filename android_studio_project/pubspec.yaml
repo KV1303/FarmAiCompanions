@@ -1,0 +1,75 @@
+name: farm_assist_ai
+description: An AI-powered agriculture assistant app with AdMob integration.
+
+# The following line prevents the package from being accidentally published to
+# pub.dev using `flutter pub publish`. This is preferred for private packages.
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+# The following defines the version and build number for your application.
+# A version number is three numbers separated by dots, like 1.2.43
+# followed by an optional build number separated by a +.
+# Both the version and the builder number may be overridden in flutter
+# build by specifying --build-name and --build-number, respectively.
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # Core dependencies
+  provider: ^6.0.5
+  shared_preferences: ^2.2.0
+  http: ^1.1.0
+  intl: ^0.18.1
+  
+  # UI dependencies
+  google_fonts: ^5.1.0
+  flutter_svg: ^2.0.7
+  cached_network_image: ^3.2.3
+  shimmer: ^3.0.0
+  
+  # AdMob and In-App Purchases
+  google_mobile_ads: ^3.0.0
+  in_app_purchase: ^3.1.7
+  
+  # Firebase services
+  firebase_core: ^2.13.1
+  firebase_analytics: ^10.4.3
+  firebase_messaging: ^14.6.3
+  
+  # Other utilities
+  path_provider: ^2.0.15
+  url_launcher: ^6.1.12
+  image_picker: ^1.0.0
+  permission_handler: ^10.4.0
+  flutter_local_notifications: ^14.1.1
+  
+  # The following adds the Cupertino Icons font to your application.
+  # Use with the CupertinoIcons class for iOS style icons.
+  cupertino_icons: ^1.0.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.2
+
+# The following section is specific to Flutter.
+flutter:
+  uses-material-design: true
+
+  # To add assets to your application, add an assets section, like this:
+  assets:
+    - assets/images/
+    - assets/icons/
+    
+  # fonts:
+  #   - family: Schyler
+  #     fonts:
+  #       - asset: fonts/Schyler-Regular.ttf
+  #       - asset: fonts/Schyler-Italic.ttf
+  #         style: italic
