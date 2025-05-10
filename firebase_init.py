@@ -149,15 +149,23 @@ except ImportError:
 
 def initialize_firebase():
     """Initialize Firebase Admin SDK for server-side operations or use in-memory implementation"""
+    # Check if we're in production mode 
+    is_production = os.environ.get('FLASK_ENV') == 'production' or os.environ.get('NODE_ENV') == 'production'
+    
     if not FIREBASE_AVAILABLE:
-        print("Using in-memory Firebase implementation")
-        return {
-            'app': None,
-            'db': InMemoryFirebaseDB(),
-            'bucket': None,
-            'auth': None,
-            'is_memory_implementation': True
-        }
+        if is_production:
+            print("ERROR: Firebase Admin SDK not available in production mode!")
+            print("Please install firebase-admin package with: pip install firebase-admin")
+            sys.exit(1)
+        else:
+            print("Using in-memory Firebase implementation (DEVELOPMENT MODE ONLY)")
+            return {
+                'app': None,
+                'db': InMemoryFirebaseDB(),
+                'bucket': None,
+                'auth': None,
+                'is_memory_implementation': True
+            }
     
     try:
         # Create a credential configuration dict
@@ -322,14 +330,22 @@ def initialize_firebase():
                     print(f"Application default credentials failed: {adc_error}")
                     
                     # Fall back to in-memory implementation
-                    print("Falling back to in-memory Firebase implementation")
-                    return {
-                        'app': None,
-                        'db': InMemoryFirebaseDB(),
-                        'bucket': None,
-                        'auth': None,
-                        'is_memory_implementation': True
-                    }
+                    # In production, we don't want to fall back to in-memory
+                    is_production = os.environ.get('FLASK_ENV') == 'production' or os.environ.get('NODE_ENV') == 'production'
+                    if is_production:
+                        print("ERROR: Failed to initialize Firebase in PRODUCTION mode!")
+                        print("Please verify your Firebase credentials and environment variables")
+                        print("See PRODUCTION.md for Firebase setup instructions")
+                        sys.exit(1)
+                    else:
+                        print("Falling back to in-memory Firebase implementation (DEVELOPMENT MODE ONLY)")
+                        return {
+                            'app': None,
+                            'db': InMemoryFirebaseDB(),
+                            'bucket': None,
+                            'auth': None,
+                            'is_memory_implementation': True
+                        }
     
     except Exception as e:
         print(f"Error initializing Firebase: {e}")
