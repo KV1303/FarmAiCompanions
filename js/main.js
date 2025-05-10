@@ -2777,6 +2777,15 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initialize auth UI
   updateAuthUI();
   
+  // Add event listener to top upgrade button in subscription banner
+  const topUpgradeBtn = document.getElementById('topUpgradeBtn');
+  if (topUpgradeBtn) {
+    topUpgradeBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      showSubscriptionModal();
+    });
+  }
+  
   // Show login section by default if user is not logged in, otherwise show dashboard
   if (!isLoggedIn()) {
     showSection('loginSection');
