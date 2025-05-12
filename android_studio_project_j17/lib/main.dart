@@ -5,8 +5,12 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'services/auth_service.dart';
+import 'services/service_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
+
+// API base URL for development/production
+const String apiBaseUrl = 'http://localhost:5004'; // Change this for production
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,24 +36,23 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AuthService()),
-        StreamProvider<User?>.value(
-          value: FirebaseAuth.instance.authStateChanges(),
-          initialData: null,
+    return ServiceProvider(
+      apiBaseUrl: apiBaseUrl,
+      testAdsMode: false, // Set to true for test ads only
+      child: StreamProvider<User?>.value(
+        value: FirebaseAuth.instance.authStateChanges(),
+        initialData: null,
+        child: MaterialApp(
+          title: 'फार्म असिस्ट AI',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            primarySwatch: Colors.green,
+            visualDensity: VisualDensity.adaptivePlatformDensity,
+            useMaterial3: true,
+            fontFamily: 'NotoSans',
+          ),
+          home: const AuthenticationWrapper(),
         ),
-      ],
-      child: MaterialApp(
-        title: 'फार्म असिस्ट AI',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          primarySwatch: Colors.green,
-          visualDensity: VisualDensity.adaptivePlatformDensity,
-          useMaterial3: true,
-          fontFamily: 'NotoSans',
-        ),
-        home: const AuthenticationWrapper(),
       ),
     );
   }
@@ -62,8 +65,19 @@ class AuthenticationWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = Provider.of<User?>(context);
     
-    // Show login screen if not authenticated, home screen if authenticated
-    return user == null ? const LoginScreen() : const HomeScreen();
+    // Show splash screen while checking auth state
+    if (user == null) {
+      // Initialize trial period for new users
+      return const LoginScreen();
+    } else {
+      // User is authenticated, try to init trial if first time
+      // This should typically be done in a better place with proper state management
+      // For simplicity, we're doing it here
+      final subscriptionService = Provider.of<SubscriptionService>(context, listen: false);
+      subscriptionService.initializeTrialPeriod();
+      
+      return const HomeScreen();
+    }
   }
 }
 
