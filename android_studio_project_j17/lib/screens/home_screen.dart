@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
+import '../services/ad_service.dart';
+import 'dashboard_screen.dart';
+import 'market_prices_screen.dart';
+import 'disease_detection_screen.dart';
+import 'farm_management_screen.dart';
+import 'profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -12,70 +18,48 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
-  final List<Widget> _screens = [
-    const DashboardTab(),
-    const MarketTab(),
-    const DiseaseTab(),
-    const FarmManagementTab(),
-    const ProfileTab(),
-  ];
-  
-  BannerAd? _bannerAd;
-  bool _isBannerAdLoaded = false;
+  late List<Widget> _screens;
+  DateTime? _lastAdShowTime;
+  static const int interstitialCooldownSeconds = 30;
 
   @override
   void initState() {
     super.initState();
-    _loadBannerAd();
+    _screens = [
+      const DashboardScreen(),
+      const MarketPricesScreen(),
+      const DiseaseDetectionScreen(),
+      const FarmManagementScreen(),
+      const ProfileScreen(),
+    ];
   }
 
-  void _loadBannerAd() {
-    _bannerAd = BannerAd(
-      adUnitId: 'ca-app-pub-3734294344200337/3068736185', // Replace with actual ad unit ID
-      size: AdSize.banner,
-      request: const AdRequest(),
-      listener: BannerAdListener(
-        onAdLoaded: (_) {
-          setState(() {
-            _isBannerAdLoaded = true;
-          });
-        },
-        onAdFailedToLoad: (ad, error) {
-          ad.dispose();
-          print('Ad failed to load: ${error.message}');
-        },
-      ),
-    );
-
-    _bannerAd?.load();
-  }
-
-  @override
-  void dispose() {
-    _bannerAd?.dispose();
-    super.dispose();
+  // Check if enough time has passed since the last ad was shown
+  bool _shouldShowAd() {
+    if (_lastAdShowTime == null) return true;
+    final difference = DateTime.now().difference(_lastAdShowTime!);
+    return difference.inSeconds >= interstitialCooldownSeconds;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        children: [
-          // Main content area
-          Expanded(child: _screens[_currentIndex]),
-          
-          // Banner ad at the bottom
-          if (_isBannerAdLoaded)
-            SizedBox(
-              height: _bannerAd!.size.height.toDouble(),
-              width: _bannerAd!.size.width.toDouble(),
-              child: AdWidget(ad: _bannerAd!),
-            ),
-        ],
-      ),
+      body: _screens[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
-        onTap: (index) {
+        onTap: (index) async {
+          // Show interstitial ad when changing tabs, if we're not on a cooldown
+          if (_currentIndex != index && _shouldShowAd()) {
+            final adService = Provider.of<AdService>(context, listen: false);
+            final wasAdShown = await adService.showInterstitialAd(context);
+            
+            if (wasAdShown) {
+              setState(() {
+                _lastAdShowTime = DateTime.now();
+              });
+            }
+          }
+          
           setState(() {
             _currentIndex = index;
           });
@@ -110,57 +94,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// Placeholder tab screens
-class DashboardTab extends StatelessWidget {
-  const DashboardTab({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('डैशबोर्ड'),
-      ),
-      body: const Center(
-        child: Text('डैशबोर्ड सामग्री'),
-      ),
-    );
-  }
-}
-
-class MarketTab extends StatelessWidget {
-  const MarketTab({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('मार्केट मूल्य'),
-      ),
-      body: const Center(
-        child: Text('मार्केट मूल्य सामग्री'),
-      ),
-    );
-  }
-}
-
-class DiseaseTab extends StatelessWidget {
-  const DiseaseTab({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('रोग पहचान'),
-      ),
-      body: const Center(
-        child: Text('रोग पहचान सामग्री'),
-      ),
-    );
-  }
-}
-
-class FarmManagementTab extends StatelessWidget {
-  const FarmManagementTab({Key? key}) : super(key: key);
+// Temporary implementation of FarmManagementScreen for compilation
+class FarmManagementScreen extends StatelessWidget {
+  const FarmManagementScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -175,8 +111,9 @@ class FarmManagementTab extends StatelessWidget {
   }
 }
 
-class ProfileTab extends StatelessWidget {
-  const ProfileTab({Key? key}) : super(key: key);
+// Temporary implementation of ProfileScreen for compilation
+class ProfileScreen extends StatelessWidget {
+  const ProfileScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
