@@ -1,0 +1,20 @@
+include: package:flutter_lints/analysis_options.yaml
+
+linter:
+  rules:
+    prefer_const_constructors: true
+    prefer_const_declarations: true
+    avoid_print: true
+    prefer_single_quotes: true
+    use_key_in_widget_constructors: true
+    always_use_package_imports: false
+
+analyzer:
+  errors:
+    missing_required_param: error
+    missing_return: error
+    todo: info
+  exclude:
+    - "build/**"
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
