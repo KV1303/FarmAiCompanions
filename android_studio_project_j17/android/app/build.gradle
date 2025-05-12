@@ -18,7 +18,7 @@ if (flutterVersionCode == null) {
 
 def flutterVersionName = localProperties.getProperty('flutter.versionName')
 if (flutterVersionName == null) {
-    flutterVersionName = '1.0.0'
+    flutterVersionName = '1.0'
 }
 
 apply plugin: 'com.android.application'
@@ -29,14 +29,16 @@ apply plugin: 'com.google.gms.google-services'
 android {
     namespace "com.replit.farmassistai"
     compileSdkVersion 33
+    ndkVersion flutter.ndkVersion
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
+        // Set source and target compatibility to Java 8 for maximum compatibility
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 
     kotlinOptions {
-        jvmTarget = '17'
+        jvmTarget = '1.8'
     }
 
     sourceSets {
@@ -45,6 +47,7 @@ android {
 
     defaultConfig {
         applicationId "com.replit.farmassistai"
+        // Min SDK version set to 21 (Android 5.0) for broader compatibility
         minSdkVersion 21
         targetSdkVersion 33
         versionCode flutterVersionCode.toInteger()
@@ -52,23 +55,15 @@ android {
         multiDexEnabled true
     }
 
-    signingConfigs {
-        release {
-            // Will be used if the Keystore properties are provided
-            // For now, we'll use the debug configuration
-            keyAlias 'androiddebugkey'
-            keyPassword 'android'
-            storeFile file('debug.keystore')
-            storePassword 'android'
-        }
-    }
-
     buildTypes {
         release {
             signingConfig signingConfigs.debug
             minifyEnabled true
             shrinkResources true
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            signingConfig signingConfigs.debug
         }
     }
 }
@@ -78,7 +73,11 @@ flutter {
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'com.google.android.gms:play-services-ads:22.0.0'
-    implementation 'androidx.multidex:multidex:2.0.1'
+    implementation platform('com.google.firebase:firebase-bom:32.0.0')
+    implementation 'com.google.firebase:firebase-analytics'
+    implementation 'com.google.firebase:firebase-auth'
+    implementation 'com.google.firebase:firebase-firestore'
+    implementation 'com.android.support:multidex:1.0.3'
 }
