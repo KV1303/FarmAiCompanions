@@ -1,21 +1,21 @@
 # FarmAssistAI - Flutter Project for Android Studio
 
-This project is configured for optimal compatibility with Android Studio and Java 17.
+This project is configured for optimal compatibility with Android Studio and Java 21.
 
 ## Project Specifications
 
 | Component                     | Version    | Notes                       |
 | ----------------------------- | ---------- | --------------------------- |
-| Java SDK                      | **17**     | Compatible with Gradle 7.x  |
-| Gradle                        | **7.6**    | Supports Java 17, stable    |
-| Android Gradle Plugin         | **7.4.2**  | Matches Gradle 7.6          |
+| Java SDK                      | **21**     | Compatible with Gradle 8.x  |
+| Gradle                        | **8.4**    | Supports Java 21, stable    |
+| Android Gradle Plugin         | **8.1.0**  | Matches Gradle 8.4          |
 | Flutter SDK                   | **>=3.0.0** | Compatible with all dependencies |
-| Android compileSdkVersion     | **33**    | Android 13                  |
+| Android compileSdkVersion     | **34**    | Android 14                  |
 
 ## Setup Instructions
 
 1. Open this project in Android Studio
-2. Ensure Java 17 is configured in Android Studio
+2. Ensure Java 21 is configured in Android Studio (File > Settings > Build, Execution, Deployment > Build Tools > Gradle > Gradle JDK)
 3. Let Gradle sync complete
 4. Run flutter pub get to download dependencies
 5. Build the app with `flutter build apk --release`
@@ -28,17 +28,17 @@ All dependencies have been locked to stable versions to ensure compatibility:
 - **State management**: Provider 6.0.5
 - **Firebase**: Core, Auth, Firestore, Analytics
 - **Ads**: Google Mobile Ads 3.0.0
-- **Notifications**: flutter_local_notifications 13.0.0 (compatible version)
+- **Notifications**: flutter_local_notifications 13.0.0
 
 ## Build Notes
 
 This project is specifically configured for compatibility with:
 - Android Studio
-- Java 17 (not newer versions)
-- Gradle 7.6
-- Android Gradle Plugin 7.4.2
+- Java 21
+- Gradle 8.4
+- Android Gradle Plugin 8.1.0
 
-The configuration avoids issues with:
-- Class file major version incompatibilities
-- Missing Linux plugins
-- Gradle wrapper errors
+The configuration includes additional JVM arguments required for Java 21 compatibility:
+- Required export and open flags for Java modules
+- Proper Kotlin daemon settings
+- Extra memory allocation for Gradle

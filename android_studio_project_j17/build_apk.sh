@@ -1,24 +1,24 @@
 #!/bin/bash
 
-# FarmAssistAI APK build script with compatible Java 17 settings
-# This script ensures proper environment configuration for builds with Java 17
+# FarmAssistAI APK build script with compatible Java 21 settings
+# This script ensures proper environment configuration for builds with Java 21
 
 echo "==============================================="
 echo "FarmAssistAI Android Build Script"
-echo "Compatible with Java 17, Gradle 7.6, Android Gradle Plugin 7.4.2"
+echo "Compatible with Java 21, Gradle 8.4, Android Gradle Plugin 8.1.0"
 echo "==============================================="
 
-# Check if Java 17 is installed
+# Check if Java 21 is installed
 java_version=$(java -version 2>&1 | awk -F '"' '/version/ {print $2}')
-if [[ $java_version == 17* ]]; then
-  echo "[✓] Java 17 detected: $java_version"
+if [[ $java_version == 21* ]]; then
+  echo "[✓] Java 21 detected: $java_version"
 else
-  echo "[✗] Warning: Java 17 not detected. Current version: $java_version"
-  echo "    This project requires Java 17 for compatibility."
+  echo "[✗] Warning: Java 21 not detected. Current version: $java_version"
+  echo "    This project requires Java 21 for compatibility."
   read -p "Continue anyway? (y/n) " -n 1 -r
   echo
   if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    echo "Build aborted. Please install Java 17 and try again."
+    echo "Build aborted. Please install Java 21 and try again."
     exit 1
   fi
 fi
