@@ -32,13 +32,13 @@ android {
     ndkVersion flutter.ndkVersion
 
     compileOptions {
-        // Set source and target compatibility to Java 8 for maximum compatibility
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        // Set source and target compatibility to Java 17 for compatibility with Java 21
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '17'
     }
 
     sourceSets {
